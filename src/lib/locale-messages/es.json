@@ -1,0 +1,87 @@
+{
+  "HomePage": {
+    "title": "¡Hola mundo!",
+    "about": "Ir a la página acerca de"
+  },
+  "PlanManagement": {
+    "title": "Gestión de Planes",
+    "buttons": {
+      "refresh": "Actualizar",
+      "addPlan": "Agregar Plan"
+    },
+    "errors": {
+      "loadingPlans": "Error al Cargar Planes de Suscripción",
+      "fetchFailed": "Error al obtener planes de suscripción"
+    },
+    "messages": {
+      "dataRefreshed": "Datos de planes actualizados exitosamente",
+      "dataFetched": "Datos de planes obtenidos exitosamente"
+    },
+    "breadcrumbs": {
+      "admin": "Administrador",
+      "planManagement": "Gestión de Planes"
+    },
+    "table": {
+      "title": "Planes de Suscripción",
+      "lastUpdated": "Última Actualización",
+      "search": {
+        "placeholder": "Buscar planes por nombre..."
+      },
+      "filters": {
+        "status": {
+          "placeholder": "Filtrar por Estado",
+          "allStatus": "Todos los Estados",
+          "active": "Activo",
+          "inactive": "Inactivo"
+        },
+        "type": {
+          "placeholder": "Filtrar por Tipo",
+          "allTypes": "Todos los Tipos",
+          "regular": "Regular",
+          "custom": "Personalizado"
+        }
+      },
+      "headers": {
+        "serialNumber": "N°",
+        "name": "Nombre",
+        "price": "Precio",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "pricing": {
+        "perMonth": "/mes"
+      },
+      "status": {
+        "active": "Activo",
+        "inactive": "Inactivo"
+      },
+      "actions": {
+        "view": "Ver Plan",
+        "edit": "Editar Plan",
+        "delete": "Eliminar Plan"
+      },
+      "emptyState": {
+        "noPlansFound": "No se encontraron planes",
+        "noPlansCreated": "Aún no se han creado planes",
+        "adjustFilters": "Intenta ajustar tu búsqueda o filtros"
+      },
+      "deleteDialog": {
+        "title": "Eliminar Plan",
+        "message": "¿Estás seguro de que quieres eliminar \"{{planName}}\"? Esta acción no se puede deshacer.",
+        "confirmButton": "Eliminar",
+        "cancelButton": "Cancelar"
+      },
+      "toasts": {
+        "deleteSuccess": {
+          "title": "Plan Eliminado Exitosamente",
+          "description": "\"{{planName}}\" ha sido eliminado exitosamente."
+        },
+        "deleteError": {
+          "title": "Error al Eliminar Plan",
+          "description": "Ocurrió un error al eliminar el plan.",
+          "unexpectedError": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "HomePage": {
+    "title": "Hello world!",
+    "about": "Go to the about page"
+  },
+  "PlanManagement": {
+    "title": "Plan Management",
+    "buttons": {
+      "refresh": "Refresh",
+      "addPlan": "Add Plan"
+    },
+    "errors": {
+      "loadingPlans": "Error Loading Subscription Plans",
+      "fetchFailed": "Failed to fetch subscription plans"
+    },
+    "messages": {
+      "dataRefreshed": "Plan data refreshed successfully",
+      "dataFetched": "Plan data fetched successfully"
+    },
+    "breadcrumbs": {
+      "admin": "Admin",
+      "planManagement": "Plan Management"
+    },
+    "table": {
+      "title": "Subscription Plans",
+      "lastUpdated": "Last Updated",
+      "search": {
+        "placeholder": "Search plans by name..."
+      },
+      "filters": {
+        "status": {
+          "placeholder": "Filter by Status",
+          "allStatus": "All Status",
+          "active": "Active",
+          "inactive": "Inactive"
+        },
+        "type": {
+          "placeholder": "Filter by Type",
+          "allTypes": "All Types",
+          "regular": "Regular",
+          "custom": "Custom"
+        }
+      },
+      "headers": {
+        "serialNumber": "SNo.",
+        "name": "Name",
+        "price": "Price",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "pricing": {
+        "perMonth": "/month"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "actions": {
+        "view": "View Plan",
+        "edit": "Edit Plan",
+        "delete": "Delete Plan"
+      },
+      "emptyState": {
+        "noPlansFound": "No plans found",
+        "noPlansCreated": "No plans have been created yet",
+        "adjustFilters": "Try adjusting your search or filters"
+      },
+      "deleteDialog": {
+        "title": "Delete Plan",
+        "message": "Are you sure you want to delete \"{{planName}}\"? This action cannot be undone.",
+        "confirmButton": "Delete",
+        "cancelButton": "Cancel"
+      },
+      "toasts": {
+        "deleteSuccess": {
+          "title": "Plan Deleted Successfully",
+          "description": "\"{{planName}}\" has been deleted successfully."
+        },
+        "deleteError": {
+          "title": "Failed to Delete Plan",
+          "description": "An error occurred while deleting the plan.",
+          "unexpectedError": "An unexpected error occurred. Please try again."
+        }
+      }
+    }
+  }
+}
