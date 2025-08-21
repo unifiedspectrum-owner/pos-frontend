@@ -200,8 +200,8 @@ export interface CreateSubscriptionPlanAPIPayloadRequest {
   card_processing_fee_fixed: number; /* Fixed fee per card transaction */
   additional_device_cost: number; /* Cost per additional device */
   annual_discount_percentage: number; /* Discount for annual billing */
-  biennial_discount_percentage: number; /* 2-year commitment discount */
-  triennial_discount_percentage: number; /* 3-year commitment discount */
+  // biennial_discount_percentage: number; /* 2-year commitment discount */
+  // triennial_discount_percentage: number; /* 3-year commitment discount */
   
   /* Device and user constraints */
   included_devices_count: number; /* Number of included devices */

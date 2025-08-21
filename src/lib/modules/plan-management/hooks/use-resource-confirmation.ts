@@ -56,7 +56,7 @@ export const useResourceConfirmation = <T extends { id: number }>({
 
   /* Confirm resource removal and close dialog */
   const handleConfirm = useCallback(() => {
-    if (confirmState.resourceId) {
+    if (confirmState.resourceId !== undefined) {
       onRemoveSelection(confirmState.resourceId);
     }
     setConfirmState({ show: false });

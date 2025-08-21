@@ -36,7 +36,7 @@ const PlanBasicDetails: React.FC<PlanBasicDetailsProps> = ({
       {/* Dynamic form fields based on configuration */}
       <SimpleGrid columns={3} gap={4}>
         {
-          BASIC_INFO_QUESTIONS.map((que) => {
+          BASIC_INFO_QUESTIONS.filter(que => que.is_active).map((que) => {
             const fieldError = errors[que.schema_key as keyof CreatePlanFormData];
             
             switch(que.type) {

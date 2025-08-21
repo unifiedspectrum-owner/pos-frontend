@@ -53,7 +53,7 @@ const SelectedAddonsConfiguration: React.FC<SelectedAddonsConfigurationProps> = 
       {/* Individual addon configuration cards */}
       {addonAssignments.map((assignment, assignmentIndex) => {
         const addon = addons.find(a => a.id === assignment.addon_id);
-        const sortedQuestions = ADDONS_INFO_QUESTIONS.sort((a, b) => a.display_order - b.display_order);
+        const sortedQuestions = ADDONS_INFO_QUESTIONS.filter(que => que.is_active).sort((a, b) => a.display_order - b.display_order);
         
         return (
           <Box 

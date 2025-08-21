@@ -1,6 +1,6 @@
 /* Dynamic form component for creating new add-ons with configurable fields */
 import React from 'react'
-import { Box, Flex, HStack, SimpleGrid, GridItem, Alert } from '@chakra-ui/react'
+import { Box, Flex, HStack, SimpleGrid, GridItem } from '@chakra-ui/react'
 import { Controller, UseFormReturn, FieldValues, SubmitHandler } from 'react-hook-form'
 import { lighten } from 'polished'
 import { FiSave } from 'react-icons/fi'
@@ -13,7 +13,7 @@ import { GRAY_COLOR } from '@shared/config'
 import { ADDON_CREATE_FORM_CONFIG } from '@plan-management/config'
 
 /* Components */
-import { TextInputField, SelectField, SwitchField, PrimaryButton } from '@shared/components'
+import { TextInputField, TextAreaField, SelectField, SwitchField, PrimaryButton } from '@shared/components'
 
 interface CreateAddonFormProps {
   showCreateAddon: boolean;
@@ -49,7 +49,7 @@ const CreateAddonForm: React.FC<CreateAddonFormProps> = ({
         <Flex flexDir="column" gap={4}>
           {/* Dynamic form fields rendered from configuration */}
           <SimpleGrid columns={2} gap={4}>
-            {ADDON_CREATE_FORM_CONFIG.sort((a, b) => a.display_order - b.display_order).map((field) => {
+            {ADDON_CREATE_FORM_CONFIG.filter(field => field.is_active).sort((a, b) => a.display_order - b.display_order).map((field) => {
               const colSpan =  field.grid.col_span;
               const name = field.schema_key as keyof CreateAddonFormData;
 
@@ -95,6 +95,29 @@ const CreateAddonForm: React.FC<CreateAddonFormProps> = ({
                             onChange={controllerField.onChange}
                             name={controllerField.name}
                             size="lg"
+                          />
+                        )}
+                      />
+                    </GridItem>
+                  );
+
+                case 'TEXTAREA':
+                  return (
+                    <GridItem key={field.id} colSpan={colSpan}>
+                      <Controller
+                        name={name}
+                        control={createAddonForm.control}
+                        render={({ field: controllerField, fieldState }) => (
+                          <TextAreaField
+                            label={field.label}
+                            value={controllerField.value || ''}
+                            placeholder={field.placeholder || ''}
+                            onChange={controllerField.onChange}
+                            onBlur={controllerField.onBlur}
+                            name={controllerField.name}
+                            isInValid={!!fieldState.error}
+                            required={field.is_required}
+                            errorMessage={fieldState.error?.message || ''}
                           />
                         )}
                       />

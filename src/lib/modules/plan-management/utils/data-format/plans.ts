@@ -17,8 +17,8 @@ export const formatApiDataToFormData = (apiPlanData: PlanDetails): CreatePlanFor
     card_processing_fee_fixed: apiPlanData.card_processing_fee_fixed.toString(),
     monthly_price: apiPlanData.monthly_price.toString(),
     annual_discount_percentage: apiPlanData.annual_discount_percentage.toString(),
-    biennial_discount_percentage: apiPlanData.biennial_discount_percentage.toString(),
-    triennial_discount_percentage: apiPlanData.triennial_discount_percentage.toString(),
+    // biennial_discount_percentage: apiPlanData.biennial_discount_percentage.toString(),
+    // triennial_discount_percentage: apiPlanData.triennial_discount_percentage.toString(),
     
     /* Device and user constraints */
     included_devices_count: apiPlanData.included_devices_count.toString(),
@@ -66,8 +66,8 @@ export const formatFormDataToApiData = (
     card_processing_fee_fixed: parseFloat(formData.card_processing_fee_fixed) || 0,
     monthly_price: parseFloat(formData.monthly_price) || 0,
     annual_discount_percentage: parseFloat(formData.annual_discount_percentage) || 0,
-    biennial_discount_percentage: parseFloat(formData.biennial_discount_percentage) || 0,
-    triennial_discount_percentage: parseFloat(formData.triennial_discount_percentage) || 0,
+    // biennial_discount_percentage: parseFloat(formData.biennial_discount_percentage) || 0,
+    // triennial_discount_percentage: parseFloat(formData.triennial_discount_percentage) || 0,
     
     /* Device and user constraints */
     included_devices_count: parseInt(formData.included_devices_count) || 0,

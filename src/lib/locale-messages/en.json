@@ -67,7 +67,7 @@
       },
       "deleteDialog": {
         "title": "Delete Plan",
-        "message": "Are you sure you want to delete \"{{planName}}\"? This action cannot be undone.",
+        "message": "Are you sure you want to delete \"{planName}\"? This action cannot be undone.",
         "confirmButton": "Delete",
         "cancelButton": "Cancel"
       },

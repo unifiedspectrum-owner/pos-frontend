@@ -33,9 +33,9 @@ const VolumeDiscounts: React.FC<VolumeDiscountsProps> = ({ mode }) => {
     name: 'volume_discounts'
   });
 
-  /* Volume discount confirmation logic */
+  /* Volume discount confirmation logic - use array index for both new and existing */
   const volumeDiscountResources = volumeDiscounts.map((discount, index) => ({
-    id: index,
+    id: index, // Always use array index for consistent deletion
     name: discount.name || `Volume Discount #${index + 1}`
   }));
 

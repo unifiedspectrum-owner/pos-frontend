@@ -67,7 +67,7 @@
       },
       "deleteDialog": {
         "title": "Eliminar Plan",
-        "message": "¿Estás seguro de que quieres eliminar \"{{planName}}\"? Esta acción no se puede deshacer.",
+        "message": "¿Estás seguro de que quieres eliminar \"{planName}\"? Esta acción no se puede deshacer.",
         "confirmButton": "Eliminar",
         "cancelButton": "Cancelar"
       },

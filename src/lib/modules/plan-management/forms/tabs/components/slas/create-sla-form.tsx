@@ -49,7 +49,7 @@ const CreateSLAForm: React.FC<CreateSLAFormProps> = ({
         <Flex flexDir="column" gap={4}>
           {/* Dynamic form fields rendered from configuration */}
           <SimpleGrid columns={2} gap={4}>
-            {SLA_CREATE_FORM_CONFIG.sort((a, b) => a.display_order - b.display_order).map((field) => {
+            {SLA_CREATE_FORM_CONFIG.filter(field => field.is_active).sort((a, b) => a.display_order - b.display_order).map((field) => {
               const name = field.schema_key as keyof CreateSlaFormData;
 
               switch (field.type) {

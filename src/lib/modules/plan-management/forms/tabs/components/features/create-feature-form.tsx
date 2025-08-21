@@ -33,7 +33,7 @@ const CreateFeatureForm: React.FC<CreateFeatureFormProps> = ({
         <Flex flexDir="column" gap={4}>
           {/* Dynamic form fields based on configuration */}
           <SimpleGrid columns={1} gap={4}>
-            {FEATURE_CREATE_FORM_CONFIG.sort((a, b) => a.display_order - b.display_order).map((field) => {
+            {FEATURE_CREATE_FORM_CONFIG.filter(field => field.is_active).sort((a, b) => a.display_order - b.display_order).map((field) => {
               const name = field.schema_key as keyof CreateFeatureFormData /* Field name for form control */
               const colSpan = field.grid.col_span /* Grid column span */;
               

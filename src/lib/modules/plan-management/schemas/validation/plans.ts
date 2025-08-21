@@ -57,20 +57,24 @@ export const createPlanSchema = z.object({
       return !isNaN(num) && num >= 0 && num <= 100;
     }, 'Annual discount must be between 0 and 100')
     .default(''),
-  biennial_discount_percentage: z.string()
-    .min(1, 'Biennial discount percentage is required')
-    .refine((val) => {
-      const num = Number(val);
-      return !isNaN(num) && num >= 0 && num <= 100;
-    }, 'Biennial discount must be between 0 and 100')
-    .default(''),
-  triennial_discount_percentage: z.string()
-    .min(1, 'Triennial discount percentage is required')
-    .refine((val) => {
-      const num = Number(val);
-      return !isNaN(num) && num >= 0 && num <= 100;
-    }, 'Triennial discount must be between 0 and 100')
-    .default(''),
+  // biennial_discount_percentage: z.string()
+  //   .min(1, 'Biennial discount percentage is required')
+  //   .refine((val) => {
+  //     if(val == null) return
+  //     const num = Number(val);
+  //     return !isNaN(num) && num >= 0 && num <= 100;
+  //   }, 'Biennial discount must be between 0 and 100')
+  //   .nullable()
+  //   .default(null),
+  // triennial_discount_percentage: z.string()
+  //   .min(1, 'Triennial discount percentage is required')
+  //   .refine((val) => {
+  //     if(val == null) return
+  //     const num = Number(val);
+  //     return !isNaN(num) && num >= 0 && num <= 100;
+  //   }, 'Triennial discount must be between 0 and 100')
+  //   .nullable()
+  //   .default(null),
 
   /* Payment Gateway Fees */
   monthly_fee_our_gateway: z.string()
@@ -252,8 +256,6 @@ export const BASIC_INFO_FIELD_KEYS = Object.keys(basicInfoSchema.shape) as Array
 export const pricingInfoSchema = createPlanSchema.pick({
   monthly_price: true,
   annual_discount_percentage: true,
-  biennial_discount_percentage: true,
-  triennial_discount_percentage: true,
   additional_device_cost: true,
   monthly_fee_our_gateway: true,
   monthly_fee_byo_processor: true,

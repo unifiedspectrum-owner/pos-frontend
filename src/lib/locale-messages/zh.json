@@ -67,7 +67,7 @@
       },
       "deleteDialog": {
         "title": "删除套餐",
-        "message": "您确定要删除\"{{planName}}\"吗？此操作无法撤消。",
+        "message": "您确定要删除\"{planName}\"吗？此操作无法撤消。",
         "confirmButton": "删除",
         "cancelButton": "取消"
       },

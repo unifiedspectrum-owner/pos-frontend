@@ -6,6 +6,7 @@ export interface FormFieldConfig {
   schema_key: string; /* Key used for form data mapping */
   placeholder?: string; /* Optional placeholder text */
   is_required: boolean; /* Whether field is mandatory */
+  is_active: boolean; /* Whether field is currently active/enabled */
   display_order: number; /* Order for field rendering */
   disabled?: boolean; /* Whether field is read-only */
   grid: {
@@ -32,6 +33,7 @@ export const BASIC_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "Enter plan name",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 1,
     grid: {
       col_span: 1
@@ -45,6 +47,7 @@ export const BASIC_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "",
     values: [],
     is_required: false,
+    is_active: true,
     toggle_text: {
       true: "Active",
       false: "Inactive",
@@ -62,6 +65,7 @@ export const BASIC_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "",
     values: [],
     is_required: false,
+    is_active: true,
     toggle_text: {
       true: "Custom Plan",
       false: "Regular Plan",
@@ -78,6 +82,7 @@ export const BASIC_INFO_QUESTIONS: FormFieldConfig[] = [
     schema_key: "description",
     placeholder: "Enter plan description",
     is_required: true,
+    is_active: true,
     display_order: 4,
     grid: {
       col_span: 3
@@ -90,6 +95,7 @@ export const BASIC_INFO_QUESTIONS: FormFieldConfig[] = [
     schema_key: "included_devices_count",
     placeholder: "0",
     is_required: true,
+    is_active: true,
     display_order: 5,
     grid: {
       col_span: 1
@@ -102,6 +108,7 @@ export const BASIC_INFO_QUESTIONS: FormFieldConfig[] = [
     schema_key: "max_users_per_branch",
     placeholder: "0",
     is_required: true,
+    is_active: true,
     display_order: 6,
     grid: {
       col_span: 1
@@ -114,6 +121,7 @@ export const BASIC_INFO_QUESTIONS: FormFieldConfig[] = [
     schema_key: "included_branches_count",
     placeholder: "0",
     is_required: true,
+    is_active: true,
     display_order: 7,
     grid: {
       col_span: 1
@@ -131,6 +139,7 @@ export const PRICING_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "0.00",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 1,
     grid: {
       columns: 5, 
@@ -145,6 +154,7 @@ export const PRICING_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "0.00",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 2,
     grid: {
       columns: 5, 
@@ -159,6 +169,7 @@ export const PRICING_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "0.00",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 3,
     grid: {
       columns: 5, 
@@ -173,6 +184,7 @@ export const PRICING_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "0.00",
     values: [],
     is_required: true,
+    is_active: false,
     display_order: 4,
     grid: {
       columns: 5, 
@@ -186,6 +198,7 @@ export const PRICING_INFO_QUESTIONS: FormFieldConfig[] = [
     schema_key: "triennial_discount_percentage",
     placeholder: "0.00",
     is_required: true,
+    is_active: false,
     display_order: 5,
     grid: {
       columns: 5, 
@@ -199,6 +212,7 @@ export const PRICING_INFO_QUESTIONS: FormFieldConfig[] = [
     schema_key: "monthly_fee_our_gateway",
     placeholder: "0.00",
     is_required: true,
+    is_active: true,
     display_order: 6,
     grid: {
       columns: 4, 
@@ -212,6 +226,7 @@ export const PRICING_INFO_QUESTIONS: FormFieldConfig[] = [
     schema_key: "monthly_fee_byo_processor",
     placeholder: "0.00",
     is_required: true,
+    is_active: true,
     display_order: 7,
     grid: {
       columns: 4, 
@@ -226,6 +241,7 @@ export const PRICING_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "0.00",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 8,
     grid: {
       columns: 4, 
@@ -240,6 +256,7 @@ export const PRICING_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "0.00",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 9,
     grid: {
       columns: 4, 
@@ -258,6 +275,7 @@ export const ADDONS_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "Add-on name",
     values: [],
     is_required: false,
+    is_active: true,
     display_order: 1,
     disabled: true,
     grid: {
@@ -275,6 +293,7 @@ export const ADDONS_INFO_QUESTIONS: FormFieldConfig[] = [
       { label: "Custom", value: "custom" }
     ],
     is_required: true,
+    is_active: true,
     display_order: 2,
     grid: {
       col_span: 1
@@ -288,6 +307,7 @@ export const ADDONS_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "",
     values: [],
     is_required: false,
+    is_active: true,
     toggle_text: {
       true: "Included",
       false: "Optional",
@@ -305,6 +325,7 @@ export const ADDONS_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "0",
     values: [],
     is_required: false,
+    is_active: true,
     display_order: 4,
     grid: {
       col_span: 1
@@ -318,6 +339,7 @@ export const ADDONS_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "0",
     values: [],
     is_required: false,
+    is_active: true,
     display_order: 5,
     grid: {
       col_span: 1
@@ -331,6 +353,7 @@ export const ADDONS_INFO_QUESTIONS: FormFieldConfig[] = [
     placeholder: "Unlimited",
     values: [],
     is_required: false,
+    is_active: true,
     display_order: 6,
     grid: {
       col_span: 1
@@ -348,6 +371,7 @@ export const FEATURE_CREATE_FORM_CONFIG: FormFieldConfig[] = [
     placeholder: "Enter feature name",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 1,
     grid: {
       col_span: 1
@@ -361,6 +385,7 @@ export const FEATURE_CREATE_FORM_CONFIG: FormFieldConfig[] = [
     placeholder: "Feature description",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 2,
     grid: {
       col_span: 1
@@ -378,6 +403,7 @@ export const ADDON_CREATE_FORM_CONFIG: FormFieldConfig[] = [
     placeholder: "Enter add-on name",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 1,
     grid: {
       col_span: 2
@@ -391,6 +417,7 @@ export const ADDON_CREATE_FORM_CONFIG: FormFieldConfig[] = [
     placeholder: "Add-on description",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 2,
     grid: {
       col_span: 2
@@ -404,6 +431,7 @@ export const ADDON_CREATE_FORM_CONFIG: FormFieldConfig[] = [
     placeholder: "0.00",
     values: [],
     is_required: false,
+    is_active: true,
     display_order: 3,
     grid: {
       col_span: 1,
@@ -420,6 +448,7 @@ export const ADDON_CREATE_FORM_CONFIG: FormFieldConfig[] = [
       { value: "organization", label: "Organization" }
     ],
     is_required: true,
+    is_active: true,
     display_order: 4,
     grid: {
       col_span: 1,
@@ -437,6 +466,7 @@ export const SLA_CREATE_FORM_CONFIG: FormFieldConfig[] = [
     placeholder: "Enter SLA name",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 1,
     grid: {
       col_span: 1,
@@ -450,6 +480,7 @@ export const SLA_CREATE_FORM_CONFIG: FormFieldConfig[] = [
     placeholder: "e.g., Email, Phone, Chat",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 2,
     grid: {
       col_span: 1,
@@ -463,6 +494,7 @@ export const SLA_CREATE_FORM_CONFIG: FormFieldConfig[] = [
     placeholder: "e.g., 24",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 3,
     grid: {
       col_span: 1,
@@ -476,6 +508,7 @@ export const SLA_CREATE_FORM_CONFIG: FormFieldConfig[] = [
     placeholder: "e.g., 24/7, Business Hours",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 4,
     grid: {
       col_span: 1,
@@ -489,6 +522,7 @@ export const SLA_CREATE_FORM_CONFIG: FormFieldConfig[] = [
     placeholder: "Additional notes about this SLA",
     values: [],
     is_required: false,
+    is_active: true,
     display_order: 5,
     grid: {
       col_span: 1
@@ -506,6 +540,7 @@ export const VOLUME_DISCOUNT_FIELD_CONFIG: FormFieldConfig[] = [
     placeholder: "Enter discount name",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 1,
     grid: {
       col_span: 1,
@@ -519,6 +554,7 @@ export const VOLUME_DISCOUNT_FIELD_CONFIG: FormFieldConfig[] = [
     placeholder: "",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 2,
     grid: {
       col_span: 1,
@@ -532,6 +568,7 @@ export const VOLUME_DISCOUNT_FIELD_CONFIG: FormFieldConfig[] = [
     placeholder: "",
     values: [],
     is_required: false,
+    is_active: true,
     display_order: 3,
     grid: {
       col_span: 1,
@@ -545,6 +582,7 @@ export const VOLUME_DISCOUNT_FIELD_CONFIG: FormFieldConfig[] = [
     placeholder: "0.00",
     values: [],
     is_required: true,
+    is_active: true,
     display_order: 4,
     grid: {
       col_span: 1,
