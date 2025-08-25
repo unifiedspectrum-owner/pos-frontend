@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@chakra-ui/react"],
   },
+  onDemandEntries: {
+    maxInactiveAge: 0,
+    pagesBufferLength: 0,
+  },
   headers: async () => [
     {
       source: '/(.*)',
@@ -19,6 +23,14 @@ const nextConfig: NextConfig = {
         {
           key: 'Cache-Control',
           value: 'no-cache, no-store, must-revalidate',
+        },
+        {
+          key: 'Pragma',
+          value: 'no-cache',
+        },
+        {
+          key: 'Expires',
+          value: '0',
         },
       ],
     },

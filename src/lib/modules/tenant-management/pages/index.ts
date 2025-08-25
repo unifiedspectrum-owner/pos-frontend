@@ -1,0 +1,1 @@
+export { default as CreateTenantAccount } from './account/create'

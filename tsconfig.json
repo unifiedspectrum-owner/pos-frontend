@@ -22,7 +22,8 @@
     "paths": {
       "@/*": ["src/*"],
       "@shared/*": ["src/lib/shared/*"],
-      "@plan-management/*": ["src/lib/modules/plan-management/*"]
+      "@plan-management/*": ["src/lib/modules/plan-management/*"],
+      "@tenant-management/*": ["src/lib/modules/tenant-management/*"]
     },
     "types": [
         "./cloudflare-env.d.ts",

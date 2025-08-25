@@ -29,9 +29,15 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body>
-        <Provider>
-          <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
-        </Provider>
+        <NextIntlClientProvider 
+          locale={locale}
+          messages={messages}
+          timeZone="UTC"
+        >
+          <Provider>
+            {children}
+          </Provider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

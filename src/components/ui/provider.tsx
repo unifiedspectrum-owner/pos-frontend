@@ -13,8 +13,8 @@ export function Provider(props: ColorModeProviderProps) {
     <ChakraProvider value={system}>
       <ColorModeProvider {...props}>
         {props.children}
+        <Toaster />
       </ColorModeProvider>
-      <Toaster />
     </ChakraProvider>
   )
 }

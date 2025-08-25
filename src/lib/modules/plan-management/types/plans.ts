@@ -88,10 +88,12 @@ export interface PlanManagementTabData {
 export interface Plan {
   id: number; /* Unique plan identifier */
   name: string; /* Plan display name */
+  description: string; /* Plan display name */
   is_active: number; /* Database boolean: 0 = inactive, 1 = active */
   is_custom: number; /* Database boolean: 0 = standard, 1 = custom */
   display_order: number; /* Sort order for display */
   monthly_price: number; /* Monthly subscription cost */
+  annual_discount_percentage: number; /* Monthly subscription cost */
 }
 
 /* Complete plan data with all relationships */
