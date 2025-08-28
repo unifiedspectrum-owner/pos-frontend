@@ -11,7 +11,7 @@ interface TextInputFieldProps {
   placeholder: string; /* Placeholder text */
   isInValid: boolean; /* Whether field has validation errors */
   required: boolean; /* Whether field is required */
-  errorMessage: string; /* Error message to display */
+  errorMessage?: string; /* Error message to display */
   disabled?: boolean; /* Whether field is disabled */
   readOnly?: boolean; /* Whether field is read-only */
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; /* Value change handler */

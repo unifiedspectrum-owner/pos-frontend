@@ -1,4 +1,3 @@
-/* API client dependencies and type imports */
 import axios, { AxiosResponse } from "axios";
 import { BACKEND_BASE_URL } from "@shared/config";
 import { 
@@ -9,10 +8,17 @@ import {
   RequestTenantAccountVerificationOTPAPIResponse, 
   TenantAccountCreationAPIRequest,
   TenantStatusApiResponse,
-  TenantStatusApiRquest, 
+  TenantStatusApiRquest,
+  AssignPlanToTenantApiRequest,
+  AssignPlanToTenantApiResponse,
+  AssignedPlanApiResponse, 
 } from "@tenant-management/types";
 
-/* HTTP client for tenants API endpoints */
+// =============================================================================
+// API CLIENT CONFIGURATION
+// =============================================================================
+
+/* HTTP client configured for tenant management endpoints */
 const apiClient = axios.create({
   baseURL: `${BACKEND_BASE_URL}/tenants`,
   headers: {
@@ -20,31 +26,27 @@ const apiClient = axios.create({
   },
 });
 
-/* Request interceptor for automatic token attachment */
+/* Request interceptor to attach authentication token */
 apiClient.interceptors.request.use(
   (config) => {
-    /* Get auth token from storage */
-    const token = localStorage.getItem('accessToken'); 
+    const token = localStorage.getItem('accessToken');
     if (token) {
-      /* Attach token to request headers */
       config.headers.Authorization = `Bearer ${token}`;
     }
-    /* Return modified config */
-    return config; 
+    return config;
   },
   (error) => {
     return Promise.reject(error);
   }
 );
 
-/* Response interceptor for authentication error handling */
+/* Response interceptor to handle authentication errors */
 apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
     if (error.response?.status === 401) {
-      /* Clear auth data and trigger logout on 401 */
       localStorage.removeItem('accessToken');
       localStorage.removeItem('loggedIn');
       window.dispatchEvent(new Event('authStateChanged'));
@@ -53,10 +55,14 @@ apiClient.interceptors.response.use(
   }
 );
 
-/* Service object containing all tenant-related API methods */
+// =============================================================================
+// TENANT API SERVICE
+// =============================================================================
+
+/* Service containing all tenant management API operations */
 export const tenantApiService = {
-  
-  /* Create new tenant account via API */
+
+  /* Creates new tenant account */
   async createTenantAccount(data: TenantAccountCreationAPIRequest): Promise<AxiosResponse<TenantAccountCreationAPIResponse>> {
     try {
       const response = await apiClient.post<TenantAccountCreationAPIResponse>('/account/create', data);
@@ -67,10 +73,10 @@ export const tenantApiService = {
     }
   },
 
-  /* Request OTP for tenant account verification */
+  /* Requests OTP for tenant account verification */
   async requestTenantAccountVerificationOTP(data: RequestTenantAccountVerificationOTPAPIRequest): Promise<AxiosResponse<RequestTenantAccountVerificationOTPAPIResponse>> {
     try {
-      const response = await apiClient.post<RequestTenantAccountVerificationOTPAPIResponse>('/account/request-otp', data); /* POST /tenants/account/request-otp */
+      const response = await apiClient.post<RequestTenantAccountVerificationOTPAPIResponse>('/account/request-otp', data);
       return response;
     } catch (error) {
       console.error('[TenantService] Failed to request OTP:', error);
@@ -78,10 +84,10 @@ export const tenantApiService = {
     }
   },
 
-  /* Verify OTP for tenant account confirmation */
+  /* Verifies OTP for tenant account confirmation */
   async verifyTenantAccountVerificationOTP(data: VerifyTenantAccountVerificationOTPAPIRequest): Promise<AxiosResponse<VerifyTenantAccountVerificationOTPAPIResponse>> {
     try {
-      const response = await apiClient.post<VerifyTenantAccountVerificationOTPAPIResponse>('/account/verify-otp', data); /* POST /tenants/account/verify-otp */
+      const response = await apiClient.post<VerifyTenantAccountVerificationOTPAPIResponse>('/account/verify-otp', data);
       return response;
     } catch (error) {
       console.error('[TenantService] Failed to verify OTP:', error);
@@ -89,13 +95,35 @@ export const tenantApiService = {
     }
   },
 
-  /* Check status of tenant account */
+  /* Retrieves current status of tenant account */
   async checkTenantAccountStatus(data: TenantStatusApiRquest): Promise<AxiosResponse<TenantStatusApiResponse>> {
     try {
-      const response = await apiClient.post<TenantStatusApiResponse>('/account/status', data); /* POST /tenants/account/verify-otp */
+      const response = await apiClient.post<TenantStatusApiResponse>('/account/status', data);
       return response;
     } catch (error) {
-      console.error('[TenantService] Failed to verify OTP:', error);
+      console.error('[TenantService] Failed to check account status:', error);
+      throw error;
+    }
+  },
+
+  /* Assigns subscription plan to tenant */
+  async assignPlanToTenant(data: AssignPlanToTenantApiRequest): Promise<AxiosResponse<AssignPlanToTenantApiResponse>> {
+    try {
+      const response = await apiClient.post<AssignPlanToTenantApiResponse>('/account/assign-plan', data);
+      return response;
+    } catch (error) {
+      console.error('[TenantService] Failed to assign plan:', error);
+      throw error;
+    }
+  },
+
+  /* Retrieves assigned plan details for tenant */
+  async getAssignedPlanForTenant(data: TenantStatusApiRquest): Promise<AxiosResponse<AssignedPlanApiResponse>> {
+    try {
+      const response = await apiClient.post<AssignedPlanApiResponse>('/account/get-assigned-plan', data);
+      return response;
+    } catch (error) {
+      console.error('[TenantService] Failed to get assigned plan:', error);
       throw error;
     }
   },

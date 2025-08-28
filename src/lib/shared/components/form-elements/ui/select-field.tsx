@@ -17,8 +17,9 @@ interface SelectFieldProps {
   placeholder?: string; /* Placeholder text */
   isInValid: boolean; /* Whether field has validation errors */
   required: boolean; /* Whether field is required */
-  errorMessage: string; /* Error message to display */
+  errorMessage?: string; /* Error message to display */
   disabled?: boolean; /* Whether field is disabled */
+  readOnly?: boolean; /* Whether field is read-only */
   options: SelectOption[]; /* Available options array */
   onChange: (value: string) => void; /* Value change handler */
   name?: string; /* Field name attribute */
@@ -32,7 +33,8 @@ const SelectField: React.FC<SelectFieldProps> = ({
   isInValid,
   required,
   errorMessage,
-  disabled,
+  disabled = false,
+  readOnly = false,
   options,
   onChange,
   name,
@@ -53,7 +55,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
     : value && value !== '' ? [value] : []
 
   return (
-    <Field label={label} invalid={isInValid} errorText={errorMessage} required={required}>
+    <Field label={label} invalid={isInValid} readOnly={readOnly} errorText={errorMessage} required={required}>
       <Select.Root
         size={size}
         value={selectValue}
@@ -61,6 +63,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
           const newValue = e.value[0]
           onChange(newValue)
         }}
+        readOnly = {readOnly}
         disabled={disabled}
         name={name}
         collection={collection}

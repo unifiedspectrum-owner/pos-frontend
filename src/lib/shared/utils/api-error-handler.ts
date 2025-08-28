@@ -1,4 +1,4 @@
-import { toaster } from '@/components/ui/toaster'
+import { createToastMessage } from '@shared/utils/ui/toast'
 
 /* Interface for validation errors from API response */
 interface ValidationError {
@@ -22,7 +22,7 @@ interface ErrorHandlerConfig {
 /* Reusable API error handler based on verification.tsx pattern */
 export const handleApiError = (
   err: any,
-  config: ErrorHandlerConfig = {}
+  config: ErrorHandlerConfig
 ) => {
   const {
     title = 'Operation Failed',
@@ -35,56 +35,46 @@ export const handleApiError = (
     /* Handle validation errors if form setError function is provided */
     if ( responseData.validation_errors && responseData.validation_errors.length > 0) {
       responseData.validation_errors.forEach((validationError: ValidationError) => {
-        toaster.create({
+        createToastMessage({
           title: responseData.message || 'Validation Error',
           description: validationError.message || 'Please check the form and try again.',
-          type: 'error',
-          duration: 5000,
-          closable: true
+          type: 'error'
         })
       })
       
-      toaster.create({
+      createToastMessage({
         title: responseData.message || 'Validation Error',
         description: responseData.error || 'Please check the form and try again.',
-        type: 'error',
-        duration: 5000,
-        closable: true
+        type: 'error'
       })
       return
     }
 
     /* Handle general API errors */
     if (responseData.error || responseData.message) {
-      toaster.create({
+      createToastMessage({
         title: responseData.message || title,
         description: responseData.error || 'An error occurred during the operation.',
-        type: 'error',
-        duration: 5000,
-        closable: true
+        type: 'error'
       })
       return
     }
 
     /* Handle failed responses without specific error messages */
     if (responseData.success === false) {
-      toaster.create({
+      createToastMessage({
         title: responseData.message || title,
         description: responseData.error || 'Operation failed. Please try again.',
-        type: 'error',
-        duration: 5000,
-        closable: true
+        type: 'error'
       })
       return
     }
   }
 
   /* Handle network/connection errors */
-  toaster.create({
+  createToastMessage({
     title: 'Connection Error',
     description: 'Unable to connect to the server. Please check your connection and try again.',
-    type: 'error',
-     duration: 5000,
-    closable: true
+    type: 'error'
   })
 }

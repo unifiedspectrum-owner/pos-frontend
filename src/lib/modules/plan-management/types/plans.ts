@@ -89,11 +89,14 @@ export interface Plan {
   id: number; /* Unique plan identifier */
   name: string; /* Plan display name */
   description: string; /* Plan display name */
+  is_featured: number;
   is_active: number; /* Database boolean: 0 = inactive, 1 = active */
   is_custom: number; /* Database boolean: 0 = standard, 1 = custom */
   display_order: number; /* Sort order for display */
   monthly_price: number; /* Monthly subscription cost */
+  included_branches_count: number | null
   annual_discount_percentage: number; /* Monthly subscription cost */
+  add_ons: Addon[]
 }
 
 /* Complete plan data with all relationships */
@@ -146,9 +149,10 @@ export interface Addon {
   name: string; /* Add-on display name */
   description: string; /* Add-on description */
   pricing_scope: "branch" | "organization"; /* Pricing model scope */
-  base_price: number; /* Base price for the add-on */
+  add_on_price: number; /* Base price for the add-on */
   default_quantity: number | null; /* Default quantity when selected */
   is_included: boolean; /* Database boolean: 0 = optional, 1 = included */
+  feature_level: string | null;
   min_quantity: number | null; /* Minimum allowed quantity */
   max_quantity: number | null; /* Maximum allowed quantity (null = unlimited) */
   display_order: number; /* Sort order for display */

@@ -1,3 +1,6 @@
 export * from './components'
+export * from './forms/account/steps/components'
+export * from './hooks'
 export * from './pages'
 export * from './types'
+export * from './utils'

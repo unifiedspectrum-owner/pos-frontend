@@ -1,13 +1,18 @@
+import { PlanBillingCycle } from "../types";
+
+export const PLAN_BILLING_CYCLES: PlanBillingCycle[] =  ['monthly', 'yearly'];
+
 /* React Icons type and icon imports */
 import { IconType } from "react-icons"
-import { FaBuilding, FaClipboardList, FaShieldAlt } from "react-icons/fa"
+import { FaBuilding, FaClipboardList, FaShieldAlt, FaCheckCircle } from "react-icons/fa"
 import { TenantAccountCreationStepType } from "../types"
 
 /* Step identifiers for tenant account creation flow */
 export const STEP_IDS = {
   TENANT_INFO: 'tenant-info',
   VERIFICATION: 'verification', 
-  PLAN_SELECTION: 'plan-selection'
+  PLAN_SELECTION: 'plan-selection',
+  PLAN_SUMMARY: 'plan-summary'
 } as const
 
 /* Interface defining step configuration properties */
@@ -41,5 +46,12 @@ export const TENANT_CREATION_STEPS: TenantAccountCreationSteps[] = [
     title: 'Choose Your Plan',
     description: 'Select a subscription plan for your account',
     icon: FaClipboardList
+  },
+  {
+    id: STEP_IDS.PLAN_SUMMARY,
+    label: 'Summary',
+    title: 'Plan Summary',
+    description: 'Review your selected plan and addons',
+    icon: FaCheckCircle
   }
 ]
