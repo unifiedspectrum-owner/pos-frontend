@@ -1,10 +1,5 @@
+import { ValidationError } from "@shared/types";
 import { Plan } from "@plan-management/types";
-
-/* Field validation error structure */
-export interface ValidationError {
-  field: string;
-  message: string;
-}
 
 /* Billing cycle options for subscription plans */
 export type PlanBillingCycle = 'monthly' | 'yearly'

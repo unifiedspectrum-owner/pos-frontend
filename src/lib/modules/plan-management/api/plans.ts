@@ -14,7 +14,7 @@ import {
   GetPlanDetailsAPIResponse, 
   PlansListAPIResponse, 
   SlaListAPIResponse 
-} from "@/lib/modules/plan-management/types/plans";
+} from "@plan-management/types/plans";
 
 /* HTTP client for subscription plan API endpoints */
 const apiClient = axios.create({

@@ -1,3 +1,5 @@
+"use client"
+
 /* React hooks */
 import { useState, useCallback } from 'react'
 
@@ -8,7 +10,7 @@ import { toaster } from '@/components/ui/toaster'
 import { tenantApiService } from '@tenant-management/api/tenants'
 import { VerifyTenantAccountVerificationOTPAPIRequest, RequestTenantAccountVerificationOTPAPIRequest } from '@tenant-management/types'
 import { StepTracker } from '@tenant-management/utils'
-import { handleApiError } from '@/lib/shared'
+import { handleApiError } from '@shared/utils/api-error-handler'
 
 /* Type definitions for verification types */
 export type VerificationType = 'email_verification' | 'phone_verification'

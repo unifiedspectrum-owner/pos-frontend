@@ -1,10 +1,5 @@
 import { createToastMessage } from '@shared/utils/ui/toast'
-
-/* Interface for validation errors from API response */
-interface ValidationError {
-  field: string
-  message: string
-}
+import { ValidationError } from '@shared/types'
 
 /* Interface for API error response structure */
 interface APIErrorResponse {

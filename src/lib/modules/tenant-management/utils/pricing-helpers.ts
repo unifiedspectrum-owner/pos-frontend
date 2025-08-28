@@ -1,7 +1,9 @@
-/* Imports */
-import { Plan } from '@/lib/modules/plan-management/types/plans'
-import { PlanBillingCycle, SelectedAddon } from '../types'
-import { PLAN_BILLING_CYCLES } from '../constants'
+/* Plan module imports */
+import { Plan, Addon } from '@plan-management/types/plans'
+
+/* Tenant module imports */
+import { PlanBillingCycle, SelectedAddon } from '@tenant-management/types'
+import { PLAN_BILLING_CYCLES } from '@tenant-management/constants'
 
 /* Calculate plan price based on billing cycle and discounts */
 export const calculatePlanPrice = (plan: Plan, billingCycle: PlanBillingCycle): number => {
@@ -60,4 +62,21 @@ export const applyBillingCycleDiscount = (
 /* Format billing cycle for display with proper capitalization */
 export const formatBillingCycleLabel = (cycle: PlanBillingCycle): string => {
   return cycle.charAt(0).toUpperCase() + cycle.slice(1)
+}
+
+ /* Get billing cycle label */
+export const getBillingCycleLabel = (cycle: PlanBillingCycle) => {
+  return cycle === 'yearly' ? 'year' : 'month'
+}
+
+/* Format addon price with billing cycle and plan discount */
+export const formatAddonPrice = (
+  addon: Addon, 
+  billingCycle: PlanBillingCycle, 
+  planDiscountPercentage: number = 0
+): string => {
+  const price = applyBillingCycleDiscount(addon.add_on_price, billingCycle, planDiscountPercentage)
+  const suffix = billingCycle === 'yearly' ? 'year' : 'month'
+  return `$${price}`
+  return `$${price}/${suffix}`
 }

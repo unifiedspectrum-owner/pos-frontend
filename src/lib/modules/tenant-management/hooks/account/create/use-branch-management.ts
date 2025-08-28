@@ -1,9 +1,26 @@
-import { useState, useCallback } from 'react'
+"use client"
+
+import { useState, useCallback, useEffect } from 'react'
 import { AddonBranchSelection, SelectedAddon } from '@tenant-management/types'
 
 export const useBranchManagement = () => {
   /* Track number of branches for addon selections */
   const [branchCount, setBranchCount] = useState<number>(1)
+
+  /* Restore branch count from localStorage on mount */
+  useEffect(() => {
+    try {
+      const savedPlanData = localStorage.getItem('selected_plan')
+      if (savedPlanData) {
+        const planData = JSON.parse(savedPlanData)
+        if (planData.branchCount) {
+          setBranchCount(planData.branchCount)
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to restore branch count from localStorage:', error)
+    }
+  }, [])
 
   /* Create branch selection array with default unselected state */
   const createBranchSelections = useCallback((count: number): AddonBranchSelection[] => {

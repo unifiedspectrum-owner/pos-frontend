@@ -7,9 +7,9 @@ import { SupportSLA, PlanFormMode } from '@plan-management/types'
 import { PLAN_FORM_MODES } from '@plan-management/config'
 import { ConfirmationDialog } from '@shared/components'
 import { TabNavigation, SearchHeader } from '@plan-management/components'
-import CreateSLAForm from './components/slas/create-sla-form'
-import SLAsGrid from './components/slas/slas-grid'
-import SelectedSLAsSummary from './components/slas/selected-slas-summary'
+import CreateSLAForm from '@plan-management/forms/tabs/components/slas/create-sla-form'
+import SLAsGrid from '@plan-management/forms/tabs/components/slas/slas-grid'
+import SelectedSLAsSummary from '@plan-management/forms/tabs/components/slas/selected-slas-summary'
 
 /* SLA configuration tab component props */
 interface PlanSlaConfigurationProps {

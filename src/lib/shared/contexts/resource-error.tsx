@@ -1,3 +1,4 @@
+/* React and Chakra UI component imports */
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 /* Resource error with retry functionality */

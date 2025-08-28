@@ -1,5 +1,5 @@
 /* Imports */
-import { Plan } from '@/lib/modules/plan-management/types/plans'
+import { Plan } from '@plan-management/types/plans'
 
 /* Validation result interface with optional error message */
 export interface ValidationResult {

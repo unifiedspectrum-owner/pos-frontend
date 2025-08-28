@@ -1,7 +1,10 @@
+/* React and Chakra UI component imports */
 import React from 'react';
 import { Button, ButtonProps, Icon, HStack } from '@chakra-ui/react';
 import { lighten } from 'polished';
 import { IconType } from 'react-icons';
+
+/* Shared module imports */
 import { GRAY_COLOR } from '@shared/config';
 
 /* Props interface for secondary button component */

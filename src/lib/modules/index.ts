@@ -1,2 +1,5 @@
-/* Export plan management module */
-export * from './plan-management';
+/* Plan management module exports */
+export * from './plan-management'
+
+/* Tenant management module exports */
+export * from './tenant-management'

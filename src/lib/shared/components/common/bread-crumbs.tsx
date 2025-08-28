@@ -1,9 +1,12 @@
 "use client"
 
+/* React and Chakra UI component imports */
 import React from 'react';
 import { Breadcrumb } from '@chakra-ui/react';
 import { usePathname } from 'next/navigation';
 import { lighten } from 'polished';
+
+/* Shared module imports */
 import { PRIMARY_COLOR, GRAY_COLOR } from '@shared/config';
 
 /* Breadcrumb item structure */

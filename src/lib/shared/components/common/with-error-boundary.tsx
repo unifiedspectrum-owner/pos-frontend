@@ -1,4 +1,7 @@
+/* React and Chakra UI component imports */
 import React from 'react';
+
+/* Shared module imports */
 import ErrorBoundary, { ErrorBoundaryProps } from '@shared/components/common/error-boundary';
 
 /* Higher-order component that wraps components with error boundary */

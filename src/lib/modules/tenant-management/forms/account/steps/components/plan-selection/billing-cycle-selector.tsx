@@ -1,9 +1,13 @@
+/* React and Chakra UI component imports */
 import React from 'react'
 import { Flex, SegmentGroup, Badge } from '@chakra-ui/react'
-import { formatBillingCycleLabel } from '../utils/pricing-helpers'
-import { PLAN_BILLING_CYCLES } from '../constants'
-import { PlanBillingCycle } from '../types'
 
+/* Tenant module imports */
+import { formatBillingCycleLabel } from '@tenant-management/utils/pricing-helpers'
+import { PLAN_BILLING_CYCLES } from '@tenant-management/constants'
+import { PlanBillingCycle } from '@tenant-management/types'
+
+/* Component props interface */
 interface BillingCycleSelectorProps {
   value: PlanBillingCycle
   onChange: (cycle: PlanBillingCycle) => void
@@ -11,13 +15,13 @@ interface BillingCycleSelectorProps {
   disabled?: boolean
 }
 
+/* Billing cycle selector component with discount badge */
 const BillingCycleSelector: React.FC<BillingCycleSelectorProps> = ({
   value,
   onChange,
   discountPercentage = 0,
   disabled = false
 }) => {
-
   return (
     <Flex justify="center" position="relative">
       <SegmentGroup.Root 
@@ -31,6 +35,7 @@ const BillingCycleSelector: React.FC<BillingCycleSelectorProps> = ({
           p="20px"  
           items={PLAN_BILLING_CYCLES.map((cycle) => ({
             value: cycle,
+            /* Show discount badge for yearly billing when discount exists */
             label: cycle === 'yearly' && discountPercentage > 0 ? (
               <Flex position="relative">
                 {formatBillingCycleLabel(cycle)}

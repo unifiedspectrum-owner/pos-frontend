@@ -1,8 +1,11 @@
 'use client';
 
+/* React and Chakra UI component imports */
 import React from 'react';
 import { Dialog, Icon, Portal, Text, HStack } from '@chakra-ui/react';
 import { FiAlertTriangle, FiX, FiCheck } from 'react-icons/fi';
+
+/* Shared module imports */
 import { PrimaryButton, SecondaryButton } from '@shared/components/form-elements';
 
 /* Props interface for confirmation dialog */

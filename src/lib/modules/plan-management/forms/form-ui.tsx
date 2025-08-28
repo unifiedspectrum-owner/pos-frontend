@@ -1,15 +1,20 @@
+/* React and Chakra UI component imports */
 import React from 'react'
 import { Flex, Tabs, Text, HStack, Box } from '@chakra-ui/react'
 import { lighten } from 'polished'
 import { FaLock, FaCheck } from 'react-icons/fa'
+import { useFormContext } from 'react-hook-form'
+
+/* Shared module imports */
+import { GRAY_COLOR, PRIMARY_COLOR } from '@shared/config'
+import { ErrorMessageContainer, ErrorBoundary } from '@shared/components'
+import { useResourceErrors } from '@shared/contexts'
+
+/* Plan module imports */
 import { PlanManagementTabs, PlanFormMode } from '@plan-management/types/plans'
 import { CreatePlanFormData } from '@plan-management/schemas/validation/plans'
 import { PLAN_MANAGEMENT_FORM_TABS, PLAN_FORM_MODES } from '@plan-management/config'
-import { GRAY_COLOR, PRIMARY_COLOR } from '@shared/config'
-import { ErrorMessageContainer, ErrorBoundary } from '@shared/components'
-import { PlanBasicDetails, PlanPricingConfiguration, PlanFeatureSelection, PlanAddonConfiguration, PlanSlaConfiguration } from './tabs'
-import { useResourceErrors } from '@shared/contexts'
-import { useFormContext } from 'react-hook-form'
+import { PlanBasicDetails, PlanPricingConfiguration, PlanFeatureSelection, PlanAddonConfiguration, PlanSlaConfiguration } from '@plan-management/forms/tabs'
 
 /* Form UI component props interface */
 interface PlanFormUIProps {

@@ -1,11 +1,14 @@
 "use client"
 
+/* React and external library imports */
 import React from 'react';
 import { Flex, Heading, Button, Text, HStack, VStack, Breadcrumb, Menu, Portal } from '@chakra-ui/react';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { lighten } from 'polished';
 import { FiPlus, FiRefreshCw, FiGlobe, FiChevronDown } from 'react-icons/fi';
+
+/* Shared module imports */
 import { GRAY_COLOR, PRIMARY_COLOR } from '@shared/config';
 import { generateBreadcrumbs } from '@shared/components/common/bread-crumbs';
 

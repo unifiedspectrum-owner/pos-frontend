@@ -1,15 +1,13 @@
+/* React and Chakra UI component imports */
 import React from 'react';
 import { Box, Flex, Text, VStack, HStack, IconButton } from '@chakra-ui/react';
 import { lighten } from 'polished';
 import { FiWifi, FiServer, FiAlertCircle, FiRefreshCw, FiRotateCcw, FiX } from 'react-icons/fi';
+
+/* Shared module imports */
 import { ERROR_RED_COLOR, GRAY_COLOR, DARK_COLOR } from '@shared/config';
 import { PrimaryButton, SecondaryButton } from '@shared/components/form-elements';
-
-/* Validation error structure */
-interface ValidationError {
-  field: string; /* Field name that failed validation */
-  message: string; /* Validation error message */
-}
+import { ValidationError } from '@shared/types';
 
 /* Props for error message container component */
 interface ErrorMessageContainerProps {

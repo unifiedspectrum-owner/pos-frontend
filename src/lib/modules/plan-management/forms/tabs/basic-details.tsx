@@ -1,11 +1,16 @@
-import { Flex, GridItem, SimpleGrid } from '@chakra-ui/react'
+/* React and Chakra UI component imports */
 import React from 'react'
+import { Flex, GridItem, SimpleGrid } from '@chakra-ui/react'
 import { Controller, useFormContext } from 'react-hook-form'
+
+/* Shared module imports */
+import { TextInputField, TextAreaField, SwitchField } from '@shared/components'
+
+/* Plan module imports */
 import { CreatePlanFormData, BASIC_INFO_FIELD_KEYS } from '@plan-management/schemas/validation/plans'
 import { useTabValidation, useTabValidationNavigation } from '@plan-management/hooks'
 import { PlanFormMode } from '@plan-management/types/plans'
 import { BASIC_INFO_QUESTIONS, PLAN_FORM_MODES } from '@plan-management/config'
-import { TextInputField, TextAreaField, SwitchField } from '@shared/components'
 import { TabNavigation } from '@plan-management/components'
 
 /* Basic details tab component props */

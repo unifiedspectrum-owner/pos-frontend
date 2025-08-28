@@ -3,7 +3,7 @@
 import React from 'react';
 import PlanFormContainer from '@plan-management/forms/form-container'
 import { PLAN_FORM_MODES } from '@plan-management/config';
-import { ResourceErrorProvider } from '@/lib/shared/contexts';
+import { ResourceErrorProvider } from '@shared/contexts';
 
 /* Props interface for edit plan page */
 interface EditPlanPageProps {

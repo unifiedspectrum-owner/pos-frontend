@@ -1,13 +1,18 @@
 "use client"
 
-import { Flex } from '@chakra-ui/react'
+/* React and Chakra UI component imports */
 import React, { useEffect, useState } from 'react'
+import { Flex } from '@chakra-ui/react'
 import { useRouter } from '@/i18n/navigation'
 import { useTranslations } from 'next-intl'
+
+/* Shared module imports */
 import { HeaderSection, ErrorMessageContainer } from '@shared/components'
+import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
+
+/* Plan module imports */
 import PlanTable from '@plan-management/tables/plans'
 import { Plan } from '@plan-management/types/plans'
-import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 import { planService } from '@plan-management/api'
 
 /* Main plan management list component */

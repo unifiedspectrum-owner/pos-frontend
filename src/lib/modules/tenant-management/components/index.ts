@@ -1,1 +1,2 @@
-export { default as BillingCycleSelector } from './billing-cycle-selector'
+/* Skeleton component exports */
+export * from './skeleton'

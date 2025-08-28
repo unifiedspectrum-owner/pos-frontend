@@ -9,9 +9,9 @@ import { useResourceManagement, useResourceCreation, useResourceSelection, useRe
 import { ConfirmationDialog } from '@shared/components'
 import { TabNavigation, SearchHeader } from '@plan-management/components'
 import { PLAN_FORM_MODES } from '@plan-management/config'
-import CreateFeatureForm from './components/features/create-feature-form'
-import FeaturesGrid from './components/features/features-grid'
-import SelectedFeaturesSummary from './components/features/selected-features-summary'
+import CreateFeatureForm from '@plan-management/forms/tabs/components/features/create-feature-form'
+import FeaturesGrid from '@plan-management/forms/tabs/components/features/features-grid'
+import SelectedFeaturesSummary from '@plan-management/forms/tabs/components/features/selected-features-summary'
 
 /* Feature selection tab component props */
 interface PlanFeatureSelectionProps {

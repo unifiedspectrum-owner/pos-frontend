@@ -1,3 +1,4 @@
+import { ValidationError } from "@shared/types";
 import { IconType } from "react-icons";
 
 /* Shared types and interfaces */
@@ -7,12 +8,6 @@ export type PlanFormMode = 'create' | 'edit' | 'view';
 
 /* Multi-step form tab identifiers */
 export type PlanManagementTabs = 'basic' | 'pricing' | 'features' | 'addons' | 'sla';
-
-/* Form validation error structure */
-export interface ValidationError {
-  field: string; /* Field name that failed validation */
-  message: string; /* Human-readable error message */
-}
 
 /* Tab validation result with errors */
 export interface TabValidationResult {

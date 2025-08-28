@@ -1,3 +1,4 @@
+/* React and external library imports */
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Box, Flex, VStack, Button, Text } from '@chakra-ui/react';

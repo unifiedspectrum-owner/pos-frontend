@@ -1,7 +1,10 @@
+/* React and Chakra UI component imports */
 import React from 'react';
-import { Field } from '@/components/ui/field';
 import { Select, Portal, createListCollection } from '@chakra-ui/react';
+import { Field } from '@/components/ui/field';
 import { lighten } from 'polished';
+
+/* Shared module imports */
 import { GRAY_COLOR } from '@shared/config';
 
 /* Option structure for select dropdown */

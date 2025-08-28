@@ -1,9 +1,12 @@
+/* React and Chakra UI component imports */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { HStack, IconButton, InputProps, NumberInput } from '@chakra-ui/react';
 import { lighten } from 'polished';
-import { GRAY_COLOR } from '@shared/config';
 import { Field } from '@/components/ui/field';
 import { LuMinus, LuPlus } from 'react-icons/lu';
+
+/* Shared module imports */
+import { GRAY_COLOR } from '@shared/config';
 
 interface NumberInputFieldProps {
   label: string;

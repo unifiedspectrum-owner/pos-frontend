@@ -1,7 +1,10 @@
+/* React and Chakra UI component imports */
 import React from 'react';
 import { Flex, HStack, Text, Button, Box, Input, InputGroup } from '@chakra-ui/react';
 import { FiSearch, FiPlus, FiX } from 'react-icons/fi';
 import { lighten } from 'polished';
+
+/* Shared module imports */
 import { PRIMARY_COLOR, GRAY_COLOR } from '@shared/config';
 import { PrimaryButton } from '@shared/components/form-elements';
 

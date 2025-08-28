@@ -1,7 +1,10 @@
+/* React and Chakra UI component imports */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Field } from '@/components/ui/field';
 import { Input, InputProps } from '@chakra-ui/react';
+import { Field } from '@/components/ui/field';
 import { lighten } from 'polished';
+
+/* Shared module imports */
 import { GRAY_COLOR } from '@shared/config';
 
 /* Props interface for text input field component */

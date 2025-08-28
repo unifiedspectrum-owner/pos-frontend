@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useCallback } from 'react'
 import { SelectedAddon } from '@tenant-management/types'
 

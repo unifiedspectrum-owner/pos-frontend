@@ -1,14 +1,16 @@
+"use client"
+
 /* React hooks */
 import { useState, useEffect, useCallback } from 'react'
 
 /* API service */
-import { planService } from '@/lib/modules/plan-management/api/plans'
+import { planService } from '@plan-management/api/plans'
 
 /* Types */
-import { Plan } from '@/lib/modules/plan-management/types/plans'
+import { Plan } from '@plan-management/types/plans'
 
 /* Shared utilities */
-import { handleApiError } from '@/lib/shared'
+import { handleApiError } from '@shared/utils/api-error-handler'
 
 /* Hook state interface */
 interface UsePlanDataState {

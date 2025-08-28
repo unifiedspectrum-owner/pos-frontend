@@ -1,5 +1,8 @@
+/* React and Chakra UI component imports */
 import React from 'react'
 import { Flex, Text, VStack, Spinner } from '@chakra-ui/react'
+
+/* Shared module imports */
 import { PRIMARY_COLOR } from '@shared/config'
 
 /* Props interface for full page loader */

@@ -1,2 +1,2 @@
 /* Tenant service API layer */
-export { tenantApiService } from './tenants';
+export { tenantApiService } from './tenants'

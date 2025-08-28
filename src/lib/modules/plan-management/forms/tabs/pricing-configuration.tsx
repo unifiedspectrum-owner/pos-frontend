@@ -3,15 +3,15 @@ import React from 'react'
 import { useFormContext, Controller } from 'react-hook-form'
 
 /* Types & Schemas */
-import { CreatePlanFormData, PRICING_INFO_FIELD_KEYS } from '@/lib/modules/plan-management/schemas/validation/plans'
-import { useTabValidation, useTabValidationNavigation } from '@/lib/modules/plan-management/hooks'
-import { PlanFormMode } from '@/lib/modules/plan-management/types/plans'
+import { CreatePlanFormData, PRICING_INFO_FIELD_KEYS } from '@plan-management/schemas/validation/plans'
+import { useTabValidation, useTabValidationNavigation } from '@plan-management/hooks'
+import { PlanFormMode } from '@plan-management/types/plans'
 
 /* Constants */
-import { PRICING_INFO_QUESTIONS } from '@/lib/modules/plan-management/config'
+import { PRICING_INFO_QUESTIONS } from '@plan-management/config'
 
 /* Components */
-import { TextInputField } from '@/lib/shared/components'
+import { TextInputField } from '@shared/components/form-elements/ui'
 import { VolumeDiscounts } from '@plan-management/forms/tabs/components/volume-discounts'
 import { TabNavigation } from '@plan-management/components'
 

@@ -1,5 +1,7 @@
-import { useState, useCallback } from 'react'
-import { Addon } from '@/lib/modules/plan-management/types/plans'
+"use client"
+
+import { useState, useCallback, useEffect } from 'react'
+import { Addon } from '@plan-management/types/plans'
 import { calculateTotalSelectedAddonsCost } from '@tenant-management/utils/pricing-helpers'
 import { AddonBranchSelection, SelectedAddon } from '@tenant-management/types'
 
@@ -10,6 +12,21 @@ export const useAddonManagement = () => {
   const [currentAddon, setCurrentAddon] = useState<Addon | null>(null)
   /* Control addon selection modal visibility */
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false)
+
+  /* Restore selected addons from localStorage on mount */
+  useEffect(() => {
+    try {
+      const savedPlanData = localStorage.getItem('selected_plan')
+      if (savedPlanData) {
+        const planData = JSON.parse(savedPlanData)
+        if (planData.selectedAddons && Array.isArray(planData.selectedAddons)) {
+          setSelectedAddons(planData.selectedAddons)
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to restore selected addons from localStorage:', error)
+    }
+  }, [])
 
   /* Open modal with specific addon for configuration */
   const openAddonModal = useCallback((addon: Addon) => {

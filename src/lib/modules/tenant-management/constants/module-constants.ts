@@ -1,11 +1,11 @@
-import { PlanBillingCycle } from "../types";
-
-export const PLAN_BILLING_CYCLES: PlanBillingCycle[] =  ['monthly', 'yearly'];
-
-/* React Icons type and icon imports */
+/* React and external library imports */
 import { IconType } from "react-icons"
 import { FaBuilding, FaClipboardList, FaShieldAlt, FaCheckCircle } from "react-icons/fa"
-import { TenantAccountCreationStepType } from "../types"
+
+/* Tenant module imports */
+import { PlanBillingCycle, TenantAccountCreationStepType } from "@tenant-management/types"
+
+export const PLAN_BILLING_CYCLES: PlanBillingCycle[] =  ['monthly', 'yearly'];
 
 /* Step identifiers for tenant account creation flow */
 export const STEP_IDS = {

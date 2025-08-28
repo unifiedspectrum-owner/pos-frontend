@@ -1,3 +1,4 @@
+/* React and Chakra UI component imports */
 import React from 'react';
 import { Field } from '@/components/ui/field';
 import { PinInput } from '@chakra-ui/react';

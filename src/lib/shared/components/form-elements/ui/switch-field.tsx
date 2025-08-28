@@ -1,8 +1,11 @@
+/* React and Chakra UI component imports */
 import React from 'react';
 import { Field } from '@/components/ui/field';
 import { Switch } from '@/components/ui/switch';
 import { Flex } from '@chakra-ui/react';
 import { lighten } from 'polished';
+
+/* Shared module imports */
 import { GRAY_COLOR } from '@shared/config';
 
 /* Props interface for switch field component */

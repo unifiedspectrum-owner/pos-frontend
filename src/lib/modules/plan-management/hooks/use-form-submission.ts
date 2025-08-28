@@ -20,7 +20,7 @@ export const useFormSubmission = (
   const [submissionError, setSubmissionError] = useState<any>(null)
 
   /* Resource error context */
-  const { addError, removeError, clearAllErrors } = useResourceErrors();
+  const { addError, removeError } = useResourceErrors();
 
   /* Handle form submission with API calls and notifications */
   const submitForm = useCallback(async (data: CreatePlanFormData) => {
@@ -94,7 +94,7 @@ export const useFormSubmission = (
     } finally {
       setIsSubmitting(false)
     }
-  }, [mode, planId, getValues, onSuccess])
+  }, [removeError, mode, planId, getValues, onSuccess, isSubmitting, addError])
 
   /* Get submit button text based on current state */
   const getSubmitButtonText = useCallback(() => 

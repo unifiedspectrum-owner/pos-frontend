@@ -10,9 +10,9 @@ import { PLAN_FORM_MODES } from '@plan-management/config'
 import { ConfirmationDialog } from '@shared/components'
 import { TabNavigation, SearchHeader } from '@plan-management/components'
 
-import CreateAddonForm from './components/addons/create-addon-form'
-import AddonsGrid from './components/addons/addons-grid'
-import SelectedAddonsConfiguration from './components/addons/selected-addons-configuration'
+import CreateAddonForm from '@plan-management/forms/tabs/components/addons/create-addon-form'
+import AddonsGrid from '@plan-management/forms/tabs/components/addons/addons-grid'
+import SelectedAddonsConfiguration from '@plan-management/forms/tabs/components/addons/selected-addons-configuration'
 
 /* Addon configuration tab component props */
 interface PlanAddonConfigurationProps {

@@ -1,1 +1,2 @@
-export { default as CreateTenantAccount } from './account/create'
+/* Account page exports */
+export * from './account'

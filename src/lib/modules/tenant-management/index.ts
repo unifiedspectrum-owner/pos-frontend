@@ -1,6 +1,26 @@
+/* API exports */
+export * from './api'
+
+/* Component exports */
 export * from './components'
-export * from './forms/account/steps/components'
+
+/* Constants exports */
+export * from './constants'
+
+/* Form exports */
+export * from './forms'
+
+/* Hook exports */
 export * from './hooks'
+
+/* Page exports */
 export * from './pages'
+
+/* Schema exports */
+export * from './schemas'
+
+/* Type exports */
 export * from './types'
+
+/* Utility exports */
 export * from './utils'

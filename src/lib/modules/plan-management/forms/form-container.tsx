@@ -1,20 +1,25 @@
 "use client"
 
+/* React and Chakra UI component imports */
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Flex, Heading, Spinner } from '@chakra-ui/react'
 import { useRouter } from 'next/navigation'
+
+/* Shared module imports */
+import { Breadcrumbs, ErrorMessageContainer } from '@shared/components'
+import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
+
+/* Plan module imports */
 import { createPlanSchema, CreatePlanFormData } from '@plan-management/schemas/validation/plans'
 import { PlanManagementTabs, PlanDetails, PlanFormMode } from '@plan-management/types/plans'
-import { Breadcrumbs, ErrorMessageContainer } from '@shared/components'
 import { DataRecoveryModal } from '@plan-management/components'
-import PlanFormUI from './form-ui'
+import PlanFormUI from '@plan-management/forms/form-ui'
 import { clearStorageData, hasStorageData, loadDataFromStorage, saveFormDataToStorage, formatApiDataToFormData } from '@plan-management/utils'
 import { planService } from '@plan-management/api'
 import { useTabValidation, useFormSubmission, useTabNavigation } from '@plan-management/hooks'
 import { AUTO_SAVE_DEBOUNCE_MS, DEFAULT_PLAN_TAB, PLAN_FORM_TITLES, STORAGE_KEYS, ERROR_MESSAGES, PLAN_FORM_MODES } from '@plan-management/config'
-import {  LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 
 /* Component props interface */
 interface PlanFormContainerProps {

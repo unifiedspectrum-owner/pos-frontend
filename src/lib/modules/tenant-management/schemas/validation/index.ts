@@ -1,2 +1,2 @@
 /* Tenant validation schema definitions */
-export * from './tenants';
+export * from './tenants'

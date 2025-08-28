@@ -1,7 +1,10 @@
 'use client';
 
+/* React and Chakra UI component imports */
 import React from 'react';
 import { Flex } from '@chakra-ui/react';
+
+/* Shared module imports */
 import Sidebar from '@shared/components/common/sidebar';
 
 /* Props for admin layout component */

@@ -1,17 +1,20 @@
+"use client"
+
 /* React hooks */
 import { useState, useCallback } from 'react'
 
 /* Shared utilities */
-import { handleApiError } from '@/lib/shared'
+import { handleApiError } from '@shared/utils/api-error-handler'
 
 /* Module-specific imports */
-import { Plan } from '@/lib/modules/plan-management/types/plans'
+import { Plan } from '@plan-management/types/plans'
 import { tenantApiService } from '@tenant-management/api/tenants'
 import { assignPlanToTenantSchema } from '@tenant-management/schemas/validation/tenants'
 import { SelectedAddon } from '@tenant-management/types'
 import { PlanBillingCycle } from '@tenant-management/types'
 import { validatePlanSelection, validateBranchCount } from '@tenant-management/utils/validation-helpers'
 import { createToastMessage } from '@shared/utils/ui'
+import { StepTracker } from '@tenant-management/utils'
 
 /* Plan submission data interface */
 interface PlanSubmissionData {
@@ -135,6 +138,17 @@ export const usePlanSubmission = () => {
       const response = await tenantApiService.assignPlanToTenant(validatedData)
 
       if (response.data.success) {
+        /* Save selected plan data to localStorage for state persistence */
+        const planData = {
+          selectedPlan: data.selectedPlan,
+          billingCycle: data.billingCycle,
+          branchCount: data.branchCount,
+          selectedAddons: data.selectedAddons
+        }
+        localStorage.setItem('selected_plan', JSON.stringify(planData))
+
+        /* Mark plan selection step as completed */
+        StepTracker.markStepCompleted('PLAN_SELECTION')
 
         /* Show success toast */
         createToastMessage({
