@@ -70,11 +70,17 @@ const HeaderSection: React.FC<AdminHeaderProps> = ({loading, handleAdd, handleRe
                           ? lighten(0.2, PRIMARY_COLOR)
                           : lighten(0.2, GRAY_COLOR)
                       }
+                      fontSize="sm"
+                      fontWeight="normal"
+                      transition="all 0.2s ease"
                       _hover={{
                         color: index === breadcrumbs.length - 1
                         ? lighten(0.2, PRIMARY_COLOR)
                           : lighten(0.2, GRAY_COLOR),
                         textDecoration: 'none',
+                        fontSize: 'md',
+                        fontWeight: 'semibold',
+                        transform: 'scale(1.05)'
                       }}
                     >
                       {crumb.name}

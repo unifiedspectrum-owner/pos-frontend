@@ -6,6 +6,9 @@ export const BACKEND_BASE_URL = 'http://127.0.0.1:8787'; /* Local development se
 export const LOADING_DELAY = 2000; /* Artificial loading delay in milliseconds */
 export const LOADING_DELAY_ENABLED = true; /* Enable/disable loading delay for testing */
 
+/* Cache configuration */
+export const COUNTRIES_CACHE_DURATION = 1000 * 60 * 60 * 24; /* Countries cache duration: 24 hours */
+
 /* Currency and formatting */
 export const CURRENCY_SYMBOL = '$'; /* Default currency symbol */
 

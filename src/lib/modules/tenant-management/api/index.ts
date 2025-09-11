@@ -1,2 +1,4 @@
-/* Tenant service API layer */
+/* Tenant management API module exports */
+
+/* Account creation and management service */
 export { tenantApiService } from './tenants'

@@ -126,8 +126,8 @@ const TextAreaField: React.FC<TextAreaFieldProps> = ({
     <Field label={label} invalid={isInValid} errorText={errorMessage} required={required}>
       <Textarea
         p={'12px'}
-        borderColor={lighten(0.3, GRAY_COLOR)}
-        borderRadius={'2xl'}
+        borderColor={isInValid ? 'red.500' : lighten(0.3, GRAY_COLOR)}
+        borderRadius={'md'}
         placeholder={placeholder}
         disabled={disabled}
         value={isDebounced ? localValue : value}

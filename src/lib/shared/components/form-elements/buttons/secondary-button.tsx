@@ -59,6 +59,7 @@ const SecondaryButton: React.FC<SecondaryButtonProps> = ({
         }
       }}
       transition="all 0.2s"
+      alignItems={'center'}
       {...buttonProps} /* Spread additional props to allow customization */
     >
       <HStack gap={2}>

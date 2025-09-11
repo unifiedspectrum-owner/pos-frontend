@@ -1,6 +1,7 @@
-/* Plan selection component exports */
-export { default as AddonSelectionModal } from './addon-selection-modal'
-export { default as AvailableAddonsGrid } from './available-addons-grid'
-export { default as BillCycleSelector } from './billing-cycle-selector'
+/* Plan selection module exports */
+
+/* Toggle component for monthly/annual billing cycle selection */
+export { default as BillingCycleSelector } from './billing-cycle-selector'
+
+/* Grid component displaying available subscription plans */
 export { default as PlansGrid } from './plans-grid'
-export { default as SelectedAddonsSummary } from './selected-addons-summary'

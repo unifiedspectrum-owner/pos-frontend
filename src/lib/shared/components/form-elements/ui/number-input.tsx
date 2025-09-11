@@ -1,6 +1,6 @@
 /* React and Chakra UI component imports */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { HStack, IconButton, InputProps, NumberInput } from '@chakra-ui/react';
+import { HStack, IconButton, InputProps, NumberInput, Text } from '@chakra-ui/react';
 import { lighten } from 'polished';
 import { Field } from '@/components/ui/field';
 import { LuMinus, LuPlus } from 'react-icons/lu';
@@ -25,6 +25,8 @@ interface NumberInputFieldProps {
   debounceMs?: number;
   min?: number;
   max?: number | null;
+  width?: string;
+  height?: string;
 }
 
 const NumberInputField: React.FC<NumberInputFieldProps> = ({
@@ -43,7 +45,9 @@ const NumberInputField: React.FC<NumberInputFieldProps> = ({
   isDebounced = true,
   debounceMs = 300,
   min = 1,
-  max
+  max,
+  width,
+  height
 }) => {
   /* State management */
   const [localValue, setLocalValue] = useState(value);
@@ -122,7 +126,12 @@ const NumberInputField: React.FC<NumberInputFieldProps> = ({
   };
 
   return (
-    <Field label={label} invalid={isInValid} errorText={errorMessage} required={required}>
+    <Field 
+      label={<Text fontWeight={'bold'}>{label}</Text>} 
+      invalid={isInValid} 
+      errorText={errorMessage} 
+      required={required}
+    >
       <NumberInput.Root 
         value={isDebounced ? localValue : value}
         onValueChange={readOnly ? undefined : handleValueChange}
@@ -132,10 +141,10 @@ const NumberInputField: React.FC<NumberInputFieldProps> = ({
         unstyled 
         spinOnPress={false}
       >
-        <HStack gap="2">
+        <HStack gap={1}>
           {/* Decrement button */}
           <NumberInput.DecrementTrigger asChild>
-            <IconButton variant="outline" size="sm" disabled={disabled || readOnly}>
+            <IconButton variant="outline" size="xs" disabled={disabled || readOnly}>
               <LuMinus />
             </IconButton>
           </NumberInput.DecrementTrigger>
@@ -146,9 +155,9 @@ const NumberInputField: React.FC<NumberInputFieldProps> = ({
             textAlign="center" 
             fontSize="lg" 
             p={'12px'}
-            w={'100px'}
+            w={ width ? width : '100px'}
             borderWidth={'1px'}
-            h={'100%'}
+            h={ height ? height :'100%'}
             _focus={{ borderWidth: '1px' }}
             _active={{ borderWidth: '1px' }}
             borderColor={lighten(0.3, GRAY_COLOR)}
@@ -161,7 +170,7 @@ const NumberInputField: React.FC<NumberInputFieldProps> = ({
           
           {/* Increment button */}
           <NumberInput.IncrementTrigger asChild>
-            <IconButton variant="outline" size="sm" disabled={disabled || readOnly}>
+            <IconButton variant="outline" size="xs" disabled={disabled || readOnly}>
               <LuPlus />
             </IconButton>
           </NumberInput.IncrementTrigger>

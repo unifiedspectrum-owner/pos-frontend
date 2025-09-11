@@ -1,14 +1,19 @@
-/* Verification section exports */
-export { VerificationSection } from './verification-section'
+/* Forms step components module exports */
 
-/* Plan selection component exports */
-export { default as AddonSelectionModal } from './plan-selection/addon-selection-modal'
-export { default as SelectedAddonsSummary } from './plan-selection/selected-addons-summary'
-export { default as AvailableAddonsGrid } from './plan-selection/available-addons-grid'
-export { default as PlansGrid } from './plan-selection/plans-grid'
+/* Navigation components */
+export * from './navigations'
 
-/* Plan summary component exports */
-export { default as BranchAddonsSummary } from './plan-summary/branch-addons-summary'
-export { default as OrganizationAddonsSummary } from './plan-summary/organization-addons-summary'
-export { default as PlanDetailsSummary } from './plan-summary/plan-details-summary'
-export { default as AccountSummary } from './plan-summary/account-summary'
+/* Tenant information components */
+export * from './tenant-info'
+
+/* Plan selection components */
+export * from './plan-selection'
+
+/* Addon selection components */
+export * from './addon-selection'
+
+/* Plan summary components */
+export * from './plan-summary'
+
+/* Payment components */
+export * from './payment'

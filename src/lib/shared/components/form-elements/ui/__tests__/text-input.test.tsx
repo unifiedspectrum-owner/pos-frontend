@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, fireEvent } from '@testing-library/react'
 import { render } from '@shared/test-utils/render'
-import TextInputField from '../text-input'
+import TextInputField from '../text-field'
 
 // Mock the shared config
 vi.mock('@shared/config', () => ({

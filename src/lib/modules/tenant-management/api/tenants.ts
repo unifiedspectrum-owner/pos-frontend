@@ -1,130 +1,169 @@
-import axios, { AxiosResponse } from "axios";
-import { BACKEND_BASE_URL } from "@shared/config";
+/* External library imports */
+import axios from "axios"
+
+/* Shared module imports */
+import { BACKEND_BASE_URL } from "@shared/config"
+
+/* Tenant module imports */
 import { 
-  VerifyTenantAccountVerificationOTPAPIRequest, 
-  VerifyTenantAccountVerificationOTPAPIResponse,
-  TenantAccountCreationAPIResponse, 
-  RequestTenantAccountVerificationOTPAPIRequest, 
-  RequestTenantAccountVerificationOTPAPIResponse, 
-  TenantAccountCreationAPIRequest,
-  TenantStatusApiResponse,
-  TenantStatusApiRquest,
+  CreateAccountApiRequest,
+  CreateAccountApiResponse,
+  VerificationOTPApiRequest, 
+  VerificationOTPApiResponse,
+  RequestOTPApiRequest, 
+  RequestOTPApiResponse,
+  AccountStatusApiResponse,
+  AccountStatusApiRequest,
+} from "@tenant-management/types/account"
+import {
   AssignPlanToTenantApiRequest,
   AssignPlanToTenantApiResponse,
-  AssignedPlanApiResponse, 
-} from "@tenant-management/types";
+  AssignedPlanApiResponse,
+} from "@tenant-management/types/subscription"
+import {
+  InitiateSubscriptionPaymentApiRequest,
+  InitiateSubscriptionPaymentApiResponse,
+  PaymentStatusApiRequest,
+  PaymentStatusApiResponse,
+} from "@tenant-management/types/payment"
+import { TenantListApiResponse } from "../types/account/list"
 
-// =============================================================================
-// API CLIENT CONFIGURATION
-// =============================================================================
-
-/* HTTP client configured for tenant management endpoints */
-const apiClient = axios.create({
+/* HTTP client configured for tenant management API endpoints */
+const tenantApiClient = axios.create({
   baseURL: `${BACKEND_BASE_URL}/tenants`,
   headers: {
     'Content-Type': 'application/json',
   },
-});
+})
 
-/* Request interceptor to attach authentication token */
-apiClient.interceptors.request.use(
+/* Attach auth token to requests */
+tenantApiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('accessToken')
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`
     }
-    return config;
+    return config
   },
   (error) => {
-    return Promise.reject(error);
+    return Promise.reject(error)
   }
-);
+)
 
-/* Response interceptor to handle authentication errors */
-apiClient.interceptors.response.use(
+/* Handle auth errors and token cleanup */
+tenantApiClient.interceptors.response.use(
   (response) => {
-    return response;
+    return response
   },
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('loggedIn');
-      window.dispatchEvent(new Event('authStateChanged'));
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('loggedIn')
+      window.dispatchEvent(new Event('authStateChanged'))
     }
-    return Promise.reject(error);
+    return Promise.reject(error)
   }
-);
+)
 
-// =============================================================================
-// TENANT API SERVICE
-// =============================================================================
-
-/* Service containing all tenant management API operations */
+/* Service object containing all tenant management API methods */
 export const tenantApiService = {
 
-  /* Creates new tenant account */
-  async createTenantAccount(data: TenantAccountCreationAPIRequest): Promise<AxiosResponse<TenantAccountCreationAPIResponse>> {
+  /* Create new tenant account */
+  async createTenantAccount(data: CreateAccountApiRequest): Promise<CreateAccountApiResponse> {
     try {
-      const response = await apiClient.post<TenantAccountCreationAPIResponse>('/account/create', data);
-      return response;
+      const response = await tenantApiClient.post<CreateAccountApiResponse>('/account/create', data)
+      return response.data
     } catch (error) {
-      console.error('[TenantService] Failed to create tenant account:', error);
-      throw error;
+      console.error('[TenantService] Failed to create tenant account:', error)
+      throw error
     }
   },
 
-  /* Requests OTP for tenant account verification */
-  async requestTenantAccountVerificationOTP(data: RequestTenantAccountVerificationOTPAPIRequest): Promise<AxiosResponse<RequestTenantAccountVerificationOTPAPIResponse>> {
+  /* Request OTP for account verification */
+  async requestOTP(data: RequestOTPApiRequest): Promise<RequestOTPApiResponse> {
     try {
-      const response = await apiClient.post<RequestTenantAccountVerificationOTPAPIResponse>('/account/request-otp', data);
-      return response;
+      const response = await tenantApiClient.post<RequestOTPApiResponse>('/account/request-otp', data)
+      return response.data
     } catch (error) {
-      console.error('[TenantService] Failed to request OTP:', error);
-      throw error;
+      console.error('[TenantService] Failed to request OTP:', error)
+      throw error
     }
   },
 
-  /* Verifies OTP for tenant account confirmation */
-  async verifyTenantAccountVerificationOTP(data: VerifyTenantAccountVerificationOTPAPIRequest): Promise<AxiosResponse<VerifyTenantAccountVerificationOTPAPIResponse>> {
+  /* Verify OTP for account confirmation */
+  async verifyOTP(data: VerificationOTPApiRequest): Promise<VerificationOTPApiResponse> {
     try {
-      const response = await apiClient.post<VerifyTenantAccountVerificationOTPAPIResponse>('/account/verify-otp', data);
-      return response;
+      const response = await tenantApiClient.post<VerificationOTPApiResponse>('/account/verify-otp', data)
+      return response.data
     } catch (error) {
-      console.error('[TenantService] Failed to verify OTP:', error);
-      throw error;
+      console.error('[TenantService] Failed to verify OTP:', error)
+      throw error
     }
   },
 
-  /* Retrieves current status of tenant account */
-  async checkTenantAccountStatus(data: TenantStatusApiRquest): Promise<AxiosResponse<TenantStatusApiResponse>> {
+  /* Get tenant account status */
+  async checkTenantAccountStatus(data: AccountStatusApiRequest): Promise<AccountStatusApiResponse> {
     try {
-      const response = await apiClient.post<TenantStatusApiResponse>('/account/status', data);
-      return response;
+      const response = await tenantApiClient.post<AccountStatusApiResponse>('/account/status', data)
+      return response.data
     } catch (error) {
-      console.error('[TenantService] Failed to check account status:', error);
-      throw error;
+      console.error('[TenantService] Failed to check account status:', error)
+      throw error
     }
   },
 
-  /* Assigns subscription plan to tenant */
-  async assignPlanToTenant(data: AssignPlanToTenantApiRequest): Promise<AxiosResponse<AssignPlanToTenantApiResponse>> {
+  /* Assign subscription plan to tenant */
+  async assignPlanToTenant(data: AssignPlanToTenantApiRequest): Promise<AssignPlanToTenantApiResponse> {
     try {
-      const response = await apiClient.post<AssignPlanToTenantApiResponse>('/account/assign-plan', data);
-      return response;
+      const response = await tenantApiClient.post<AssignPlanToTenantApiResponse>('/account/assign-plan', data)
+      return response.data
     } catch (error) {
-      console.error('[TenantService] Failed to assign plan:', error);
-      throw error;
+      console.error('[TenantService] Failed to assign plan:', error)
+      throw error
     }
   },
 
-  /* Retrieves assigned plan details for tenant */
-  async getAssignedPlanForTenant(data: TenantStatusApiRquest): Promise<AxiosResponse<AssignedPlanApiResponse>> {
+  /* Get assigned plan details for tenant */
+  async getAssignedPlanForTenant(data: AccountStatusApiRequest): Promise<AssignedPlanApiResponse> {
     try {
-      const response = await apiClient.post<AssignedPlanApiResponse>('/account/get-assigned-plan', data);
-      return response;
+      const response = await tenantApiClient.post<AssignedPlanApiResponse>('/account/get-assigned-plan', data)
+      return response.data
     } catch (error) {
-      console.error('[TenantService] Failed to get assigned plan:', error);
-      throw error;
+      console.error('[TenantService] Failed to get assigned plan:', error)
+      throw error
+    }
+  },
+
+  /* Initiate subscription payment process */
+  async initiateTenantSubscriptionPayment(data: InitiateSubscriptionPaymentApiRequest): Promise<InitiateSubscriptionPaymentApiResponse> {
+    try {
+      const response = await tenantApiClient.post<InitiateSubscriptionPaymentApiResponse>('/account/payment/initiate', data)
+      return response.data
+    } catch (error) {
+      console.error('[TenantService] Failed to initiate payment:', error)
+      throw error
+    }
+  },
+
+  /* Get payment status for tenant subscription */
+  async getPaymentStatusForTenant(data: PaymentStatusApiRequest): Promise<PaymentStatusApiResponse> {
+    try {
+      const response = await tenantApiClient.post<PaymentStatusApiResponse>('/account/payment/status', data)
+      return response.data
+    } catch (error) {
+      console.error('[TenantService] Failed to get payment status:', error)
+      throw error
+    }
+  },
+
+  /* Get payment status for tenant subscription */
+  async listAllTenants(): Promise<TenantListApiResponse> {
+    try {
+      const response = await tenantApiClient.get<TenantListApiResponse>('/list')
+      return response.data
+    } catch (error) {
+      console.error('[TenantService] Failed to get payment status:', error)
+      throw error
     }
   },
 }

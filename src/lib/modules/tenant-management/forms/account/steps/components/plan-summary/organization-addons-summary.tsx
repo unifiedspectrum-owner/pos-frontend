@@ -1,12 +1,12 @@
 /* React and Chakra UI component imports */
-import { Text, Box, Flex, SimpleGrid, GridItem } from '@chakra-ui/react'
+import { Text, Box, Flex, Separator } from '@chakra-ui/react'
 
 /* Shared component and configuration imports */
 import { EmptyStateContainer } from '@shared/components/common'
-import { PRIMARY_COLOR, WHITE_COLOR } from '@shared/config'
+import { PRIMARY_COLOR } from '@shared/config'
 
 /* Icon imports */
-import { FaPlus } from 'react-icons/fa'
+import { FaPlus, FaRegBuilding } from 'react-icons/fa'
 
 /* Tenant module imports */
 import { AssignedAddonDetails, PlanBillingCycle } from '@tenant-management/types'
@@ -25,24 +25,38 @@ const OrganizationAddonsSummary: React.FC<OrganizationAddonsSummaryProps> = ({
 }) => {
   /* Calculate total cost for all organization addons using hook function */
   const calculateTotalOrgAddonCost = () => {
-    const monthlyTotal = organizationAddons.reduce((sum, addon) => sum + addon.addon_price, 0)
-    return calculateSingleAddonPrice(monthlyTotal)
+    return organizationAddons.reduce((sum, addon) => {
+      return sum + calculateSingleAddonPrice(addon.addon_price)
+    }, 0)
   }
 
   return (
-    <Flex flexDir={'column'} w={'100%'} gap={3} flexWrap={'wrap'} borderWidth={'2px'} bg={WHITE_COLOR} p={'12px'} borderRadius={'12px'}>
-      {/* Section header with addon count and total cost */}
-      <Flex justify="space-between" align="center">
-        <Text fontSize="xl" fontWeight="bold">
-          Organization Add-ons ({organizationAddons.length})
-        </Text>
-        {organizationAddons.length > 0 && (
-          <Text fontSize="lg" fontWeight="semibold" color={PRIMARY_COLOR}>
-            Total: ${calculateTotalOrgAddonCost().toFixed(2)}/{getBillingCycleLabel(billingCycle)}
+    <Flex w={'50%'} flexDir={'column'} gap={4} p={3} bg={'gray.50'} borderWidth={1} borderRadius={'lg'}>
+      {/* Header section with icon, title and total cost */}
+      <Flex alignItems={'center'} justifyContent={'space-between'}>
+        <Flex align="center" gap={3}>
+          <Text fontSize={20}>
+            <FaRegBuilding color={PRIMARY_COLOR} />
           </Text>
+          <Text fontSize="lg" fontWeight="semibold">
+            Organization Add-ons ({organizationAddons.length})
+          </Text>
+        </Flex>
+
+        {organizationAddons.length > 0 && (
+          <Flex gap={3} alignItems={'center'}>
+            <Text fontSize="xl" fontWeight="bold" color={PRIMARY_COLOR}>
+              ${calculateTotalOrgAddonCost().toFixed(2)}
+              <Text as="span" fontSize="sm" color="gray.600" ml={1}>
+                /{getBillingCycleLabel(billingCycle)}
+              </Text>
+            </Text>
+          </Flex>
         )}
       </Flex>
-      
+
+      <Separator />
+
       {/* Conditional rendering based on addon availability */}
       {organizationAddons.length === 0 ? (
         <EmptyStateContainer
@@ -51,35 +65,30 @@ const OrganizationAddonsSummary: React.FC<OrganizationAddonsSummaryProps> = ({
           icon={<FaPlus />}
         />
       ) : (
-        /* Grid layout for organization addon cards */
-        <SimpleGrid columns={2} gap={2}>
+        /* Addon cards layout */
+        <Flex flexDir={'column'} gap={3}>
           {organizationAddons.map((addon) => {
             const addonPrice = calculateSingleAddonPrice(addon.addon_price)
             
             return (
-              <GridItem key={addon.assignment_id}>
-                <Box p={4} bg="gray.50" borderWidth={'2px'} borderRadius="md">
-                  <Flex justify="space-between" align="center">
-                    {/* Addon details section */}
-                    <Flex flexDir={'column'} gap={1}>
-                      <Text fontWeight="semibold">{addon.addon_name}</Text>
-                      <Text fontSize="sm" color="gray.600">{addon.addon_description}</Text>
-                    </Flex>
-                    {/* Addon pricing section */}
-                    <Flex gap={1}>
-                      <Text fontWeight="semibold" color={PRIMARY_COLOR}>
-                        ${addonPrice.toFixed(2)}
-                        <Text as="span" fontSize="xs" color="gray.600" ml={1}>
-                          /{getBillingCycleLabel(billingCycle)}
-                        </Text>
-                      </Text>
-                    </Flex>
+              <Box key={addon.assignment_id} p={3}>
+                <Flex justify="space-between" align="center">
+                  {/* Addon details section */}
+                  <Flex flexDir={'column'} gap={1}>
+                    <Text fontSize="md" fontWeight="bold">
+                      {addon.addon_name}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600">{addon.addon_description}</Text>
                   </Flex>
-                </Box>
-              </GridItem>
+                  {/* Addon pricing section */}
+                  <Text fontSize="lg" fontWeight="bold" color={PRIMARY_COLOR}>
+                    ${addonPrice.toFixed(2)}
+                  </Text>
+                </Flex>
+              </Box>
             )
           })}
-        </SimpleGrid>
+        </Flex>
       )}
     </Flex>
   )

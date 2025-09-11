@@ -1,82 +1,106 @@
 /* React and Chakra UI component imports */
 import React, { useState, useCallback, useEffect } from 'react'
-import { Text, Box, Flex } from '@chakra-ui/react'
+import { Flex } from '@chakra-ui/react'
 
-/* Shared module imports */
-import { PrimaryButton, SecondaryButton } from '@shared/components/form-elements/buttons'
-import NumberInputField from '@shared/components/form-elements/ui/number-input'
 
 /* Plan module imports */
-import { Addon, Plan } from '@plan-management/types/plans'
+import { Plan } from '@plan-management/types/plans'
 
 /* Tenant module imports */
-import { AddonSelectionModal, SelectedAddonsSummary, AvailableAddonsGrid, PlansGrid } from '@tenant-management/forms/account/steps/components'
-import BillingCycleSelector from '@tenant-management/forms/account/steps/components/plan-selection/billing-cycle-selector'
-import { PlanSelectionSkeleton } from '@tenant-management/components/skeleton'
-import { useBranchManagement, useAddonManagement, usePlanData, usePlanSubmission } from '@tenant-management/hooks'
-import { formatPlanPriceLabel } from '@tenant-management/utils/pricing-helpers'
-import { PlanBillingCycle } from '@tenant-management/types'
+import { PlansGrid, BillingCycleSelector, NavigationButton } from './components'
+import { PlanSelectionSkeleton } from '@tenant-management/components/loading'
+import { useBranchManagement, useAddonManagement, usePlanData } from '@tenant-management/hooks'
+import { usePlanStorage } from '@tenant-management/hooks/account/creation'
+import { CachedPlanData, PlanBillingCycle } from '@tenant-management/types'
+import { MAX_BRANCH_COUNT, TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
+import { StepTracker } from '@tenant-management/utils/workflow'
+import { PRIMARY_COLOR, WHITE_COLOR } from '@/lib/shared/config'
 
 /* Props interface for plan selection step component */
 interface PlanSelectionStepProps {
   isCompleted: (completed: boolean) => void
-  isReviewMode?: boolean
   onPrevious: () => void
 }
 
- /* Plan selection step component for tenant account creation */
+/* Plan selection step component for tenant account creation */
 const PlanSelectionStep: React.FC<PlanSelectionStepProps> = ({
   isCompleted, 
-  isReviewMode = false, 
   onPrevious
 }) => {
-  /* State management for selection */
+  /* State management for plan and billing selections */
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null)
   const [billingCycle, setBillingCycle] = useState<PlanBillingCycle>('monthly')
 
   /* Custom hooks for data fetching and management */
   const { plans, isLoading: isPlanLoading } = usePlanData()
-  const { branchCount, handleBranchCountChange } = useBranchManagement()
+  const { branchCount, branches, handleBranchCountChange } = useBranchManagement()
+  const { selectedAddons, setSelectedAddons } = useAddonManagement()
   
-  /* Addon management hook - organized by functionality */
-  const {
-    /* State properties */
-    selectedAddons, currentAddon, isAddonModalOpen,
-    
-    /* State setters */
-    setSelectedAddons,
-    
-    /* Modal management */
-    openAddonModal, closeAddonModal,
-    
-    /* Addon operations */
-    handleAddonSelection, removeAddon,
-    
-    /* Query functions */
-    isAddonSelected, getAddonSelection
-  } = useAddonManagement()
-
-  /* Plan submission hook */
-  const { submitPlan, isSubmitting: isPlanSubmitting } = usePlanSubmission()
+  /* Plan storage hook for API submission */
+  const { 
+    isSubmitting, 
+    assignPlanToTenant,
+  } = usePlanStorage()
+  
+  /* Auto-select the first featured plan when plans load and no plan is selected */
+  useEffect(() => {
+    if (!selectedPlan && plans && plans.length > 0) {
+      const featuredPlan = plans.find(plan => plan.is_featured) || plans[2]
+      setSelectedPlan(featuredPlan)
+    }
+  }, [plans, selectedPlan])
 
   /* Restore previously selected plan data from localStorage */
   useEffect(() => {
     try {
-      const savedPlanData = localStorage.getItem('selected_plan')
+      const savedPlanData = localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.SELECTED_PLAN_DATA)
       if (savedPlanData) {
-        const planData = JSON.parse(savedPlanData)
-        setSelectedPlan(planData.selectedPlan)
-        setBillingCycle(planData.billingCycle)
-        /* Branch count will be restored by the useBranchManagement hook */
-        /* Selected addons will be restored by the useAddonManagement hook */
+        const planData: CachedPlanData = JSON.parse(savedPlanData);
+        if (planData.selectedPlan) {
+          setSelectedPlan(planData.selectedPlan)
+        }
+        if (planData.billingCycle) {
+          setBillingCycle(planData.billingCycle)
+        }
       }
     } catch (error) {
       console.warn('Failed to restore plan data from localStorage:', error)
     }
   }, [])
 
-  /* Plan selection handler */
-  const handlePlanSelect = useCallback((plan: Plan) => setSelectedPlan(plan), [])
+  /* Plan selection handler with branch count adjustment and addon filtering */
+  const handlePlanSelect = useCallback((plan: Plan) => {
+    setSelectedPlan(plan)
+    
+    /* Adjust branch count if current selection exceeds new plan's limit */
+    const planMaxBranches = plan.included_branches_count || MAX_BRANCH_COUNT
+    const effectiveMaxBranches = Math.min(planMaxBranches, MAX_BRANCH_COUNT)
+    
+    if (branchCount > effectiveMaxBranches) {
+      const newBranchCount = effectiveMaxBranches
+      handleBranchCountChange(newBranchCount, setSelectedAddons)
+    }
+
+    /* Filter selected addons to only keep those available in the new plan */
+    setSelectedAddons(prevSelectedAddons => {
+      const planAddonIds = new Set(plan.add_ons.map(addon => addon.id))
+      
+      return prevSelectedAddons
+        .filter(selectedAddon => planAddonIds.has(selectedAddon.addon_id))
+        .map(selectedAddon => {
+          /* Addon is available, but need to adjust branch count if it was reduced */
+          if (selectedAddon.pricing_scope === 'branch' && selectedAddon.branches.length > effectiveMaxBranches) {
+            /* Create new addon object with trimmed branches */
+            return {
+              ...selectedAddon,
+              branches: selectedAddon.branches.slice(0, effectiveMaxBranches)
+            }
+          }
+          return selectedAddon
+        })
+    })
+
+  }, [branchCount, handleBranchCountChange, setSelectedAddons])
 
   /* Billing cycle change handler */
   const handleBillingCycleChange = useCallback((cycle: PlanBillingCycle) => setBillingCycle(cycle), [])
@@ -86,38 +110,34 @@ const PlanSelectionStep: React.FC<PlanSelectionStepProps> = ({
     handleBranchCountChange(value, setSelectedAddons)
   }, [handleBranchCountChange, setSelectedAddons])
 
-  /* Handle addon configuration modal opening */
-  const handleAddonClick = useCallback((addon: Addon) => {
-    if (addon.is_included || isReviewMode) return
-    openAddonModal(addon)
-  }, [isReviewMode, openAddonModal])
-
-  /* Handle editing addon from summary by finding it in selected plan */
-  const handleAddonEdit = useCallback((addonId: number) => {
-    const addon = selectedPlan?.add_ons.find(a => a.id === addonId)
-    if (addon) {
-      handleAddonClick(addon)
-    }
-  }, [selectedPlan, handleAddonClick])
-
-  /* Submit plan selection and complete step */
+  /* Save plan data, call API, and complete step after success */
   const handleContinue = useCallback(async () => {
-    const planData = {
+    const planData: CachedPlanData = {
       selectedPlan,
       billingCycle,
       branchCount,
+      branches,
       selectedAddons,
     }
 
-    await submitPlan(planData, () => {
-      /* Mark step as completed on successful submission */
-      isCompleted(true)
-    })
-  }, [selectedPlan, billingCycle, branchCount, selectedAddons, submitPlan, isCompleted]);
-
-  /* Format plan price based on billing cycle */
-  const getPriceLabel = useCallback((plan: Plan) => formatPlanPriceLabel(plan, billingCycle), [billingCycle])
-
+    try {
+      /* Store complete plan data in localStorage first */
+      localStorage.setItem(TENANT_ACCOUNT_CREATION_LS_KEYS.SELECTED_PLAN_DATA, JSON.stringify(planData))
+      
+      /* Assign plan to tenant via API */
+      const success = await assignPlanToTenant()
+      
+      if (success) {
+        /* After API success, mark step as completed */
+        StepTracker.markStepCompleted('PLAN_SELECTION')
+        isCompleted(true)
+      }
+    } catch (error) {
+      console.error('Failed to save plan data or assign plan:', error)
+      /* Don't proceed if API fails */
+    }
+  }, [selectedPlan, billingCycle, branchCount, branches, selectedAddons, assignPlanToTenant, isCompleted])
+  
   /* Show skeleton while loading plans */
   if (isPlanLoading) {
     return (
@@ -130,112 +150,46 @@ const PlanSelectionStep: React.FC<PlanSelectionStepProps> = ({
   }
 
   return (
-    <Flex flexDir={'column'} gap={3}>
+    <Flex
+      flexDir={'column'} 
+      gap={6} 
+      borderWidth={1} 
+      bg={WHITE_COLOR} 
+      borderBottomRadius={'lg'} 
+      p={8}
+      transition="all 0.3s ease"
+      borderColor={PRIMARY_COLOR}
+      _hover={{
+        boxShadow: "0 8px 24px rgba(136, 92, 247, 0.15)"
+      }}
+    >
       {/* Billing cycle selection toggle */}
       <BillingCycleSelector
         value={billingCycle}
         onChange={handleBillingCycleChange}
         discountPercentage={plans[3]?.annual_discount_percentage ?? 0}
-        disabled={isReviewMode}
       />
 
-      {/*  Available subscription plans */}
+      {/* Available subscription plans grid */}
       <PlansGrid
         plans={plans}
         selectedPlan={selectedPlan}
-        isReviewMode={isReviewMode}
-        onPlanSelect={handlePlanSelect}
-        formatPriceLabel={getPriceLabel}
-      />
-
-      {/* Branch count input when plan selected */}
-      {selectedPlan && (
-        <Flex flexDir="column"  p={6} bg="gray.50" borderRadius="lg">
-          <Text fontSize="lg" fontWeight="bold" color="gray.800" mb={4}>
-            Branch Configuration
-          </Text>
-          
-          <Flex flexDir={'column'} gap={2}>
-            <NumberInputField 
-              label="Number of Branches"
-              value={branchCount.toString()}
-              placeholder="Enter number of branches"
-              isInValid={false}
-              required={true}
-              min={1}
-              max={selectedPlan.included_branches_count}
-              disabled={isReviewMode}
-              onChange={(value) => onBranchCountChange(parseInt(value) || 1)}
-            />
-            <Flex flexDir={'column'} gap={2}>
-              <Text fontSize="xs">
-                You can add upto: 
-                <Text as={'b'}> {selectedPlan.included_branches_count || 'Unlimited'} branches</Text>
-              </Text>
-              
-              <Text fontSize="xs">
-                Additional branches may incur extra charges based on your selected plan.
-              </Text>
-            </Flex>
-          </Flex>
-          
-        </Flex>
-      )}
-
-      {/* Available plan add-ons */}
-      <Box mt={8}>
-        <AvailableAddonsGrid
-          selectedPlan={selectedPlan}
-          billingCycle={billingCycle}
-          isReviewMode={isReviewMode}
-          onAddonConfigure={handleAddonClick}
-          onAddonRemove={removeAddon}
-          isAddonSelected={isAddonSelected}
-          getAddonSelection={getAddonSelection}
-        />
-        
-        {/* Summary of selected addons */}
-        <Box mt={6}>
-          <SelectedAddonsSummary
-            selectedAddons={selectedAddons}
-            branchCount={branchCount}
-            billingCycle={billingCycle}
-            planDiscountPercentage={selectedPlan?.annual_discount_percentage || 0}
-            onEdit={handleAddonEdit}
-            onRemove={removeAddon}
-            readOnly={isReviewMode}
-          />
-        </Box>
-      </Box>
-
-      {/*  Modal for configuring addon options */}
-      <AddonSelectionModal
-        isOpen={isAddonModalOpen}
-        onClose={closeAddonModal}
-        addon={currentAddon}
-        branchCount={branchCount}
         billingCycle={billingCycle}
-        planDiscountPercentage={selectedPlan?.annual_discount_percentage || 0}
-        currentSelection={currentAddon ? getAddonSelection(currentAddon.id) : null}
-        onSave={handleAddonSelection}
+        onPlanSelect={handlePlanSelect}
+        branchCount={branchCount}
+        onBranchCountChange={onBranchCountChange}
       />
 
       {/* Step navigation controls */}
-      <Flex justify="space-between" pt={4}>
-        {/* Previous step button */}
-        <SecondaryButton onClick={onPrevious}>
-          Back to Verification
-        </SecondaryButton>
-        
-        {/* Continue/Complete button */}
-        <PrimaryButton 
-          onClick={handleContinue}
-          loading={isPlanSubmitting}
-          disabled={isPlanSubmitting}
-        >
-          {isPlanSubmitting ? 'Saving Plan...' : 'Continue with Selected Plan'}
-        </PrimaryButton>
-      </Flex>
+      <NavigationButton
+        secondaryBtnText="Back to Account Info"
+        onSecondaryClick={onPrevious}
+        primaryBtnText="Continue to Addon Selection"
+        primaryBtnLoadingText="Assigning Plan..."
+        onPrimaryClick={handleContinue}
+        primaryBtnDisabled={!selectedPlan || isSubmitting}
+        isPrimaryBtnLoading={isSubmitting}
+      />
     </Flex>
   )
 }

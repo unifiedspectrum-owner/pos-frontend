@@ -1,4 +1,10 @@
-/* Form field type definitions exports */
-export * from './form-fields'
+/* Shared type definitions module exports */
 
-export * from './common'
+/* Form validation and error handling types */
+export * from './validation'
+
+/* Data structure and model types */
+export * from './data'
+
+/* UI component and form configuration types */
+export * from './ui'
