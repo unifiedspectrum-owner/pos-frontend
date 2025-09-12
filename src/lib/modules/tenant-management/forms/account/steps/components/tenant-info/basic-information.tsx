@@ -13,7 +13,7 @@ import { ComboboxOption } from '@shared/components/form-elements/ui/combobox-fie
 import { TenantInfoFormData } from '@tenant-management/schemas/account'
 import { TENANT_BASIC_INFO_QUESTIONS, TENANT_FORM_SECTIONS } from '@tenant-management/constants'
 import TextInputFieldWithButton from '@/lib/shared/components/form-elements/ui/text-button-field'
-import { useOTPManagement, useFormPersistence, useVerificationStatus } from '@tenant-management/hooks/account/creation'
+import { useOTPManagement, useFormPersistence, useVerificationStatus } from '@/lib/modules/tenant-management/hooks/account-creation'
 
 /* Props interface */
 interface BasicInformationProps {

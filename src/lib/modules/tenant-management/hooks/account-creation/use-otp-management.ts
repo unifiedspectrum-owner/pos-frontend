@@ -7,11 +7,12 @@ import { handleApiError } from '@shared/utils/api'
 import { useCountdownTimer } from '@shared/hooks/use-countdown-timer'
 
 /* Tenant module imports */
-import { tenantApiService } from '@tenant-management/api/tenants'
-import { useOTPVerification } from '@tenant-management/hooks/account'
+import { accountService } from '@tenant-management/api'
+import { useOTPVerification } from '@/lib/modules/tenant-management/hooks/account-creation'
 import { VERIFICATION_CONFIGS, TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 import { cleanupAccountCreationStorage } from '@tenant-management/utils'
-import { TenantInfoFormData } from '../../../schemas/account/creation'
+import { TenantInfoFormData } from '../../schemas/account/creation'
+import { AxiosError } from 'axios'
 
 /* OTP management hook interface */
 interface UseOTPManagementOptions {
@@ -114,7 +115,7 @@ export const useOTPManagement = ({
     
     setIsSendingEmailOTP(true)
     try {
-      const response = await tenantApiService.requestOTP({
+      const response = await accountService.requestOTP({
         otp_type: 'email_verification',
         email: email
       })
@@ -140,7 +141,8 @@ export const useOTPManagement = ({
       }
     } catch (error) {
       cleanupAccountCreationStorage()
-      handleApiError(error, {
+      const err = error as AxiosError;
+      handleApiError(err, {
         title: 'Failed to Send Email OTP'
       })
     } finally {
@@ -164,7 +166,7 @@ export const useOTPManagement = ({
 
     setIsSendingPhoneOTP(true)
     try {
-      const response = await tenantApiService.requestOTP({
+      const response = await accountService.requestOTP({
         otp_type: 'phone_verification',
         phone: phoneNumber
       })
@@ -189,8 +191,9 @@ export const useOTPManagement = ({
         })
       }
     } catch (error) {
-      cleanupAccountCreationStorage()
-      handleApiError(error, {
+      cleanupAccountCreationStorage();
+      const err = error as AxiosError;
+      handleApiError(err, {
         title: 'Failed to Send Phone OTP'
       })
     } finally {

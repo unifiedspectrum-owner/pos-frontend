@@ -7,9 +7,7 @@ import { TenantAccountFormCacheData, TenantVerificationStatusCachedData } from '
 import { CreateAccountApiRequest } from '../../types/account/creation'
 
 /* Get tenant ID from localStorage */
-export const getTenantId = (): string | null => {
-  return localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.TENANT_ID)
-}
+export const getTenantId = (): string | null => localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.TENANT_ID);
 
 /* Parse payment data from localStorage */
 export const getPaymentStatus = (): boolean => {

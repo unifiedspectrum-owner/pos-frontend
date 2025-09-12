@@ -1,12 +1,12 @@
 'use client';
 
 /* React and Chakra UI component imports */
-import React from 'react';
-import { Dialog, Icon, Portal, Text, HStack } from '@chakra-ui/react';
+import React, { useState, useEffect } from 'react';
+import { Dialog, Icon, Portal, Text, HStack, VStack } from '@chakra-ui/react';
 import { FiAlertTriangle, FiX, FiCheck } from 'react-icons/fi';
 
 /* Shared module imports */
-import { PrimaryButton, SecondaryButton } from '@shared/components/form-elements';
+import { PrimaryButton, SecondaryButton, TextInputField } from '@shared/components/form-elements';
 
 /* Props interface for confirmation dialog */
 interface ConfirmationDialogProps {
@@ -19,6 +19,8 @@ interface ConfirmationDialogProps {
   isLoading?: boolean; /* Loading state for confirm button */
   onConfirm: () => void; /* Confirm action handler */
   onCancel: () => void; /* Cancel action handler */
+  confirmationText?: string; /* Optional text that user must type to confirm */
+  confirmationLabel?: string; /* Label for the confirmation text field */
 }
 
 /* Confirmation dialog component with customizable buttons */
@@ -31,8 +33,42 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   confirmVariant = 'primary', /* Default button variant */
   isLoading = false, /* Default loading state */
   onConfirm,
-  onCancel
+  onCancel,
+  confirmationText, /* Optional confirmation text */
 }) => {
+  /* State for confirmation text input */
+  const [inputValue, setInputValue] = useState<string>('')
+  const [isConfirmDisabled, setIsConfirmDisabled] = useState<boolean>(false)
+  const [isInvalid, setIsInvalid] = useState<boolean>(false)
+  
+  /* Reset input when dialog opens/closes */
+  useEffect(() => {
+    if (isOpen) {
+      setInputValue('')
+      setIsConfirmDisabled(!!confirmationText) /* Disable if confirmation text is required */
+    }
+  }, [isOpen, confirmationText])
+  
+  /* Update confirm button state based on input */
+  useEffect(() => {
+    if (confirmationText) {
+      setIsConfirmDisabled(inputValue !== confirmationText)
+    }
+  }, [inputValue, confirmationText])
+
+  /* Enhanced onConfirm handler with validation to prevent dev tools bypass */
+  const handleConfirm = () => {
+    /* If confirmation text is required, validate it before proceeding */
+    if (confirmationText && inputValue !== confirmationText) {
+      console.warn('[ConfirmationDialog] Validation failed: Input does not match required confirmation text')
+      setIsInvalid(true)
+      return /* Block execution if validation fails */
+    }
+    
+    /* If no confirmation text required or validation passes, proceed */
+    onConfirm()
+  }
+
   return (
     <Dialog.Root 
       open={isOpen} 
@@ -69,9 +105,28 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 
               {/* Dialog message content */}
               <Dialog.Body p={3}>
-                <Text fontSize="sm" color="fg.muted">
-                  {message}
-                </Text>
+                <VStack align="start" gap={3}>
+                  <Text fontSize="sm" color="fg.muted">
+                    {message}
+                  </Text>
+                  
+                  {/* Optional confirmation text input */}
+                  {confirmationText && (
+                    <TextInputField
+                      label={`Type in \`${confirmationText}\` to confirm`}
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      placeholder={confirmationText}
+                      errorMessage={`Type in \`${confirmationText}\` to confirm`}
+                      isInValid={isInvalid}
+                      required={true}
+                      disabled={isLoading}
+                      inputProps={{
+                        fontSize: "sm"
+                      }}
+                    />
+                  )}
+                </VStack>
               </Dialog.Body>
 
               {/* Dialog action buttons */}
@@ -89,22 +144,22 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                   {/* Conditional confirm button based on variant */}
                   {confirmVariant === 'danger' ? (
                     <PrimaryButton
-                      onClick={onConfirm}
+                      onClick={handleConfirm}
                       size="md"
                       bg="red.500" /* Danger styling */
                       leftIcon={FiAlertTriangle}
                       loading={isLoading}
-                      disabled={isLoading}
+                      disabled={isLoading || isConfirmDisabled}
                     >
                       {confirmText}
                     </PrimaryButton>
                   ) : (
                     <PrimaryButton
-                      onClick={onConfirm}
+                      onClick={handleConfirm}
                       size="md"
                       leftIcon={FiCheck} /* Success icon */
                       loading={isLoading}
-                      disabled={isLoading}
+                      disabled={isLoading || isConfirmDisabled}
                     >
                       {confirmText}
                     </PrimaryButton>

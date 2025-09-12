@@ -8,10 +8,11 @@ import { handleApiError } from '@shared/utils/api'
 import { createToastNotification } from '@shared/utils/ui'
 
 /* Tenant module imports */
-import { tenantApiService } from '@tenant-management/api'
-import { VerificationOTPApiRequest, RequestOTPApiRequest, VerificationType } from '@tenant-management/types/account'
+import { accountService } from '@tenant-management/api'
+import { VerificationOTPApiRequest, RequestOTPApiRequest, VerificationType, TenantVerificationStatusCachedData } from '@tenant-management/types/account'
 import { getCachedVerificationStatus, StepTracker, clearOTPState } from '@tenant-management/utils'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
+import { AxiosError } from 'axios'
 
 /* Verification type definitions */
 export type StepType = 'EMAIL_VERIFICATION' | 'PHONE_VERIFICATION'
@@ -39,7 +40,7 @@ export const useOTPVerification = (config: VerificationConfig) => {
     try {
       const verificationData = localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.TENANT_VERIFICATION_DATA)
       if (verificationData) {
-        const status = JSON.parse(verificationData)
+        const status: TenantVerificationStatusCachedData = JSON.parse(verificationData)
         
         /* Restore verification status based on config type */
         if (config.type === 'email_verification' && status.email_verified) {
@@ -102,7 +103,7 @@ export const useOTPVerification = (config: VerificationConfig) => {
         otp_code: otpNumber
       }
 
-      const response = await tenantApiService.verifyOTP(apiRequest)
+      const response = await accountService.verifyOTP(apiRequest)
       
       /* Process successful verification */
       if (response.success && response.data?.verified) {
@@ -137,9 +138,10 @@ export const useOTPVerification = (config: VerificationConfig) => {
           description: `${config.successMessage} has been verified successfully.`,
         })
       }
-    } catch (err) {
+    } catch (error) {
       /* Log and display verification errors */
-      console.log(`${config.type} OTP Error`, err)
+      console.log(`${config.type} OTP Error`, error);
+      const err = error as AxiosError;
       handleApiError(err, {
         title: `${config.successMessage} OTP Validation Error`
       })
@@ -162,7 +164,7 @@ export const useOTPVerification = (config: VerificationConfig) => {
         ...(phone && { phone })
       }
 
-      const response = await tenantApiService.requestOTP(apiRequest)
+      const response = await accountService.requestOTP(apiRequest)
       
       /* Process successful resend */
       if (response.success) {
@@ -172,9 +174,10 @@ export const useOTPVerification = (config: VerificationConfig) => {
           description: config.resendDescriptionText,
         })
       }
-    } catch (err) {
+    } catch (error) {
       /* Log and display resend errors */
-      console.log(`${config.type} Resend API error`, err)
+      console.log(`${config.type} Resend API error`, error);
+      const err = error as AxiosError;
       handleApiError(err, {
         title: `${config.successMessage} OTP Resending API error`
       })

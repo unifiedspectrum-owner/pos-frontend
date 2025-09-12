@@ -1,6 +1,7 @@
 /* Reusable API error handling utilities */
 
 /* Shared module imports */
+import axios, { AxiosError } from 'axios'
 import { createToastNotification } from '../ui/notifications'
 import { ValidationError } from '@shared/types'
 
@@ -19,16 +20,28 @@ interface ErrorHandlerConfig {
 
 /* Reusable API error handler with toast integration */
 export const handleApiError = (
-  err: any,
+  error: AxiosError,
   config: ErrorHandlerConfig
 ) => {
   const {
     title = 'Operation Failed',
-  } = config
+  } = config;
+
+  if (!axios.isAxiosError(error)) {
+    createToastNotification({
+      title,
+      description: 'An unexpected error occurred.',
+      type: 'error'
+    });
+    return;
+  }
+
+  const err = error as AxiosError<APIErrorResponse>
 
   /* Handle structured API error responses */
   if (err.response?.data) {
-    const responseData: APIErrorResponse = err.response.data
+    const responseData: APIErrorResponse = err.response.data;
+    console.log(title, responseData);
 
     /* Handle validation errors */
     if (responseData.validation_errors && responseData.validation_errors.length > 0) {

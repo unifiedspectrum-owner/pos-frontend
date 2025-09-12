@@ -19,6 +19,9 @@ export * from './pages'
 /* Schema exports */
 export * from './schemas'
 
+/* Table component exports */
+export * from './tables'
+
 /* Type exports */
 export * from './types'
 

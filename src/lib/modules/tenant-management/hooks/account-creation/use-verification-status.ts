@@ -8,7 +8,7 @@ import { handleApiError } from '@shared/utils/api'
 
 /* Tenant module imports */
 import { TenantInfoFormData } from '@tenant-management/schemas/account'
-import { tenantApiService } from '@tenant-management/api/tenants'
+import { accountService } from '@tenant-management/api'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 import { 
   CreateAccountApiRequest, 
@@ -19,8 +19,8 @@ import {
   cleanupAccountCreationStorage, 
   getTenantId, 
   transformFormDataToApiPayload, 
-  transformFormDataToTenantCacheData 
 } from '@tenant-management/utils'
+import { AxiosError } from 'axios'
 
 /* Verification status management hook interface */
 interface UseVerificationStatusOptions {
@@ -59,7 +59,6 @@ export const useVerificationStatus = ({
     const verificationStatus: TenantVerificationStatusCachedData = {
       email_verified: emailVerified,
       phone_verified: phoneVerified,
-      both_verified: emailVerified && phoneVerified,
       email_verified_at: emailVerified ? new Date().toISOString() : null,
       phone_verified_at: phoneVerified ? new Date().toISOString() : null,
     }
@@ -114,7 +113,7 @@ export const useVerificationStatus = ({
       /* Prepare API request with verification status and tenant_id if updating */
       const apiRequest: CreateAccountApiRequest = transformFormDataToApiPayload(currentValues, verificationStatus, existingTenantId)
 
-      const response = await tenantApiService.createTenantAccount(apiRequest)
+      const response = await accountService.createTenantAccount(apiRequest)
       
       if (response.data && response.success) {
         console.log('Account updated with verification status:', response.data);
@@ -131,7 +130,8 @@ export const useVerificationStatus = ({
     } catch (error) {
       console.warn('Failed to update account with verification status:', error)
       cleanupAccountCreationStorage()
-      handleApiError(error, {
+      const err = error as AxiosError;
+      handleApiError(err, {
         title: 'Verification Update Failed'
       });
     } finally {

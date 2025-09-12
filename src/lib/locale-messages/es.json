@@ -7,6 +7,7 @@
     "title": "Gestión de Planes",
     "buttons": {
       "refresh": "Actualizar",
+      "add": "Agregar Plan",
       "addPlan": "Agregar Plan"
     },
     "errors": {
@@ -82,6 +83,13 @@
           "unexpectedError": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo."
         }
       }
+    }
+  },
+  "TenantManagement": {
+    "title": "Gestión de Inquilinos",
+    "buttons": {
+      "refresh": "Actualizar",
+      "add": "Agregar Inquilino"
     }
   }
 }

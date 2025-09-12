@@ -19,7 +19,9 @@ interface PrimaryButtonProps {
   rightIcon?: IconType; /* Icon to display on right */
   buttonProps?: ButtonProps; /* Additional Chakra button props */
   bg?: string; /* Custom background color */
-  width?: string;
+  width?: string; /* Custom width for the button */
+  height?: string; /* Custom height for the button */
+  borderRadius?: string | number; /* Custom border radius for the button */
 }
 
 /* Primary action button component with hover and loading states */
@@ -34,13 +36,16 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   rightIcon,
   bg, /* Optional custom background */
   width,
+  height,
+  borderRadius,
   buttonProps
 }) => {
   return (
     <Button
       px={5}
-      w={width? width : 'auto'}
-      borderRadius={20}
+      w={width || 'auto'}
+      h={height}
+      borderRadius={borderRadius || 20}
       type={type}
       size={size}
       onClick={onClick}

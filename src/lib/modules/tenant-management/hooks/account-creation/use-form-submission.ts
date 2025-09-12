@@ -11,12 +11,13 @@ import { createToastNotification } from '@shared/utils'
 import { Plan } from '@plan-management/types/plans'
 
 /* Tenant module imports */
-import { tenantApiService } from '@tenant-management/api'
+import { subscriptionService } from '@tenant-management/api'
 import { assignPlanToTenantSchema } from '@tenant-management/schemas'
 import { SelectedAddon, PlanBillingCycle } from '@tenant-management/types/subscription'
 import { validatePlanSelection, validateBranchCount } from '@tenant-management/utils/business'
 import { StepTracker } from '@tenant-management/utils/workflow'
-import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '../../../constants/module-constants'
+import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
+import { AxiosError } from 'axios'
 
 /* Tenant form submission data structure */
 interface TenantSubmissionData {
@@ -156,9 +157,9 @@ export const useFormSubmission = () => {
       const validatedPayload = validationResult.data!
 
       /* Execute plan assignment API call */
-      const response = await tenantApiService.assignPlanToTenant(validatedPayload)
+      const response = await subscriptionService.assignPlanToTenant(validatedPayload)
 
-      if (response.data.success) {
+      if (response.data && response.success) {
         /* Cache submission data for cross-step persistence */
         const submissionCache = {
           selectedPlan: data.selectedPlan,
@@ -184,7 +185,7 @@ export const useFormSubmission = () => {
         /* Call success callback */
         onSuccess?.()
       } else {
-        throw new Error(response.data.error || 'Failed to assign plan to tenant')
+        throw new Error(response.error || 'Failed to assign plan to tenant')
       }
     } catch (error) {
       console.error('Failed to assign plan to tenant:', error)
@@ -198,7 +199,8 @@ export const useFormSubmission = () => {
       })
 
       /* Display error notification */
-      handleApiError(error, { title: 'Failed to assign plan to tenant' })
+      const err = error as AxiosError;
+      handleApiError(err, { title: 'Failed to assign plan to tenant' })
     }
   }, [validateSubmissionData, formatOrganizationAddons, formatBranchAddons])
 

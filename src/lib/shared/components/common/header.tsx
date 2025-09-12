@@ -14,17 +14,25 @@ import { generateBreadcrumbs } from '@shared/components/common/bread-crumbs';
 
 /* Props for admin header section */
 export interface AdminHeaderProps {
+  translation: string;
   loading: boolean; /* Whether content is loading */
-  handleAdd: () => void; /* Add new item handler */
+  handleAdd?: () => void; /* Add new item handler - optional if showAddButton is false */
   handleRefresh: () => void; /* Refresh content handler */
+  showAddButton?: boolean; /* Whether to show add button - default true */
 }
 
 /* Header section component with breadcrumbs and actions */
-const HeaderSection: React.FC<AdminHeaderProps> = ({loading, handleAdd, handleRefresh}) => {
+const HeaderSection: React.FC<AdminHeaderProps> = ({
+  translation, 
+  loading, 
+  handleAdd, 
+  handleRefresh, 
+  showAddButton = true
+}) => {
   /* Get current pathname for breadcrumb generation */
   const pathName = usePathname();
   const breadcrumbs = generateBreadcrumbs(pathName);
-  const t = useTranslations('PlanManagement');
+  const t = useTranslations(translation);
   const locale = useLocale();
   const router = useRouter();
 
@@ -180,31 +188,33 @@ const HeaderSection: React.FC<AdminHeaderProps> = ({loading, handleAdd, handleRe
             <Text display={{ base: 'none', sm: 'inline' }}>{t('buttons.refresh')}</Text>
           </Button>
 
-          {/* Add Plan Button */}
-          <Button
-            onClick={handleAdd}
-            bg={PRIMARY_COLOR}
-            color="white"
-            borderRadius="32px"
-            _hover={{ 
-              transform: 'translateY(-1px)',
-              boxShadow: 'lg',
-            }}
-            _active={{
-              bg: PRIMARY_COLOR,
-              transform: 'translateY(0)',
-            }}
-            size={{ base: 'md', sm: 'md' }}
-            fontSize="sm"
-            fontWeight="medium"
-            px={{ base: 2.5, sm: 3 }}
-            title={t('buttons.addPlan')}
-            transition="all 0.2s"
-            boxShadow="0 0 20px rgba(66, 153, 225, 0.3)"
-          >
-            <FiPlus />
-            <Text display={{ base: 'none', sm: 'inline' }}>{t('buttons.addPlan')}</Text>
-          </Button>
+          {/* Add Button - conditionally rendered */}
+          {showAddButton && handleAdd && (
+            <Button
+              onClick={handleAdd}
+              bg={PRIMARY_COLOR}
+              color="white"
+              borderRadius="32px"
+              _hover={{ 
+                transform: 'translateY(-1px)',
+                boxShadow: 'lg',
+              }}
+              _active={{
+                bg: PRIMARY_COLOR,
+                transform: 'translateY(0)',
+              }}
+              size={{ base: 'md', sm: 'md' }}
+              fontSize="sm"
+              fontWeight="medium"
+              px={{ base: 2.5, sm: 3 }}
+              title={t('buttons.add')}
+              transition="all 0.2s"
+              boxShadow="0 0 20px rgba(66, 153, 225, 0.3)"
+            >
+              <FiPlus />
+              <Text display={{ base: 'none', sm: 'inline' }}>{t('buttons.add')}</Text>
+            </Button>
+          )}
         </HStack>
       </Flex>
     </VStack>

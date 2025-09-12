@@ -13,6 +13,7 @@ import { Plan } from '@plan-management/types'
 
 /* Tenant module imports */
 import { PLANS_CACHE_CONFIG } from '@tenant-management/constants'
+import { AxiosError } from 'axios'
 
 /* Plan data hook state interface */
 interface UsePlanDataState {
@@ -124,10 +125,10 @@ export const usePlanData = () => {
         })
         throw new Error(errorMessage)
       }
-    } catch (err) {
+    } catch (error) {
       /* Log and handle API errors */
-      console.error('[usePlanData] Failed to fetch plans:', err)
-      
+      console.error('[usePlanData] Failed to fetch plans:', error)
+      const err = error as AxiosError;
       /* Display user-friendly error */
       handleApiError(err, {
         title: 'Failed to Load Plans'

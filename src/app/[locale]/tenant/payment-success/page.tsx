@@ -8,14 +8,15 @@ import { useSearchParams, useRouter } from 'next/navigation'
 
 /* Shared module imports */
 import { PrimaryButton } from '@shared/components/form-elements/buttons'
-import { createToastMessage } from '@shared/utils/ui/toast'
+import { createToastNotification } from '@shared/utils/ui'
 import { PRIMARY_COLOR } from '@shared/config'
 
 /* Tenant module imports */
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
-import { tenantApiService } from '@tenant-management/api/tenants'
+import { paymentService } from '@tenant-management/api'
 import { handleApiError } from '@shared/utils'
 import { CachedPaymentStatusData } from '@/lib/modules/tenant-management/types/subscription'
+import { AxiosError } from 'axios'
 
 /* Payment status type */
 type PaymentStatus = 'loading' | 'success' | 'failed' | 'cancelled'
@@ -53,7 +54,7 @@ const PaymentSuccessPage: React.FC = () => {
         console.log('[PaymentSuccess] Calling payment status API...')
         
         /* Call API to get payment status */
-        const { data: response } = await tenantApiService.getPaymentStatusForTenant({
+        const response  = await paymentService.getPaymentStatusForTenant({
           payment_intent: paymentIntent
         })
 
@@ -64,7 +65,7 @@ const PaymentSuccessPage: React.FC = () => {
           setStatus('failed')
           setErrorMessage(response.message || 'Failed to verify payment status.')
           
-          createToastMessage({
+          createToastNotification({
             title: 'Payment Verification Failed',
             description: response.message || 'Unable to verify payment status.',
             type: 'error'
@@ -97,7 +98,7 @@ const PaymentSuccessPage: React.FC = () => {
           setStatus('success')
           
           /* Show success toast */
-          createToastMessage({
+          createToastNotification({
             title: 'Payment Successful',
             description: statusInfo.status_message || 'Your payment has been processed successfully.',
             type: 'success'
@@ -114,7 +115,7 @@ const PaymentSuccessPage: React.FC = () => {
           setErrorMessage(statusInfo.status_message || 'Your payment could not be processed. Please try again.')
           
           /* Show error toast */
-          createToastMessage({
+          createToastNotification({
             title: 'Payment Failed',
             description: statusInfo.status_message || 'Your payment could not be processed.',
             type: 'error'
@@ -148,9 +149,10 @@ const PaymentSuccessPage: React.FC = () => {
       } catch (error) {
         console.error('[PaymentSuccess] API call failed:', error)
         setStatus('failed')
-        setErrorMessage('Failed to verify payment status. Please try again.')
+        setErrorMessage('Failed to verify payment status. Please try again.');
+        const err = error as AxiosError;
         
-        handleApiError(error, {
+        handleApiError(err, {
           title: 'Payment Status Check Failed'
         })
 

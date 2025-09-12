@@ -23,6 +23,7 @@ interface TextAreaFieldProps {
   inputProps?: TextareaProps; /* Additional Chakra textarea props */
   isDebounced?: boolean; /* Whether to debounce input changes */
   debounceMs?: number; /* Debounce delay in milliseconds */
+  helperText?: string
 }
 
 const TextAreaField: React.FC<TextAreaFieldProps> = ({
@@ -39,7 +40,8 @@ const TextAreaField: React.FC<TextAreaFieldProps> = ({
   name,
   inputProps,
   isDebounced = true,
-  debounceMs = 300
+  debounceMs = 300,
+  helperText
 }) => {
   /* Local state for immediate UI updates */
   const [localValue, setLocalValue] = useState(value);
@@ -123,7 +125,7 @@ const TextAreaField: React.FC<TextAreaFieldProps> = ({
   };
 
   return (
-    <Field label={label} invalid={isInValid} errorText={errorMessage} required={required}>
+    <Field label={label} invalid={isInValid} errorText={errorMessage} required={required} helperText={helperText}>
       <Textarea
         p={'12px'}
         borderColor={isInValid ? 'red.500' : lighten(0.3, GRAY_COLOR)}

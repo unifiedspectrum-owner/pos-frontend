@@ -6,7 +6,7 @@ import { IconType } from "react-icons";
 /* Dynamic form field configuration structure */
 export interface FormFieldStructure {
   id: number; 
-  type: 'INPUT' | 'TEXTAREA' | 'SELECT' | 'TOGGLE' | 'PIN' | 'INPUT_WITH_BUTTON' | 'COMBOBOX' | 'PHONE_NUMBER';
+  type: 'INPUT' | 'TEXTAREA' | 'SELECT' | 'TOGGLE' | 'PIN' | 'INPUT_WITH_BUTTON' | 'COMBOBOX' | 'PHONE_NUMBER' | 'DATE';
   label: string;
   schema_key: string;
   left_icon?: IconType;

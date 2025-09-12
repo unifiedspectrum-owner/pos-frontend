@@ -7,6 +7,7 @@
     "title": "Plan Management",
     "buttons": {
       "refresh": "Refresh",
+      "add": "Add Plan",
       "addPlan": "Add Plan"
     },
     "errors": {
@@ -82,6 +83,13 @@
           "unexpectedError": "An unexpected error occurred. Please try again."
         }
       }
+    }
+  },
+  "TenantManagement": {
+    "title": "Tenant Management",
+    "buttons": {
+      "refresh": "Refresh",
+      "add": "Add Tenant"
     }
   }
 }

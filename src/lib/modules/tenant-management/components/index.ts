@@ -5,3 +5,6 @@ export * from './layout';
 
 /* Loading state components */
 export * from './loading';
+
+/* Modal components */
+export * from './modal';

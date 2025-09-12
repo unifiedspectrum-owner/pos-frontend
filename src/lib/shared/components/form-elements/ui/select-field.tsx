@@ -27,6 +27,10 @@ interface SelectFieldProps {
   onChange: (value: string) => void; /* Value change handler */
   name?: string; /* Field name attribute */
   size?: 'sm' | 'md' | 'lg'; /* Field size variant */
+  height?: string; /* Custom height for the select trigger */
+  width?: string; /* Custom width for the select trigger */
+  padding?: string; /* Custom padding for the select trigger */
+  borderRadius?: string; /* Custom border radius for the select trigger */
 }
 
 const SelectField: React.FC<SelectFieldProps> = ({
@@ -41,7 +45,11 @@ const SelectField: React.FC<SelectFieldProps> = ({
   options,
   onChange,
   name,
-  size = 'lg'
+  size = 'lg',
+  height,
+  width,
+  padding,
+  borderRadius
 }) => {
   /* Create collection from options with unique identifiers */
   const collection = createListCollection({
@@ -74,8 +82,10 @@ const SelectField: React.FC<SelectFieldProps> = ({
         <Select.HiddenSelect />
         <Select.Control>
           <Select.Trigger
-            h="48px"
-            borderRadius="2xl"
+            h={height || "48px"}
+            w={width}
+            p={padding}
+            borderRadius={borderRadius || "2xl"}
             borderColor={isInValid ? 'red.500' : lighten(0.3, GRAY_COLOR)}
             _hover={{
               borderColor: isInValid ? 'red.600' : lighten(0.2, GRAY_COLOR)
@@ -87,7 +97,6 @@ const SelectField: React.FC<SelectFieldProps> = ({
             data-testid="select-trigger"
           >
             <Select.ValueText 
-              px={3} 
               placeholder={placeholder}
               data-testid="select-value-text"
             />

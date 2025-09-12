@@ -12,12 +12,13 @@ import { PRIMARY_COLOR, WHITE_COLOR } from '@shared/config'
 
 /* Tenant module imports */
 import { createTenantAccountSchema, TenantInfoFormData } from '@tenant-management/schemas/account'
-import { tenantApiService } from '@tenant-management/api/tenants'
+import { accountService } from '@tenant-management/api'
 import { StepTracker, getCachedVerificationStatus, transformFormDataToTenantCacheData, transformFormDataToApiPayload, hasFormDataChanged, getTenantId } from '@tenant-management/utils/workflow'
 import { TenantInfo, CreateAccountApiRequest } from '@tenant-management/types/account'
 import { BasicInformation, AddressInformation } from '@tenant-management/forms/account/steps/components/tenant-info'
 import { CREATE_TENANT_ACCOUNT_FORM_DEFAULT_VALUES, TENANT_ACCOUNT_CREATION_LS_KEYS, TENANT_BASIC_INFO_QUESTIONS, TENANT_FORM_SECTIONS } from '@tenant-management/constants'
 import { NavigationButton } from '@tenant-management/forms/account/steps/components/navigations'
+import { AxiosError } from 'axios'
 
 /* Component props interface */
 interface TenantInfoStepProps {
@@ -174,7 +175,7 @@ const BasicInfoStep: React.FC<TenantInfoStepProps> = ({ isCompleted }) => {
       )
       
       console.log("API Request data", apiRequest)
-      const response = await tenantApiService.createTenantAccount(apiRequest)
+      const response = await accountService.createTenantAccount(apiRequest)
 
       if (response.data && response.success) {
         const { tenant_id } = response.data
@@ -198,9 +199,10 @@ const BasicInfoStep: React.FC<TenantInfoStepProps> = ({ isCompleted }) => {
         
         isCompleted(true)
       }
-    } catch (err) {
+    } catch (error) {
       /* Handle API failures */
-      console.log("Account creation failed", err)
+      console.log("Account creation failed", error)
+      const err = error as AxiosError;
       handleApiError(err, { title: 'Account Creation Failed' });
       isCompleted(false)
     } finally {

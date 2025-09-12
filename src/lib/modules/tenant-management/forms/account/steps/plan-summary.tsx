@@ -16,7 +16,7 @@ import { StepTracker } from '@tenant-management/utils/workflow'
 import { PRIMARY_COLOR, WHITE_COLOR } from '@/lib/shared/config'
 import { FiArrowLeft, FiArrowRight, FiFileText } from 'react-icons/fi'
 import { getTenantId } from '../../../utils'
-import { usePlanStorage } from '@tenant-management/hooks/account/creation'
+import { usePlanStorage } from '@/lib/modules/tenant-management/hooks/account-creation'
 
 /* Props for plan summary step component */
 interface PlanSummaryStepProps {

@@ -1,9 +1,14 @@
+/* React imports */
 import { FormFieldStructure } from "@shared/types";
 import { FaRegBuilding } from "react-icons/fa6";
 import { FiPhone } from "react-icons/fi";
 import { MdOutlineEmail, MdPersonOutline } from "react-icons/md";
 import { SlLocationPin } from "react-icons/sl";
 
+/* Tenant module imports */
+import { TenantInfoFormData } from "@tenant-management/schemas/account";
+
+/* Form field structure with section heading */
 export interface FormFieldStructureWithSectionHeading {
   section_heading: string,
   section_values: FormFieldStructure[]
@@ -103,32 +108,6 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
           col_span: 3
         }
       },
-      // {
-      //   id: 12,
-      //   type: "INPUT_WITH_BUTTON",
-      //   label: "Email OTP",
-      //   schema_key: "email_otp",
-      //   placeholder: "Enter Email OTP",
-      //   is_required: true,
-      //   is_active: true,
-      //   display_order: 4,
-      //   grid: {
-      //     col_span: 3
-      //   }
-      // },
-      // {
-      //   id: 13,
-      //   type: "INPUT_WITH_BUTTON",
-      //   label: "Phone OTP", 
-      //   schema_key: "phone_otp",
-      //   placeholder: "Enter Phone OTP",
-      //   is_required: true,
-      //   is_active: true,
-      //   display_order: 5,
-      //   grid: {
-      //     col_span: 3
-      //   }
-      // },
       {
         id: 7,
         type: "INPUT_WITH_BUTTON",
@@ -219,32 +198,16 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
   }
 ];
 
-/* Form field configurations for OTP verification */
-export const TENANT_COMPANY_VERIFICATION_QUESTIONS: FormFieldStructure[] = [
-  {
-    id: 1,
-    type: "PIN",
-    label: "Email OTP",
-    schema_key: "email_otp",
-    placeholder: "",
-    is_required: true,
-    is_active: true,
-    display_order: 1,
-    grid: {
-      col_span: 1
-    }
-  },
-  {
-    id: 2,
-    type: "PIN",
-    label: "Phone OTP",
-    schema_key: "phone_otp",
-    placeholder: "",
-    is_required: true,
-    is_active: true,
-    display_order: 2,
-    grid: {
-      col_span: 1
-    }
-  }
-];
+/* Default form values for tenant registration */
+export const CREATE_TENANT_ACCOUNT_FORM_DEFAULT_VALUES: TenantInfoFormData = {
+  company_name: '',
+  contact_person: '',
+  primary_email: '',
+  primary_phone: ['', ''],
+  address_line1: '',
+  address_line2: '',
+  city: '',
+  state_province: '',
+  postal_code: '',
+  country: ''
+}

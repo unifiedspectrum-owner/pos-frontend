@@ -6,6 +6,7 @@ import { countryApiService } from '@shared/api'
 import { CountryData, State } from '@shared/types'
 import { handleApiError } from '@shared/utils'
 import { COUNTRIES_CACHE_DURATION } from '@shared/config'
+import { AxiosError } from 'axios'
 
 /* Hook options interface */
 export interface UseCountriesOptions {
@@ -96,11 +97,11 @@ export const useCountries = (options: UseCountriesOptions = {}): UseCountriesRet
         setError(errorMsg)
         console.warn('Failed to fetch countries:', errorMsg)
       }
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Error fetching countries'
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Error fetching countries'
       setError(errorMsg)
-      console.error('Error fetching countries:', err)
-      
+      console.error('Error fetching countries:', error)
+      const err = error as AxiosError;
       if (showErrorToast) {
         handleApiError(err, {
           title: 'Failed to Load Countries'

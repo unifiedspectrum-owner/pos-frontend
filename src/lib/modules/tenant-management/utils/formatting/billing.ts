@@ -2,19 +2,7 @@
 
 /* Tenant module imports */
 import { PlanBillingCycle } from '@tenant-management/types/subscription'
-import { PLAN_BILLING_CYCLE } from '../../constants'
-
-/* Get formatted billing cycle name */
-export const getBillingCycleName = (cycle: PlanBillingCycle): string => {
-  switch (cycle) {
-    case PLAN_BILLING_CYCLE.MONTHLY:
-      return 'Monthly'
-    case PLAN_BILLING_CYCLE.YEARLY:
-      return 'Yearly'
-    default:
-      return 'Month'
-  }
-}
+import { PLAN_BILLING_CYCLE } from '@tenant-management/constants'
 
 export const getBillingCycleLabel = ({
   billingCycle, 
@@ -32,26 +20,3 @@ export const getBillingCycleLabel = ({
   return billingCycle === PLAN_BILLING_CYCLE.MONTHLY ? '/month' : '/year'
 }
 
-/* Get billing cycle abbreviation */
-export const getBillingCycleAbbreviation = (cycle: PlanBillingCycle): string => {
-  switch (cycle) {
-    case 'monthly':
-      return 'Mo'
-    case 'yearly':
-      return 'Yr'
-    default:
-      return ''
-  }
-}
-
-/* Get billing cycle period description */
-export const getBillingCyclePeriod = (cycle: PlanBillingCycle): string => {
-  switch (cycle) {
-    case 'monthly':
-      return 'per month'
-    case 'yearly':
-      return 'per year'
-    default:
-      return ''
-  }
-}

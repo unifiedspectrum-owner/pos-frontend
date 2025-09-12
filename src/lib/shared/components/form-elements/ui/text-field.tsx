@@ -129,7 +129,22 @@ const TextInputField: React.FC<TextInputFieldProps> = ({
   };
 
   return (
-    <Field label={label} invalid={isInValid} errorText={errorMessage} required={required}>
+    <Field 
+      label={label} 
+      invalid={isInValid} 
+      errorText={errorMessage} 
+      required={required}
+      css={{
+        '& label': {
+          userSelect: 'text',
+          cursor: 'text',
+          pointerEvents: 'auto'
+        },
+        '& label:hover': {
+          cursor: 'text'
+        }
+      }}
+    >
       <InputGroup alignItems={'center'} startElementProps={{fontSize: 'lg'}} startElement={leftIcon ? leftIcon : undefined} endElement={rightIcon ? rightIcon : undefined}>
       <Input
         h={'48px'}

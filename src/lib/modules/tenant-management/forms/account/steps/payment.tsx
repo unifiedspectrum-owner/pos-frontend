@@ -15,10 +15,11 @@ import { handleApiError, PRIMARY_COLOR, WHITE_COLOR } from '@/lib/shared'
 
 /* Tenant module imports */
 import { CheckoutForm } from './components'
-import { tenantApiService } from '@tenant-management/api/tenants'
+import { subscriptionService } from '@tenant-management/api'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS, PLAN_BILLING_CYCLE } from '@tenant-management/constants'
 import { AccountStatusApiRequest, AssignedPlanDetails } from '@tenant-management/types'
 import { calculateSingleAddonPrice } from '@tenant-management/utils/business'
+import { AxiosError } from 'axios'
 
 /* Initialize Stripe with publishable key */
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
@@ -55,7 +56,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
       const tenantId = localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.TENANT_ID)
       if (tenantId) {
         const apiRequest: AccountStatusApiRequest = { tenant_id: tenantId }
-        const response = await tenantApiService.getAssignedPlanForTenant(apiRequest)
+        const response = await subscriptionService.getAssignedPlanForTenant(apiRequest)
         
         if (response.success && response.data) {
           const planData = response.data;
@@ -96,7 +97,8 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
       }
     } catch (error) {
       console.warn('Failed to load payment data:', error)
-      handleApiError(error, {title: "Failed to load payment data"})
+      const err = error as AxiosError;
+      handleApiError(err, {title: "Failed to load payment data"})
     } finally {
       setIsLoading(false)
     }

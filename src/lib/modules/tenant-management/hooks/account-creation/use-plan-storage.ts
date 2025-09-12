@@ -6,10 +6,11 @@ import { handleApiError } from '@shared/utils/api'
 import { createToastNotification } from '@shared/utils/ui'
 
 /* Tenant module imports */
-import { tenantApiService } from '@tenant-management/api/tenants'
+import { subscriptionService } from '@tenant-management/api'
 import { CachedPlanData } from '@tenant-management/types/subscription'
 import { AssignPlanToTenantApiRequest } from '@tenant-management/types/subscription'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS, ADDON_PRICING_SCOPE } from '@tenant-management/constants'
+import { AxiosError } from 'axios'
 
 /* Hook return type interface */
 interface UsePlanStorageReturn {
@@ -145,7 +146,7 @@ export const usePlanStorage = (): UsePlanStorageReturn => {
       }
 
       /* Submit to API */
-      await tenantApiService.assignPlanToTenant(apiRequestData)
+      await subscriptionService.assignPlanToTenant(apiRequestData)
       
       createToastNotification({
         title: 'Plan Assigned Successfully',
@@ -155,7 +156,8 @@ export const usePlanStorage = (): UsePlanStorageReturn => {
       return true
     } catch (error) {
       console.error('Failed to assign plan to tenant:', error)
-      handleApiError(error, { title: 'Failed to assign plan' })
+      const err = error as AxiosError;
+      handleApiError(err, { title: 'Failed to assign plan' })
       return false
     } finally {
       setIsSubmitting(false)

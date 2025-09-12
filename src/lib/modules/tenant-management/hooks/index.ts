@@ -1,7 +1,7 @@
 /* Tenant management hooks module exports */
 
 /* Account creation and verification hooks */
-export * from './account';
+export * from './account-creation';
 
 /* Data management hooks for plans, addons, and branches */
 export * from './data-management';
@@ -11,3 +11,6 @@ export * from './ui-interactions';
 
 /* Business calculation and pricing hooks */
 export * from './calculations';
+
+/* Tenant action hooks for suspension, hold, and activation */
+export * from './tenant-actions';

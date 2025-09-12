@@ -75,6 +75,7 @@ const PlanManagement: React.FC = () => {
     <Flex w={'100%'} flexDir={'column'}>
       {/* Header section with add and refresh buttons */}
       <HeaderSection
+        translation={'PlanManagement'}
         loading={loading}
         handleAdd={handleAddPlan}
         handleRefresh={handleRefresh}

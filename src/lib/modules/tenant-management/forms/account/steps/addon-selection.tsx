@@ -9,11 +9,11 @@ import { Addon, Plan } from '@plan-management/types/plans'
 /* Tenant module imports */
 import { AddonSelectionModal, SelectedAddonsSummary, AvailableAddonsGrid, NavigationButton } from './components'
 import { useBranchManagement, useAddonManagement } from '@tenant-management/hooks'
-import { usePlanStorage } from '@tenant-management/hooks/account/creation'
+import { usePlanStorage } from '@/lib/modules/tenant-management/hooks/account-creation'
 import { PlanBillingCycle, AddonBranchSelection, CachedPlanData } from '@tenant-management/types'
 import { StepTracker } from '@tenant-management/utils/workflow'
 import { PRIMARY_COLOR, WHITE_COLOR } from '@/lib/shared/config'
-import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '../../../constants'
+import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 
 /* Props interface for addon selection step component */
 interface AddonSelectionStepProps {

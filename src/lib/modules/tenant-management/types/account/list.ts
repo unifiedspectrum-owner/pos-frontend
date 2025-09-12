@@ -25,4 +25,5 @@ export interface TenantListApiResponse {
     has_next_page: boolean;
     has_prev_page: boolean;
   };
+  timestamp: string
 }

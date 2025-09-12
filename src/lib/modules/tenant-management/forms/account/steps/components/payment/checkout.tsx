@@ -15,7 +15,7 @@ import { createToastNotification } from '@shared/utils/ui'
 
 /* Tenant module imports */
 import { AssignedPlanDetails, CachedPaymentStatusData, InitiateSubscriptionPaymentApiRequest } from '@/lib/modules/tenant-management/types'
-import { tenantApiService } from '@tenant-management/api/tenants'
+import { paymentService } from '@tenant-management/api'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 
 /* Props interface for CheckoutForm component */
@@ -126,7 +126,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       }
       
       console.log('[CheckoutForm] Payment initiation request:', apiRequest)
-      const response = await tenantApiService.initiateTenantSubscriptionPayment(apiRequest)
+      const response = await paymentService.initiateTenantSubscriptionPayment(apiRequest)
       
       if (!response.success || !response.data) {
         console.error('[CheckoutForm] Payment initialization failed:', response)

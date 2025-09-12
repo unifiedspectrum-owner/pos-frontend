@@ -35,6 +35,7 @@ const SecondaryButton: React.FC<SecondaryButtonProps> = ({
   return (
     <Button
       px={5}
+      w={'auto'}
       borderRadius={20}
       type={type}
       size={size}

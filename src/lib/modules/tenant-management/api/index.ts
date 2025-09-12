@@ -1,4 +1,7 @@
 /* Tenant management API module exports */
 
-/* Account creation and management service */
-export { tenantApiService } from './tenants'
+/* HTTP client configuration */
+export * from './clients'
+
+/* All tenant management services */
+export * from './services'
