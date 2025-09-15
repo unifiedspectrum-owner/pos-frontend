@@ -15,11 +15,12 @@ import { Addon } from '@plan-management/types/plans'
 
 /* Tenant module imports */
 import { AddonBranchSelection, SelectedAddon, PlanBillingCycle } from '@tenant-management/types'
-import { calculateSingleAddonPrice, getBillingCycleLabel } from '@tenant-management/utils/business'
+import { calculateSingleAddonPrice } from '@tenant-management/utils/business'
 import { useAddonConfirmation } from '@tenant-management/hooks'
 
 /* UI component imports */
 import { toaster } from '@/components/ui/toaster'
+import { getBillingCycleLabel } from '@/lib/modules/tenant-management/utils/formatting'
 
 /* Modal component props for add-on branch selection */
 interface AddonSelectionModalProps {
@@ -197,7 +198,7 @@ const AddonSelectionModal: React.FC<AddonSelectionModalProps> = ({
                       </Flex>
                       <Flex flexDir={'column'}>
                         <Text fontSize="xl" fontWeight="bold" color={PRIMARY_COLOR}>
-                          ${Math.floor(addonPrice)}{getBillingCycleLabel(billingCycle)}
+                          ${Math.floor(addonPrice)}{getBillingCycleLabel({billingCycle})}
                         </Text>
                         <Text fontSize="sm" color="gray.600">
                           per {addon.pricing_scope}
@@ -249,7 +250,7 @@ const AddonSelectionModal: React.FC<AddonSelectionModalProps> = ({
                                   {/* Show pricing when branch is selected */}
                                   {selection.isSelected && (
                                     <Text fontSize="sm" fontWeight="bold" color={PRIMARY_COLOR}>
-                                      ${Math.floor(addonPrice)}{getBillingCycleLabel(billingCycle)}
+                                      ${Math.floor(addonPrice)}{getBillingCycleLabel({billingCycle})}
                                     </Text>
                                   )}
                                 </Flex>
@@ -299,7 +300,7 @@ const AddonSelectionModal: React.FC<AddonSelectionModalProps> = ({
                               </Text>
                               <Text fontSize="sm" color="blue.700">
                                 This add-on applies to your entire organization and will be available across all branches. 
-                                The cost is ${addonPrice}{getBillingCycleLabel(billingCycle)} for the organization.
+                                The cost is ${addonPrice}{getBillingCycleLabel({billingCycle})} for the organization.
                               </Text>
                             </Box>
                           </Flex>
@@ -324,7 +325,7 @@ const AddonSelectionModal: React.FC<AddonSelectionModalProps> = ({
                           </Text>
                         </Flex>
                         <Text fontSize="xl" fontWeight="bold" color={PRIMARY_COLOR}>
-                          ${Math.floor(totalCost)}{getBillingCycleLabel(billingCycle)}
+                          ${Math.floor(totalCost)}{getBillingCycleLabel({billingCycle})}
                         </Text>
                       </Flex>
                     </Box>

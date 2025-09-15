@@ -23,7 +23,8 @@
       "@/*": ["src/*"],
       "@shared/*": ["src/lib/shared/*"],
       "@plan-management/*": ["src/lib/modules/plan-management/*"],
-      "@tenant-management/*": ["src/lib/modules/tenant-management/*"]
+      "@tenant-management/*": ["src/lib/modules/tenant-management/*"],
+      "@user-management/*": ["src/lib/modules/user-management/*"],
     },
     "types": [
         "./cloudflare-env.d.ts",

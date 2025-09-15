@@ -91,5 +91,86 @@
       "refresh": "Actualizar",
       "add": "Agregar Inquilino"
     }
+  },
+  "UserManagement": {
+    "title": "Gestión de Usuarios",
+    "buttons": {
+      "refresh": "Actualizar",
+      "add": "Agregar Usuario"
+    },
+    "errors": {
+      "loadingUsers": "Error al Cargar Usuarios",
+      "fetchFailed": "Error al obtener usuarios"
+    },
+    "messages": {
+      "dataRefreshed": "Datos de usuarios actualizados exitosamente",
+      "dataFetched": "Datos de usuarios obtenidos exitosamente"
+    },
+    "breadcrumbs": {
+      "admin": "Admin",
+      "userManagement": "Gestión de Usuarios"
+    },
+    "table": {
+      "title": "Gestión de Usuarios",
+      "lastUpdated": "Última Actualización",
+      "search": {
+        "placeholder": "Buscar por nombre o correo..."
+      },
+      "filters": {
+        "status": {
+          "placeholder": "Filtrar por Estado",
+          "allUsers": "Todos los Usuarios",
+          "active": "Activo",
+          "inactive": "Inactivo",
+          "pending": "Pendiente",
+          "suspended": "Suspendido"
+        },
+        "role": {
+          "placeholder": "Filtrar por Rol",
+          "allRoles": "Todos los Roles",
+          "superAdmin": "Super Administrador",
+          "admin": "Administrador",
+          "manager": "Gerente",
+          "staff": "Personal",
+          "viewer": "Visor"
+        }
+      },
+      "headers": {
+        "serialNumber": "No.",
+        "name": "Nombre",
+        "email": "Correo",
+        "role": "Rol",
+        "status": "Estado",
+        "lastLogin": "Último Acceso",
+        "actions": "Acciones"
+      },
+      "emptyState": {
+        "title": "No se Encontraron Usuarios",
+        "description": "Aún no se han creado usuarios.",
+        "filteredDescription": "Ningún usuario coincide con sus filtros actuales. Intente ajustar sus criterios de búsqueda."
+      },
+      "actions": {
+        "view": "Ver detalles del usuario",
+        "edit": "Editar usuario",
+        "delete": "Eliminar usuario"
+      },
+      "deleteConfirmation": {
+        "title": "Eliminar Usuario",
+        "message": "¿Está seguro de que desea eliminar el usuario '{{userName}}'? Esta acción no se puede deshacer y eliminará todos los datos asociados.",
+        "confirmText": "Eliminar Usuario",
+        "cancelText": "Cancelar"
+      },
+      "toasts": {
+        "deleteSuccess": {
+          "title": "Usuario Eliminado",
+          "description": "El usuario '{{userName}}' ha sido eliminado exitosamente."
+        },
+        "deleteError": {
+          "title": "Error al Eliminar Usuario",
+          "description": "Ocurrió un error al eliminar el usuario.",
+          "unexpectedError": "Ocurrió un error inesperado. Por favor, inténtelo de nuevo."
+        }
+      }
+    }
   }
 }

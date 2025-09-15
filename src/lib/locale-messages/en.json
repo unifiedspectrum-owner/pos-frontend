@@ -91,5 +91,86 @@
       "refresh": "Refresh",
       "add": "Add Tenant"
     }
+  },
+  "UserManagement": {
+    "title": "User Management",
+    "buttons": {
+      "refresh": "Refresh",
+      "add": "Add User"
+    },
+    "errors": {
+      "loadingUsers": "Error Loading Users",
+      "fetchFailed": "Failed to fetch users"
+    },
+    "messages": {
+      "dataRefreshed": "User data refreshed successfully",
+      "dataFetched": "User data fetched successfully"
+    },
+    "breadcrumbs": {
+      "admin": "Admin",
+      "userManagement": "User Management"
+    },
+    "table": {
+      "title": "User Management",
+      "lastUpdated": "Last Updated",
+      "search": {
+        "placeholder": "Search by name or email..."
+      },
+      "filters": {
+        "status": {
+          "placeholder": "Filter by Status",
+          "allUsers": "All Users",
+          "active": "Active",
+          "inactive": "Inactive",
+          "pending": "Pending",
+          "suspended": "Suspended"
+        },
+        "role": {
+          "placeholder": "Filter by Role",
+          "allRoles": "All Roles",
+          "superAdmin": "Super Admin",
+          "admin": "Admin",
+          "manager": "Manager",
+          "staff": "Staff",
+          "viewer": "Viewer"
+        }
+      },
+      "headers": {
+        "serialNumber": "SNo.",
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "lastLogin": "Last Login",
+        "actions": "Actions"
+      },
+      "emptyState": {
+        "title": "No Users Found",
+        "description": "No users have been created yet.",
+        "filteredDescription": "No users match your current filters. Try adjusting your search criteria."
+      },
+      "actions": {
+        "view": "View user details",
+        "edit": "Edit user",
+        "delete": "Delete user"
+      },
+      "deleteConfirmation": {
+        "title": "Delete User",
+        "message": "Are you sure you want to delete the user '{{userName}}'? This action cannot be undone and will remove all associated data.",
+        "confirmText": "Delete User",
+        "cancelText": "Cancel"
+      },
+      "toasts": {
+        "deleteSuccess": {
+          "title": "User Deleted",
+          "description": "The user '{{userName}}' has been successfully deleted."
+        },
+        "deleteError": {
+          "title": "Failed to Delete User",
+          "description": "An error occurred while deleting the user.",
+          "unexpectedError": "An unexpected error occurred. Please try again."
+        }
+      }
+    }
   }
 }

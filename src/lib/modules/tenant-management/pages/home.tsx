@@ -9,7 +9,7 @@ import { useRouter } from '@/i18n/navigation'
 import { HeaderSection, ErrorMessageContainer } from '@shared/components'
 import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 import { PaginationInfo } from '@shared/types'
-import { handleApiError } from '@shared/utils'
+import { createToastNotification, handleApiError } from '@shared/utils'
 
 /* Tenant module imports */
 import TenantTable from '@tenant-management/tables/tenants'
@@ -43,7 +43,16 @@ const TenantManagement: React.FC = () => {
   const fetchTenants = useCallback(async(page: number = 1, limit: number = 10) => {
     try {
       setLoading(true)
-      setError(null)
+      setError(null);
+
+      if(isNaN(page)) {
+        createToastNotification({
+          title: "Invalid Page Number",
+          description: "Page number must be a valid number",
+          type: "error"
+        })
+        return
+      }
       
       /* Artificial delay for testing */
       if (LOADING_DELAY_ENABLED) {

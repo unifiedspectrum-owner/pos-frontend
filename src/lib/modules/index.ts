@@ -3,3 +3,6 @@ export * from './plan-management'
 
 /* Tenant management module exports */
 export * from './tenant-management'
+
+/* User management module exports */
+export * from './user-management'
