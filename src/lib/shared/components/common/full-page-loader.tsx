@@ -38,7 +38,6 @@ const FullPageLoader: React.FC<FullPageLoaderProps> = ({
         size={size} 
         color={color} 
         borderWidth="4px" 
-        speed="0.65s" 
       />
       <VStack gap={2}>
         <Text fontSize="lg" fontWeight="medium" color={color}>

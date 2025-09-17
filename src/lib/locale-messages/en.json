@@ -172,5 +172,65 @@
         }
       }
     }
+  },
+  "RoleManagement": {
+    "title": "Role Management",
+    "buttons": {
+      "refresh": "Refresh",
+      "add": "Add Role"
+    },
+    "errors": {
+      "loadingRoles": "Error Loading Roles",
+      "fetchFailed": "Failed to fetch roles"
+    },
+    "messages": {
+      "dataRefreshed": "Role data refreshed successfully",
+      "dataFetched": "Role data fetched successfully"
+    },
+    "breadcrumbs": {
+      "admin": "Admin",
+      "roleManagement": "Role Management"
+    },
+    "table": {
+      "title": "Role Management",
+      "lastUpdated": "Last Updated",
+      "search": {
+        "placeholder": "Search by role name or description..."
+      },
+      "headers": {
+        "serialNumber": "SNo.",
+        "name": "Name",
+        "description": "Description",
+        "usersCount": "Users Count",
+        "actions": "Actions"
+      },
+      "emptyState": {
+        "title": "No Roles Found",
+        "description": "No roles have been created yet.",
+        "filteredDescription": "No roles match your current search criteria."
+      },
+      "actions": {
+        "view": "View role details",
+        "edit": "Edit role",
+        "delete": "Delete role"
+      },
+      "deleteConfirmation": {
+        "title": "Delete Role",
+        "message": "Are you sure you want to delete the role '{{roleName}}'? This action cannot be undone and will remove all associated data.",
+        "confirmText": "Delete Role",
+        "cancelText": "Cancel"
+      },
+      "toasts": {
+        "deleteSuccess": {
+          "title": "Role Deleted",
+          "description": "The role '{{roleName}}' has been successfully deleted."
+        },
+        "deleteError": {
+          "title": "Failed to Delete Role",
+          "description": "An error occurred while deleting the role.",
+          "unexpectedError": "An unexpected error occurred. Please try again."
+        }
+      }
+    }
   }
 }

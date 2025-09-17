@@ -43,7 +43,8 @@ interface PhoneNumberFieldProps {
   rightIcon?: React.ReactNode;
   leftIcon?: React.ReactNode;
   getDialCodeFromSelection?: (selectedValue: string) => string;
-  showVerifiedText?: boolean
+  showVerifiedText?: boolean;
+  showVerifyButton?: boolean;
 }
 
 const PhoneNumberField: React.FC<PhoneNumberFieldProps> = ({
@@ -60,14 +61,15 @@ const PhoneNumberField: React.FC<PhoneNumberFieldProps> = ({
   onBlur,
   name,
   options,
-  defaultDialCode = '+1',
+  defaultDialCode = '+91',
   buttonText = 'Verify',
   onButtonClick,
   buttonLoading = false,
   rightIcon,
   leftIcon,
   getDialCodeFromSelection,
-  showVerifiedText = false
+  showVerifiedText = false,
+  showVerifyButton = true
 }) => {
   /* Handle dial code change */
   const handleDialCodeChange = useCallback((selectedValue: string) => {
@@ -90,16 +92,16 @@ const PhoneNumberField: React.FC<PhoneNumberFieldProps> = ({
 
   /* Get current dial code for display - ensure it matches an option value */
   const currentDialCode = value?.[0] || defaultDialCode;
-  
+
   console.log('PhoneNumberField - currentDialCode:', currentDialCode);
-  
+
   /* Find the matching option for the current dial code */
   const matchingOption = options.find(option => option.value === currentDialCode);
   console.log('PhoneNumberField - matchingOption:', matchingOption);
-  
-  /* Use option.value for ComboboxField value matching */
-  const comboboxValue = currentDialCode;
-  console.log('PhoneNumberField - comboboxValue (using dial code):', comboboxValue);
+
+  /* Use option.value for ComboboxField value matching, fallback to first option if no match */
+  const comboboxValue = matchingOption ? matchingOption.value : (options.length > 0 ? options[0].value : currentDialCode);
+  console.log('PhoneNumberField - comboboxValue:', comboboxValue);
   
   /* Get current phone number for display */
   const currentPhoneNumber = value?.[1] || '';
@@ -156,9 +158,9 @@ const PhoneNumberField: React.FC<PhoneNumberFieldProps> = ({
             onChange={handlePhoneNumberChange}
             onBlur={handleBlur}
             borderColor={isInValid ? 'red.500' : lighten(0.3, GRAY_COLOR)}
-            borderRadius={'none'}
+            borderRadius={showVerifyButton ? 'none' : undefined}
             borderLeft={'none'}
-            borderRight={'none'}
+            borderRight={showVerifyButton ? 'none' : undefined}
             placeholder={placeholder}
             disabled={disabled}
             readOnly={readOnly}
@@ -172,20 +174,22 @@ const PhoneNumberField: React.FC<PhoneNumberFieldProps> = ({
             }}
           />
         </InputGroup>
-        
+
         {/* Verify button */}
-        <Button 
-          h={'48px'} 
-          minW="100px"
-          bg={PRIMARY_COLOR} 
-          borderRightRadius={'md'}
-          borderLeftRadius={'none'}
-          onClick={onButtonClick}
-          disabled={disabled}
-          loading={buttonLoading}
-        >
-          {buttonText}
-        </Button>
+        {showVerifyButton && (
+          <Button
+            h={'48px'}
+            minW="100px"
+            bg={PRIMARY_COLOR}
+            borderRightRadius={'md'}
+            borderLeftRadius={'none'}
+            onClick={onButtonClick}
+            disabled={disabled}
+            loading={buttonLoading}
+          >
+            {buttonText}
+          </Button>
+        )}
       </Group>
     </Field>
   );

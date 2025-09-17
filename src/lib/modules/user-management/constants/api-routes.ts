@@ -4,16 +4,7 @@
 export const USER_API_ROUTES = {
   LIST: '/list',
   DETAILS: '/:id',
-  CREATE: '/create',
-  UPDATE: '/:id',
-  DELETE: '/:id',
-} as const
-
-/* Role API endpoints */
-export const ROLE_API_ROUTES = {
-  LIST: '/list',
-  DETAILS: '/:id',
-  CREATE: '/create',
+  CREATE: '',
   UPDATE: '/:id',
   DELETE: '/:id',
 } as const

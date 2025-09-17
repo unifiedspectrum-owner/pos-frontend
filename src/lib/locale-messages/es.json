@@ -172,5 +172,65 @@
         }
       }
     }
+  },
+  "RoleManagement": {
+    "title": "Gestión de Roles",
+    "buttons": {
+      "refresh": "Actualizar",
+      "add": "Agregar Rol"
+    },
+    "errors": {
+      "loadingRoles": "Error al Cargar Roles",
+      "fetchFailed": "Error al obtener roles"
+    },
+    "messages": {
+      "dataRefreshed": "Datos de roles actualizados exitosamente",
+      "dataFetched": "Datos de roles obtenidos exitosamente"
+    },
+    "breadcrumbs": {
+      "admin": "Administrador",
+      "roleManagement": "Gestión de Roles"
+    },
+    "table": {
+      "title": "Gestión de Roles",
+      "lastUpdated": "Última Actualización",
+      "search": {
+        "placeholder": "Buscar por nombre de rol o descripción..."
+      },
+      "headers": {
+        "serialNumber": "No.",
+        "name": "Nombre",
+        "description": "Descripción",
+        "usersCount": "Cantidad de Usuarios",
+        "actions": "Acciones"
+      },
+      "emptyState": {
+        "title": "No se Encontraron Roles",
+        "description": "Aún no se han creado roles.",
+        "filteredDescription": "Ningún rol coincide con sus criterios de búsqueda actuales."
+      },
+      "actions": {
+        "view": "Ver detalles del rol",
+        "edit": "Editar rol",
+        "delete": "Eliminar rol"
+      },
+      "deleteConfirmation": {
+        "title": "Eliminar Rol",
+        "message": "¿Está seguro de que desea eliminar el rol '{{roleName}}'? Esta acción no se puede deshacer y eliminará todos los datos asociados.",
+        "confirmText": "Eliminar Rol",
+        "cancelText": "Cancelar"
+      },
+      "toasts": {
+        "deleteSuccess": {
+          "title": "Rol Eliminado",
+          "description": "El rol '{{roleName}}' ha sido eliminado exitosamente."
+        },
+        "deleteError": {
+          "title": "Error al Eliminar Rol",
+          "description": "Ocurrió un error al eliminar el rol.",
+          "unexpectedError": "Ocurrió un error inesperado. Por favor, inténtelo de nuevo."
+        }
+      }
+    }
   }
 }

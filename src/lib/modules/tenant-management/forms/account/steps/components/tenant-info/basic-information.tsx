@@ -4,7 +4,7 @@ import { SimpleGrid, Flex, GridItem } from '@chakra-ui/react'
 import { Controller, Control, FieldErrors } from 'react-hook-form'
 
 /* Shared module imports */
-import { formatTimer } from '@shared/utils/formatting'
+import { formatTimer, getPhoneFieldErrorMessage } from '@shared/utils/formatting'
 import { createToastNotification } from '@shared/utils/ui'
 import { TextInputField, ComboboxField, PhoneNumberField } from '@shared/components/form-elements/ui'
 import { ComboboxOption } from '@shared/components/form-elements/ui/combobox-field'
@@ -122,22 +122,6 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
 
               }
               
-              /* Handle tuple validation errors for phone field */
-              const getPhoneErrorMessage = () => {
-                if (schemaKey === 'primary_phone' && fieldError) {
-                  console.log('Phone field error:', fieldError)
-                  /* Check if it's a tuple validation error */
-                  if (fieldError.message) {
-                    return fieldError.message
-                  }
-                  /* Check for nested errors in tuple elements */
-                  if (Array.isArray(fieldError) && fieldError.length > 0) {
-                    return fieldError[0]?.message || fieldError[1]?.message || "Invalid phone number"
-                  }
-                }
-                return fieldError?.message
-              }
-              
               /* Render email field with OTP functionality */
               if (schemaKey === 'primary_email' && que.type == "INPUT_WITH_BUTTON") {
                 return (
@@ -222,7 +206,7 @@ const BasicInformation: React.FC<BasicInformationProps> = ({
                               value={value}
                               onChange={field.onChange}
                               onBlur={field.onBlur}
-                              errorMessage={getPhoneErrorMessage()}
+                              errorMessage={getPhoneFieldErrorMessage(fieldError)}
                               readOnly={phoneVerification.isVerified || que.disabled}
                               disabled={phoneVerification.isVerified || isLoadingCountries || que.disabled}
                               options={dialCodeOptions}

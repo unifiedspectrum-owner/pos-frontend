@@ -14,7 +14,7 @@ interface SwitchFieldProps {
   value: boolean; /* Current switch state */
   isInValid: boolean; /* Whether field has validation errors */
   required: boolean; /* Whether field is required */
-  errorMessage: string; /* Error message to display */
+  errorMessage?: string; /* Error message to display */
   disabled?: boolean; /* Whether field is disabled */
   readOnly?: boolean; /* Whether field is read-only */
   onChange: (checked: boolean) => void; /* Value change handler */
@@ -38,27 +38,35 @@ const SwitchField: React.FC<SwitchFieldProps> = ({
 }) => {
   return (
     <Field label={label} invalid={isInValid} errorText={errorMessage} required={required}>
-      <Flex 
-        borderWidth={1} 
-        w={'100%'} 
-        h={'48px'} 
-        p={'12px'} 
+      <Flex
+        borderWidth={1}
+        w={'100%'}
+        h={'48px'}
+        p={'12px'}
         borderRadius={'2xl'}
         borderColor={lighten(0.3, GRAY_COLOR)}
         cursor={disabled ? 'not-allowed' : 'pointer'}
-        onClick={() => !disabled && onChange(!value)} /* Toggle value on click if not disabled */
+        onClick={(e) => {
+          e.preventDefault()
+          if (!disabled && !readOnly) {
+            onChange(!value)
+          }
+        }}
         _hover={!disabled ? {
           borderColor: GRAY_COLOR,
           bg: lighten(0.7, GRAY_COLOR)
         } : {}} /* Apply hover styles only when enabled */
         transition="all 0.2s"
       >
-        <Switch 
+        <Switch
           checked={value}
           disabled={disabled}
           readOnly={readOnly}
           name={name}
-          onCheckedChange={(details) => onChange(details.checked)}
+          onCheckedChange={(details) => {
+            onChange(details.checked)
+          }}
+          onClick={(e) => e.stopPropagation()}
         >
           {value ? activeText : inactiveText}
         </Switch>

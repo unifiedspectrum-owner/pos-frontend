@@ -1,7 +1,7 @@
 /* Tenant module imports */
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 import { CachedPaymentStatusData } from '@tenant-management/types/subscription'
-import { formatPhoneForAPI, parsePhoneFromAPI } from '../formatting/phone'
+import { formatPhoneForAPI, parsePhoneFromAPI } from '@shared/utils/formatting'
 import { TenantInfoFormData } from '../../schemas/account/creation'
 import { TenantAccountFormCacheData, TenantVerificationStatusCachedData } from '../../types/account/status'
 import { CreateAccountApiRequest } from '../../types/account/creation'

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Box, Flex, VStack, Button, Text } from '@chakra-ui/react';
 import { FaChartLine } from 'react-icons/fa';
-import { FiLayers, FiList, FiPlus, FiGrid, FiUsers } from 'react-icons/fi';
+import { FiLayers, FiList, FiPlus, FiGrid, FiUsers, FiShield } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
 import { IconType } from 'react-icons';
 
@@ -78,21 +78,41 @@ const menuItems: SidebarMenuItems[] = [
       },
     ]
   },
-  { 
-    id: 4, 
-    icon: FiUsers, 
+  {
+    id: 4,
+    icon: FiUsers,
     label: 'User Management',
     base_path: 'user-management',
     sub_menu_items: [
-      { 
-        id: 1, 
-        label: 'Manage Users', 
+      {
+        id: 1,
+        label: 'Manage Users',
         icon: FiList,
-        path: '/' 
+        path: '/'
       },
-      { 
-        id: 2, 
-        label: 'Create User', 
+      {
+        id: 2,
+        label: 'Create User',
+        icon: FiPlus,
+        path: '/create'
+      },
+    ]
+  },
+  {
+    id: 5,
+    icon: FiShield,
+    label: 'Role Management',
+    base_path: 'role-management',
+    sub_menu_items: [
+      {
+        id: 1,
+        label: 'Manage Roles',
+        icon: FiList,
+        path: '/'
+      },
+      {
+        id: 2,
+        label: 'Create Role',
         icon: FiPlus,
         path: '/create'
       },

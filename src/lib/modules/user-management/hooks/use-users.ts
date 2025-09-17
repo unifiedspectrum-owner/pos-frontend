@@ -7,7 +7,7 @@ import { handleApiError } from '@shared/utils'
 
 /* User module imports */
 import { userManagementService } from '@user-management/api'
-import { UserWithDetails } from '@user-management/types/users'
+import { UserAccountDetails } from '@/lib/modules/user-management/types/management'
 import { AxiosError } from 'axios'
 
 /* Hook interface */
@@ -18,7 +18,7 @@ interface UseUsersParams {
 }
 
 interface UseUsersReturn {
-  users: UserWithDetails[]
+  users: UserAccountDetails[]
   loading: boolean
   error: string | null
   lastUpdated: string
@@ -36,7 +36,7 @@ export const useUsers = (params: UseUsersParams = {}): UseUsersReturn => {
   } = params
 
   /* Hook state */
-  const [users, setUsers] = useState<UserWithDetails[]>([])
+  const [users, setUsers] = useState<UserAccountDetails[]>([])
   const [loading, setLoading] = useState<boolean>(autoFetch)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string>('')

@@ -1,20 +1,15 @@
 /* Tenant account creation validation schemas */
 
 /* External library imports */
+import { PhoneNumberSchema } from '@shared/schema/validation';
 import { z } from 'zod/v4';
-
-/* Phone number tuple validation schema */
-const PhoneSchema = z.tuple([
-  z.string().regex(/^\+\d{1,4}$/, "Invalid dial code"),  // First element
-  z.string().regex(/^\d{4,15}$/, "Invalid phone number"), // Second element
-]);
 
 /* Schema for creating new tenant account with complete business information */
 export const createTenantAccountSchema = z.object({
   company_name: z.string().min(1, 'Company name is required').max(200),
   contact_person: z.string().min(1, 'Contact Person name is required').max(200),
   primary_email: z.email('Valid email address is required'),
-  primary_phone: PhoneSchema,
+  primary_phone: PhoneNumberSchema,
   email_otp: z
     .string()
     .length(6, { message: "Email OTP must be 6 digits long" })

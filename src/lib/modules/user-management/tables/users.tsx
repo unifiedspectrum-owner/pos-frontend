@@ -19,14 +19,17 @@ import { GRAY_COLOR, PRIMARY_COLOR, ERROR_RED_COLOR } from '@shared/config'
 import { getStatusBadgeColor } from '@shared/utils'
 
 /* User module imports */
-import { UserWithDetails } from '@/lib/modules/user-management/types/users/management'
+import { UserAccountDetails } from '@/lib/modules/user-management/types/management'
 import { UserTableSkeleton } from '@user-management/components'
-import { useRoles, useUserOperations } from '@user-management/hooks'
+import { useUserOperations } from '@user-management/hooks'
 import { USER_PAGE_ROUTES, USER_STATUS_FILTER_OPTIONS } from '@user-management/constants'
+
+/* Role module imports */
+import { useRoles } from '@role-management/hooks'
 
 /* Component interfaces */
 interface UserTableProps {
-  users: UserWithDetails[]
+  users: UserAccountDetails[]
   lastUpdated: string
   onRefresh?: () => void
   onPageChange?: (page: number, limit: number) => void
@@ -68,7 +71,7 @@ const UserTable: React.FC<UserTableProps> = ({
         user.l_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesStatus = statusFilter === 'all' || user.user_status === statusFilter
-      const matchesRole = roleFilter === 'all' || user.role_code === roleFilter
+      const matchesRole = roleFilter === 'all' || user.role_details?.code === roleFilter
 
       return matchesSearch && matchesStatus && matchesRole
     })
@@ -229,7 +232,7 @@ const UserTable: React.FC<UserTableProps> = ({
                   <Text w="30%" textAlign={'center'}>{user.email}</Text>
 
                   <Text w="12%" textAlign={'center'}>
-                      {user.role_display_name || 'N/A'}
+                      {user.role_details?.display_name || 'N/A'}
                   </Text>
 
                   <Text w="15%" textAlign={'center'}>

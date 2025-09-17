@@ -9,7 +9,6 @@ import { Field } from '@/components/ui/field';
 
 /* Option structure for combobox dropdown */
 export interface ComboboxOption {
-  id: string
   value: string
   label: string
 }
@@ -51,9 +50,16 @@ const ComboboxField: React.FC<ComboboxFieldProps> = ({
 }) => {
   
   /* Normalize value to string for consistent handling */
-  const normalizedValue = Array.isArray(value) 
+  const normalizedValue = Array.isArray(value)
     ? value.filter(v => v !== '' && v !== null && v !== undefined)[0] || ''
     : value && value !== '' ? value : ''
+
+  console.log('ComboboxField - received value:', value)
+  console.log('ComboboxField - normalizedValue:', normalizedValue)
+
+  /* Find matching option */
+  const matchingOption = options.find(option => option.value === normalizedValue)
+  console.log('ComboboxField - matching option:', matchingOption)
 
   /* Filter functionality */
   const { contains } = useFilter({ sensitivity: "base" })
@@ -115,6 +121,7 @@ const ComboboxField: React.FC<ComboboxFieldProps> = ({
           name={name}
           openOnClick
           value={normalizedValue ? [normalizedValue] : []}
+          inputValue={matchingOption ? matchingOption.label : normalizedValue}
         >
         <Combobox.Control>
           <Combobox.Input
@@ -123,6 +130,7 @@ const ComboboxField: React.FC<ComboboxFieldProps> = ({
             borderColor={isInValid ? 'red.500' : lighten(0.3, GRAY_COLOR)}
             borderRadius={'md'}
             onKeyDown={handleKeyDown}
+            autoComplete="autocomplete" // for removing suggestion popup
             _hover={{
               borderColor: isInValid ? 'red.600' : lighten(0.2, GRAY_COLOR)
             }}

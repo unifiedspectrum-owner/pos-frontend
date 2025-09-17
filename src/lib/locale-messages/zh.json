@@ -171,5 +171,65 @@
         }
       }
     }
+  },
+  "RoleManagement": {
+    "title": "角色管理",
+    "buttons": {
+      "refresh": "刷新",
+      "add": "添加角色"
+    },
+    "errors": {
+      "loadingRoles": "加载角色时出错",
+      "fetchFailed": "获取角色失败"
+    },
+    "messages": {
+      "dataRefreshed": "角色数据刷新成功",
+      "dataFetched": "角色数据获取成功"
+    },
+    "breadcrumbs": {
+      "admin": "管理员",
+      "roleManagement": "角色管理"
+    },
+    "table": {
+      "title": "角色管理",
+      "lastUpdated": "最后更新",
+      "search": {
+        "placeholder": "按角色名称或描述搜索..."
+      },
+      "headers": {
+        "serialNumber": "序号",
+        "name": "名称",
+        "description": "描述",
+        "usersCount": "用户数量",
+        "actions": "操作"
+      },
+      "emptyState": {
+        "title": "未找到角色",
+        "description": "尚未创建任何角色。",
+        "filteredDescription": "没有角色匹配当前搜索条件。"
+      },
+      "actions": {
+        "view": "查看角色详情",
+        "edit": "编辑角色",
+        "delete": "删除角色"
+      },
+      "deleteConfirmation": {
+        "title": "删除角色",
+        "message": "您确定要删除角色 '{{roleName}}' 吗？此操作无法撤消，将删除所有相关数据。",
+        "confirmText": "删除角色",
+        "cancelText": "取消"
+      },
+      "toasts": {
+        "deleteSuccess": {
+          "title": "角色已删除",
+          "description": "角色 '{{roleName}}' 已成功删除。"
+        },
+        "deleteError": {
+          "title": "删除角色失败",
+          "description": "删除角色时发生错误。",
+          "unexpectedError": "发生意外错误，请重试。"
+        }
+      }
+    }
   }
 }

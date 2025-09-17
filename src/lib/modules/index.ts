@@ -6,3 +6,6 @@ export * from './tenant-management'
 
 /* User management module exports */
 export * from './user-management'
+
+/* Role management module exports */
+export * from './role-management'
