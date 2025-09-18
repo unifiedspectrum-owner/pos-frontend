@@ -1,13 +1,16 @@
 /* Libraries imports */
 import React from 'react'
 import { Flex, HStack } from '@chakra-ui/react'
-import { MdOutlineArrowBack, MdOutlineArrowForward } from 'react-icons/md'
+import { MdOutlineArrowBack, MdOutlineArrowForward, MdAdd, MdCancel } from 'react-icons/md'
+import { useRouter, useParams } from 'next/navigation'
 
 /* Shared module imports */
 import { PrimaryButton, SecondaryButton } from '@shared/components/form-elements'
 
 /* Role module imports */
-import { RoleFormTabType, ROLE_FORM_TABS } from '@role-management/constants'
+import { RoleFormTabType, ROLE_FORM_TABS, ROLE_PAGE_ROUTES } from '@role-management/constants'
+import { useFormMode } from './form-mode-context'
+import { FaRegEdit } from 'react-icons/fa'
 
 /* Role form actions component props */
 interface RoleFormActionsProps {
@@ -16,8 +19,6 @@ interface RoleFormActionsProps {
   onPrevious?: () => void
   currentTab: RoleFormTabType
   loading?: boolean
-  submitText?: string
-  loadingText?: string
 }
 
 /* Action buttons for role forms */
@@ -26,27 +27,49 @@ const RoleFormActions: React.FC<RoleFormActionsProps> = ({
   onNext,
   onPrevious,
   currentTab,
-  loading = false,
-  submitText = "Create Role",
-  loadingText = "Creating Role..."
+  loading = false
 }) => {
+  const { isViewMode, isCreateMode } = useFormMode() /* Get form mode from context */
+  const router = useRouter() /* Next.js router for navigation */
+  const params = useParams() /* Get URL parameters */
 
   /* Determine tab position internally */
   const isFirstTab = currentTab === ROLE_FORM_TABS[0].id
   const isLastTab = currentTab === ROLE_FORM_TABS[ROLE_FORM_TABS.length - 1].id
 
-  /* Generate button text based on current state */
+  /* Handle edit navigation for view mode */
+  const handleNavigation = () => {
+    if (isViewMode && isLastTab) {
+      /* Navigate to edit page using router and roleId from params */
+      const roleId = params.roleId as string
+      const editPath = ROLE_PAGE_ROUTES.EDIT.replace(':id', roleId)
+      router.push(editPath)
+    } else {
+      onNext?.()
+    }
+  }
+
+  /* Generate button text based on current state and mode */
   const getButtonText = () => {
-    if (isLastTab) {
-      return loading ? loadingText : submitText
+    if (isViewMode && isLastTab) {
+      return "Edit Role"
+    }
+    if (isLastTab && !isViewMode) {
+      if (loading) {
+        return isCreateMode ? "Creating Role..." : "Updating Role..."
+      }
+      return isCreateMode ? "Create Role" : "Update Role"
     }
     return "Next"
   }
 
   /* Generate button icon based on current state */
   const getButtonIcon = () => {
-    if (isLastTab) {
-      return undefined /* No icon for submit button */
+    if (isViewMode && isLastTab) {
+      return FaRegEdit /* Edit icon for view mode edit button */
+    }
+    if (isLastTab && !isViewMode) {
+      return isCreateMode ? MdAdd : FaRegEdit /* Add icon for create, edit icon for update */
     }
     return MdOutlineArrowForward /* Forward arrow for next */
   }
@@ -56,9 +79,10 @@ const RoleFormActions: React.FC<RoleFormActionsProps> = ({
       <HStack gap={3}>
         <SecondaryButton
           onClick={onCancel}
-          disabled={loading}
+          disabled={loading && !isViewMode}
+          leftIcon={MdCancel}
         >
-          Cancel
+          {isViewMode ? "Back to Roles" : "Cancel"}
         </SecondaryButton>
       </HStack>
 
@@ -68,19 +92,20 @@ const RoleFormActions: React.FC<RoleFormActionsProps> = ({
           <SecondaryButton
             onClick={onPrevious}
             leftIcon={MdOutlineArrowBack}
-            disabled={loading}
+            disabled={loading && !isViewMode}
           >
             Previous
           </SecondaryButton>
         )}
 
-        {/* Next/Submit button */}
+        {/* Next/Submit/Edit button */}
         <PrimaryButton
-          onClick={onNext}
-          rightIcon={getButtonIcon()}
-          loading={loading}
-          disabled={loading}
-          type={isLastTab ? "submit" : "button"}
+          onClick={handleNavigation}
+          rightIcon={!isLastTab ? getButtonIcon() : undefined}
+          leftIcon={isLastTab ? getButtonIcon() : undefined}
+          loading={loading && !isViewMode}
+          disabled={loading && !isViewMode}
+          type={isLastTab && !isViewMode ? "submit" : "button"}
         >
           {getButtonText()}
         </PrimaryButton>

@@ -1,5 +1,5 @@
 /* Libraries imports */
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FormProvider, UseFormReturn } from 'react-hook-form'
 import { Flex, Heading, Tabs, Text, HStack } from '@chakra-ui/react'
 import { lighten } from 'polished'
@@ -13,8 +13,9 @@ import { Breadcrumbs, FullPageLoader, ErrorMessageContainer } from '@shared/comp
 import { CreateRoleFormData, MODULE_ASSIGNMENTS_FIELD_KEYS, ROLE_INFO_FIELD_KEYS } from '@role-management/schemas'
 import { ROLE_FORM_TABS, RoleFormTabType, ROLE_TAB_IDS, ROLE_FORM_MODES, ROLE_FORM_TITLES, RoleFormMode } from '@role-management/constants'
 import { RoleInfoTab, ModuleAssignmentsTab } from '@role-management/forms/create/tabs'
-import { useTabValidation } from '@role-management/hooks'
+import { useTabValidation, useModules } from '@role-management/hooks'
 import { RoleFormActions } from '@role-management/forms/create/components'
+import { FormModeProvider } from './form-mode-context'
 
 /* Component props interface */
 interface RoleFormLayoutProps {
@@ -43,12 +44,22 @@ const RoleFormLayout: React.FC<RoleFormLayoutProps> = ({
   const [activeTab, setActiveTab] = useState<RoleFormTabType>(ROLE_TAB_IDS.ROLE_INFO)
   const [tabUnlockState, setTabUnlockState] = useState<Record<RoleFormTabType, boolean>>({
     [ROLE_TAB_IDS.ROLE_INFO]: true,
-    [ROLE_TAB_IDS.MODULE_ASSIGNMENTS]: false
+    [ROLE_TAB_IDS.MODULE_ASSIGNMENTS]: mode === ROLE_FORM_MODES.VIEW ? true : false
   })
 
   /* Get form methods for validation */
   const { getValues, trigger } = methods
-  const { validateRoleInfo, validateModuleAssignments } = useTabValidation(getValues);
+  const { validateRoleInfo, validateModuleAssignments } = useTabValidation(getValues)
+
+  /* Modules data management hook with caching */
+  const { modules, isLoading: modulesLoading, error: modulesError, fetchModules } = useModules()
+
+  /* Fetch modules when switching to module assignments tab */
+  useEffect(() => {
+    if (activeTab === ROLE_TAB_IDS.MODULE_ASSIGNMENTS) {
+      fetchModules();
+    }
+  }, [activeTab, fetchModules])
 
   /* Helper function to lock all tabs after a given index */
   const lockTabsAfterIndex = (fromIndex: number) => {
@@ -62,6 +73,11 @@ const RoleFormLayout: React.FC<RoleFormLayoutProps> = ({
   }
 
   const validateCurrentTab = () => {
+    /* Skip validation for view mode */
+    if (mode === ROLE_FORM_MODES.VIEW) {
+      return true
+    }
+
     /* Validate current tab before moving to next */
     let isCurrentTabValid = true
 
@@ -101,11 +117,23 @@ const RoleFormLayout: React.FC<RoleFormLayoutProps> = ({
   }
 
   /* Move to next tab with validation */
-  const handleNextTab = () => {
-    const isCurrentTabValid = validateCurrentTab()
+  const handleNextTab = async () => {
     const currentIndex = ROLE_FORM_TABS.findIndex(tab => tab.id === activeTab)
 
-    if (!isCurrentTabValid) {
+    /* Trigger form validation to populate errors object */
+    const isFormValid = await methods.trigger()
+    console.log("Form validation result:", isFormValid)
+    console.log("Form errors after trigger:", methods.formState.errors)
+
+    /* Check if current tab fields are valid */
+    let hasCurrentTabError = false
+    if (activeTab === ROLE_TAB_IDS.ROLE_INFO) {
+      hasCurrentTabError = ROLE_INFO_FIELD_KEYS.some(key => !!methods.formState.errors[key])
+    } else if (activeTab === ROLE_TAB_IDS.MODULE_ASSIGNMENTS) {
+      hasCurrentTabError = !!methods.formState.errors.module_assignments
+    }
+
+    if (hasCurrentTabError) {
       /* Lock all subsequent tabs when current tab validation fails */
       lockTabsAfterIndex(currentIndex)
       return;
@@ -117,7 +145,7 @@ const RoleFormLayout: React.FC<RoleFormLayoutProps> = ({
       setActiveTab(nextTab.id);
     }
 
-    if (activeTab === ROLE_FORM_TABS[ROLE_FORM_TABS.length - 1].id) {
+    if (activeTab === ROLE_FORM_TABS[ROLE_FORM_TABS.length - 1].id && isFormValid) {
       console.log("Coming to submit", methods.formState.errors)
       methods.handleSubmit(onSubmit)()
     }
@@ -149,85 +177,86 @@ const RoleFormLayout: React.FC<RoleFormLayoutProps> = ({
 
   return (
     <FormProvider {...methods}>
-      <Flex w="100%" flexDir="column">
-        {/* Responsive main container */}
-        <Flex flexDir="column" p={6} maxW="1400px" mx="auto" w="full" gap={4}>
-          {/* Page header section */}
-          <Flex flexDir="column" gap={1}>
-            <Heading as="h1" fontWeight="700" mb={0}>
-              {ROLE_FORM_TITLES[mode]}
-            </Heading>
-            <Breadcrumbs />
+      <FormModeProvider mode={mode}>
+        <Flex w="100%" flexDir="column">
+          {/* Responsive main container */}
+          <Flex flexDir="column" p={6} maxW="1400px" mx="auto" w="full" gap={4}>
+            {/* Page header section */}
+            <Flex flexDir="column" gap={1}>
+              <Heading as="h1" fontWeight="700" mb={0}>
+                {ROLE_FORM_TITLES[mode]}
+              </Heading>
+              <Breadcrumbs />
+            </Flex>
+
+            {/* Form content container with tabs */}
+            <Flex flexDir={'column'} gap={4} borderWidth={1} borderRadius={10} borderColor={lighten(0.3, GRAY_COLOR)}>
+              <Tabs.Root w="100%" value={activeTab} variant="outline" size="md"
+                onValueChange={(e) => handleTabChange(e.value as RoleFormTabType)}>
+
+                {/* Tab headers with unlock state */}
+                <HStack justify="space-between" align="center" mb={2}>
+                  <Tabs.List px={5} pt={5} borderBottomWidth={1} gap={1} borderColor={lighten(0.3, GRAY_COLOR)} flex={1}>
+                    {ROLE_FORM_TABS.map((item) => {
+                      const Icon = item.icon
+                      const isUnlocked = tabUnlockState[item.id]
+                      const isSelected = item.id === activeTab
+
+                      return (
+                        <Tabs.Trigger key={item.id} alignItems="center" justifyContent="space-between"
+                          h="60px" borderWidth={1} borderBottomWidth={isSelected ? 0 : 1}
+                          borderColor={lighten(0.3, GRAY_COLOR)} borderTopRadius={10} w="50%" p={5}
+                          value={item.id} disabled={!isUnlocked} opacity={isUnlocked ? 1 : 0.8}
+                          cursor={isUnlocked ? 'pointer' : 'not-allowed'}
+                          _hover={isUnlocked ? { bg: lighten(0.47, PRIMARY_COLOR) } : {}}>
+
+                          {/* Tab icon and label display */}
+                          <Flex align="center" justify="center" gap="5px">
+                            <Text fontSize="lg">
+                              <Icon color={isUnlocked ? PRIMARY_COLOR : lighten(0.3, GRAY_COLOR)} />
+                            </Text>
+                            <Text color={isUnlocked ? 'inherit' : lighten(0.3, GRAY_COLOR)}>
+                              {item.label}
+                            </Text>
+                          </Flex>
+
+                          {/* Lock icon for inaccessible tabs */}
+                          {!isUnlocked && <Text fontSize="md" color={GRAY_COLOR}><FaLock/></Text>}
+                        </Tabs.Trigger>
+                      )
+                    })}
+                  </Tabs.List>
+                </HStack>
+
+                {/* Individual tab content components */}
+                <Tabs.ContentGroup px={5} pb={5} borderTopWidth={0}>
+                  <Tabs.Content value={ROLE_TAB_IDS.ROLE_INFO} borderTopWidth={0}>
+                    <RoleInfoTab/>
+                  </Tabs.Content>
+
+                  <Tabs.Content value={ROLE_TAB_IDS.MODULE_ASSIGNMENTS} borderTopWidth={0}>
+                    <ModuleAssignmentsTab
+                      modules={modules}
+                      isLoading={modulesLoading}
+                      error={modulesError}
+                      onRetry={fetchModules}
+                    />
+                  </Tabs.Content>
+                </Tabs.ContentGroup>
+              </Tabs.Root>
+            </Flex>
+
+            {/* Action buttons section for all modes */}
+            <RoleFormActions
+              onCancel={onCancel}
+              onNext={handleNextTab}
+              onPrevious={handlePreviousTab}
+              currentTab={activeTab}
+              loading={isSubmitting}
+            />
           </Flex>
-
-          {/* Form content container with tabs */}
-          <Flex flexDir={'column'} gap={4} borderWidth={1} borderRadius={10} borderColor={lighten(0.3, GRAY_COLOR)}>
-            <Tabs.Root w="100%" value={activeTab} variant="outline" size="md"
-              onValueChange={(e) => handleTabChange(e.value as RoleFormTabType)}>
-
-              {/* Tab headers with unlock state */}
-              <HStack justify="space-between" align="center" mb={2}>
-                <Tabs.List px={5} pt={5} borderBottomWidth={1} gap={1} borderColor={lighten(0.3, GRAY_COLOR)} flex={1}>
-                  {ROLE_FORM_TABS.map((item) => {
-                    const Icon = item.icon
-                    const isUnlocked = tabUnlockState[item.id]
-                    const isSelected = item.id === activeTab
-
-                    return (
-                      <Tabs.Trigger key={item.id} alignItems="center" justifyContent="space-between"
-                        h="60px" borderWidth={1} borderBottomWidth={isSelected ? 0 : 1}
-                        borderColor={lighten(0.3, GRAY_COLOR)} borderTopRadius={10} w="50%" p={5}
-                        value={item.id} disabled={!isUnlocked} opacity={isUnlocked ? 1 : 0.8}
-                        cursor={isUnlocked ? 'pointer' : 'not-allowed'}
-                        _hover={isUnlocked ? { bg: lighten(0.47, PRIMARY_COLOR) } : {}}>
-
-                        {/* Tab icon and label display */}
-                        <Flex align="center" justify="center" gap="5px">
-                          <Text fontSize="lg">
-                            <Icon color={isUnlocked ? PRIMARY_COLOR : lighten(0.3, GRAY_COLOR)} />
-                          </Text>
-                          <Text color={isUnlocked ? 'inherit' : lighten(0.3, GRAY_COLOR)}>
-                            {item.label}
-                          </Text>
-                        </Flex>
-
-                        {/* Lock icon for inaccessible tabs */}
-                        {!isUnlocked && <Text fontSize="md" color={GRAY_COLOR}><FaLock/></Text>}
-                      </Tabs.Trigger>
-                    )
-                  })}
-                </Tabs.List>
-              </HStack>
-
-              {/* Individual tab content components */}
-              <Tabs.ContentGroup px={5} pb={5} borderTopWidth={0}>
-                <Tabs.Content value={ROLE_TAB_IDS.ROLE_INFO} borderTopWidth={0}>
-                  <RoleInfoTab/>
-                </Tabs.Content>
-
-                <Tabs.Content value={ROLE_TAB_IDS.MODULE_ASSIGNMENTS} borderTopWidth={0}>
-                  <ModuleAssignmentsTab/>
-                </Tabs.Content>
-              </Tabs.ContentGroup>
-            </Tabs.Root>
-          </Flex>
-
-          {/* Action buttons section */}
-          <RoleFormActions
-            onCancel={onCancel}
-            onNext={handleNextTab}
-            onPrevious={handlePreviousTab}
-            currentTab={activeTab}
-            loading={isSubmitting}
-            submitText={ mode === ROLE_FORM_MODES.CREATE 
-              ? 'Create Role' : mode === ROLE_FORM_MODES.EDIT 
-              ? 'Update Role' : 'Save Changes' }
-            loadingText={mode === ROLE_FORM_MODES.CREATE 
-              ? 'Creating Role...' : mode === ROLE_FORM_MODES.EDIT 
-              ? 'Updating Role...' : 'Saving...'}
-          />
         </Flex>
-      </Flex>
+      </FormModeProvider>
     </FormProvider>
   )
 }

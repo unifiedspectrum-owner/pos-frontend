@@ -11,8 +11,8 @@ export const createRoleSchema = z.object({
 
   code: z.string()
     .min(2, 'Role code must be at least 2 characters')
-    .max(20, 'Role code must not exceed 20 characters')
-    .regex(/^[A-Z_]+$/, 'Role code must contain only uppercase letters and underscores'),
+    .max(20, 'Role code must not exceed 20 characters'),
+    //.regex(/^[A-Z_]+$/, 'Role code must contain only uppercase letters and underscores'),
 
   display_name: z.string()
     .min(2, 'Display name must be at least 2 characters')
@@ -23,10 +23,10 @@ export const createRoleSchema = z.object({
     .max(500, 'Description cannot exceed 500 characters'),
 
   module_assignments: z.array(z.object({
-    module_id: z.string(),
+    module_id: z.string().min(1, 'Module ID is required'),
     can_create: z.boolean(),
     can_read: z.boolean(),
-    can_updated: z.boolean(),
+    can_update: z.boolean(),
     can_delete: z.boolean(),
   })),
 

@@ -1,7 +1,7 @@
 /* Role module imports */
-import { RoleCreationApiRequest, RoleCreationApiResponse, RoleDeletionApiResponse, RoleListApiResponse } from "@role-management/types"
+import { RoleCreationApiRequest, RoleCreationApiResponse, RoleDeletionApiResponse, RoleListApiResponse, RoleUpdationApiRequest, RoleUpdationApiResponse, RoleDetailsApiResponse, ModulesListApiResponse } from "@role-management/types"
 import { roleApiClient } from "@role-management/api/clients"
-import { ROLE_API_ROUTES } from "@role-management/constants"
+import { MODULE_API_ROUTES, ROLE_API_ROUTES } from "@role-management/constants"
 
 /* Service object containing role CRUD operations API methods */
 export const roleManagementService = {
@@ -22,6 +22,22 @@ export const roleManagementService = {
     }
   },
 
+   /* Get all roles with pagination and filtering */
+  async listAllModules(page?: number, limit?: number): Promise<ModulesListApiResponse> {
+    try {
+      const response = await roleApiClient.get<ModulesListApiResponse>(MODULE_API_ROUTES.LIST, {
+        params: {
+          page,
+          limit
+        }
+      })
+      return response.data
+    } catch (error) {
+      console.error('[RoleManagementService] Failed to list roles:', error)
+      throw error
+    }
+  },
+
   /* Create new role with provided data */
   async createRole(data: RoleCreationApiRequest): Promise<RoleCreationApiResponse> {
     try {
@@ -29,6 +45,28 @@ export const roleManagementService = {
       return response.data
     } catch (error) {
       console.error('[RoleManagementService] Failed to create role:', error)
+      throw error
+    }
+  },
+
+  /* Get role details by ID */
+  async getRoleDetails(roleId: string): Promise<RoleDetailsApiResponse> {
+    try {
+      const response = await roleApiClient.get<RoleDetailsApiResponse>(ROLE_API_ROUTES.DETAILS.replace(':id', roleId))
+      return response.data
+    } catch (error) {
+      console.error('[RoleManagementService] Failed to get role details:', error)
+      throw error
+    }
+  },
+
+  /* Update existing role with provided data */
+  async updateRole(roleId: string, data: RoleUpdationApiRequest): Promise<RoleUpdationApiResponse> {
+    try {
+      const response = await roleApiClient.put<RoleUpdationApiResponse>(ROLE_API_ROUTES.UPDATE.replace(':id', roleId), data)
+      return response.data
+    } catch (error) {
+      console.error('[RoleManagementService] Failed to update role:', error)
       throw error
     }
   },

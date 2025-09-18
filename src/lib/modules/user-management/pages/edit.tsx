@@ -11,7 +11,7 @@ import { parsePhoneFromAPI } from '@shared/utils/formatting/phone'
 import { createToastNotification } from '@shared/utils/ui/notifications'
 
 /* User module imports */
-import { UpdateUserFormData, updateUserSchema } from '@user-management/schemas'
+import { CreateUserFormData, createUserSchema } from '@user-management/schemas'
 import { useUserOperations } from '@user-management/hooks'
 import { USER_FORM_DEFAULT_VALUES, USER_PAGE_ROUTES } from '@user-management/constants'
 import { UserFormLayout, UserFormActions } from '@user-management/forms/create/components'
@@ -26,13 +26,13 @@ interface EditUserPageProps {
 const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
   const router = useRouter()
   const [fetchError, setFetchError] = useState<string | null>(null)
-  const [originalData, setOriginalData] = useState<UpdateUserFormData | null>(null)
+  const [originalData, setOriginalData] = useState<CreateUserFormData | null>(null)
   const [isFormReady, setIsFormReady] = useState(false)
   const { fetchUserDetails, userDetails, updateUser, isUpdating, isFetching } = useUserOperations()
 
   /* Form configuration with Zod validation schema */
-  const methods = useForm<UpdateUserFormData>({
-    resolver: zodResolver(updateUserSchema),
+  const methods = useForm<CreateUserFormData>({
+    resolver: zodResolver(createUserSchema),
     defaultValues: USER_FORM_DEFAULT_VALUES
   })
 
@@ -69,7 +69,7 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
       const parsedPhone = parsePhoneFromAPI(userDetails.phone)
 
       /* Prepare form data */
-      const formData: UpdateUserFormData = {
+      const formData: CreateUserFormData = {
         f_name: userDetails.f_name,
         l_name: userDetails.l_name,
         email: userDetails.email,
@@ -91,7 +91,7 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
 
 
   /* Handle form submission with change detection */
-  const onSubmit = async (data: UpdateUserFormData) => {
+  const onSubmit = async (data: CreateUserFormData) => {
     try {
       /* Detect what fields have changed using utility function */
       const changedFields = getChangedFields(data, originalData)
@@ -132,7 +132,7 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
   }
 
   return (
-    <UserFormLayout<UpdateUserFormData>
+    <UserFormLayout<CreateUserFormData>
       title="Edit User"
       isLoading={(isFetching && !fetchError) || !isFormReady}
       error={fetchError || (!isFetching && !userDetails ? 'User details not found' : null)}

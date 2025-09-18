@@ -9,10 +9,12 @@ import { TextInputField, TextAreaField, SwitchField } from '@shared/components/f
 /* Role module imports */
 import { CreateRoleFormData } from '@role-management/schemas'
 import { ROLE_CREATION_FORM_QUESTIONS } from '@role-management/constants'
+import { useFormMode } from '@role-management/forms/create/components'
 
 /* Dynamic role information form with field configuration */
 const RoleInfoTab: React.FC = () => {
   const { control, formState: { errors }, clearErrors } = useFormContext<CreateRoleFormData>() /* Form validation context */
+  const { isViewMode } = useFormMode() /* Form mode context */
 
   return (
     <SimpleGrid w={'100%'} columns={[1,6]} gap={6}>
@@ -28,11 +30,11 @@ const RoleInfoTab: React.FC = () => {
             name: schemaKey,
             label: field.label,
             placeholder: field.placeholder,
-            isInValid: !!fieldError,
-            required: field.is_required,
-            errorMessage: fieldError?.message,
-            readOnly: field.disabled,
-            disabled: field.disabled,
+            isInValid: !isViewMode && !!fieldError,
+            required: field.is_required && !isViewMode,
+            errorMessage: !isViewMode ? fieldError?.message : undefined,
+            readOnly: field.disabled || isViewMode,
+            disabled: field.disabled || isViewMode,
           }
 
           /* Render appropriate field type based on configuration */

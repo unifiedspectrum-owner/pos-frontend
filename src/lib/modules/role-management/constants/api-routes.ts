@@ -8,3 +8,8 @@ export const ROLE_API_ROUTES = {
   UPDATE: '/:id',
   DELETE: '/:id',
 } as const
+
+/* Module API endpoints */
+export const MODULE_API_ROUTES = {
+  LIST: '/modules/list',
+} as const

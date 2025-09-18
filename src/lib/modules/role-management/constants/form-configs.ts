@@ -66,3 +66,11 @@ export const ROLE_FORM_DEFAULT_VALUES: CreateRoleFormData = {
   module_assignments: []
 }
 
+/* CRUD permission options for module assignments */
+export const MODULE_PERMISSION_OPTIONS = [
+  { label: 'Create', value: 'can_create' },
+  { label: 'Read', value: 'can_read' },
+  { label: 'Update', value: 'can_update' },
+  { label: 'Delete', value: 'can_delete' }
+]
+
