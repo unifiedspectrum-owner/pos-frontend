@@ -1,4 +1,7 @@
 /* User management type exports */
 
-/* User management and CRUD operation types */
-export * from './management'
+/* Core user domain entities */
+export * from './entities'
+
+/* API request and response interfaces */
+export * from './api'

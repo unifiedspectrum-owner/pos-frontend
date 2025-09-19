@@ -1,3 +1,5 @@
+/* HTTP client configuration for user management API */
+
 /* External library imports */
 import axios from "axios"
 

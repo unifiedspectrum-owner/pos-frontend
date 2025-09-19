@@ -1,3 +1,5 @@
+/* Form utilities for user management module */
+
 /* Shared module imports */
 import { formatPhoneForAPI } from '@shared/utils/formatting'
 
@@ -6,7 +8,7 @@ import { CreateUserFormData, UpdateUserFormData } from '@user-management/schemas
 import { UserCreationApiRequest, UserUpdationApiRequest } from '@user-management/types'
 
 /* Role module imports */
-import { ModuleAssignments, RolePermission } from '@role-management/types'
+import { ModuleAssignment, RolePermission } from '@role-management/types'
 
 /* User module imports */
 import { UserPermissions } from '@user-management/types'
@@ -17,9 +19,9 @@ export const mergeRoleAndUserPermissions = (
   rolePermissions: RolePermission[],
   selectedRoleId?: string,
   originalRoleId?: string
-): ModuleAssignments[] => {
+): ModuleAssignment[] => {
   /* Create a map to track all modules from both sources */
-  const moduleMap = new Map<number, ModuleAssignments>()
+  const moduleMap = new Map<number, ModuleAssignment>()
 
   /* Get role permissions for the selected role */
   const currentRolePermissions = selectedRoleId && rolePermissions.length > 0
@@ -74,7 +76,7 @@ export const mergeRoleAndUserPermissions = (
 /* Convert UserPermissions to ModuleAssignments format for form population */
 export const convertPermissionsToModuleAssignments = (
   permissions: UserPermissions[]
-): ModuleAssignments[] => {
+): ModuleAssignment[] => {
   /* Group permissions by module_id to get unique modules */
   const moduleMap = new Map<number, UserPermissions>()
 
@@ -96,10 +98,10 @@ export const convertPermissionsToModuleAssignments = (
 
 /* Filter out role-based permissions to send only custom permissions */
 export const filterCustomPermissions = (
-  moduleAssignments: ModuleAssignments[],
+  moduleAssignments: ModuleAssignment[],
   rolePermissions: RolePermission[],
   selectedRoleId: string
-): ModuleAssignments[] => {
+): ModuleAssignment[] => {
   if (!selectedRoleId || !rolePermissions.length) {
     return moduleAssignments
   }
@@ -203,7 +205,7 @@ export const buildUpdateUserPayload = (
 }
 
 /* Generic field value type for form data */
-type FormFieldValue = string | number | boolean | [string, string] | ModuleAssignments[] | undefined
+type FormFieldValue = string | number | boolean | [string, string] | ModuleAssignment[] | undefined
 
 /* Record type for form data with string keys and form field values */
 type FormDataRecord = Record<string, FormFieldValue>

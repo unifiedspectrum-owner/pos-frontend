@@ -6,23 +6,23 @@ import { Flex } from '@chakra-ui/react'
 import { PrimaryButton, SecondaryButton } from '@shared/components/form-elements/buttons'
 
 /* Component props interface */
-interface UserFormActionsProps {
+interface UserNavigationButtonsProps {
   onCancel: () => void
   onSubmit: () => void
   loading: boolean
   disabled?: boolean
-  submitText: string
-  loadingText: string
+  submitText?: string
+  loadingText?: string
 }
 
-/* Shared actions component for user forms */
-const UserFormActions: React.FC<UserFormActionsProps> = ({
+/* Navigation and action buttons for user forms */
+const UserNavigationButtons: React.FC<UserNavigationButtonsProps> = ({
   onCancel,
   onSubmit,
   loading,
   disabled = false,
-  submitText,
-  loadingText
+  submitText = "Create User",
+  loadingText = "Creating User..."
 }) => {
   return (
     <Flex justify="space-between" mt={4}>
@@ -44,4 +44,4 @@ const UserFormActions: React.FC<UserFormActionsProps> = ({
   )
 }
 
-export default UserFormActions
+export default UserNavigationButtons

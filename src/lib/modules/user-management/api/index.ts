@@ -1,7 +1,7 @@
 /* User management API exports */
 
-/* HTTP clients for user management endpoints */
-export * from './clients'
+/* HTTP client for user management endpoints */
+export * from './client'
 
 /* API service methods for user operations */
 export * from './services'

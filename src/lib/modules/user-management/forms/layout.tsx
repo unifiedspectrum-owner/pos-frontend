@@ -10,14 +10,13 @@ import { Breadcrumbs, FullPageLoader, ErrorMessageContainer } from '@shared/comp
 
 /* User module imports */
 import { USER_FORM_SECTIONS } from '@user-management/constants'
-import { UserBasicInfo } from '@user-management/forms'
-import UserModuleAssignments from '@user-management/forms/create/module-assignments'
-import { UserFormActions } from '@user-management/forms/create/components'
+import { CreateUserFormData } from '@user-management/schemas'
+import { UserInfoSection, ModuleAssignmentsSection } from '@user-management/forms/sections'
+import { UserNavigationButtons } from '@user-management/forms'
 
 /* Role module imports */
 import { useModules, useRoles } from '@role-management/hooks'
-import { RolePermission, ModuleAssignments } from '@role-management/types'
-import { CreateUserFormData } from '../../../schemas'
+import { RolePermission, ModuleAssignment } from '@role-management/types'
 
 /* Component props interface */
 interface UserFormLayoutProps {
@@ -32,11 +31,11 @@ interface UserFormLayoutProps {
   isRetrying?: boolean
   submitText?: string
   loadingText?: string
-  userPermissionsFromAPI?: ModuleAssignments[]
+  userPermissionsFromAPI?: ModuleAssignment[]
 }
 
-/* Shared layout component for user forms */
-const UserFormLayout =({
+/* Main layout component for user forms */
+const UserFormLayout: React.FC<UserFormLayoutProps> = ({
   title,
   isLoading = false,
   error = null,
@@ -48,19 +47,18 @@ const UserFormLayout =({
   submitText = "Create User",
   loadingText = "Creating User...",
   userPermissionsFromAPI = [],
-}: UserFormLayoutProps) => {
+}) => {
   /* Modules data management hook with caching */
   const { modules, isLoading: modulesLoading, error: modulesError, fetchModules } = useModules()
 
   /* Role permissions management hook */
-  const { 
-    roleSelectOptions, loading: rolesLoading, error: rolesError, 
-    rolePermissions, permissionsLoading, permissionsError, fetchRolePermissions 
+  const {
+    roleSelectOptions, loading: rolesLoading, error: rolesError,
+    rolePermissions, permissionsLoading, permissionsError, fetchRolePermissions
   } = useRoles()
 
   /* Watch for role selection changes */
   const selectedRoleId = methods.watch('role_id')
-
 
   /* Fetch modules on component mount */
   useEffect(() => {
@@ -105,7 +103,7 @@ const UserFormLayout =({
           <Flex p={5} gap={4} borderWidth={1} borderRadius={10} borderColor={lighten(0.3, GRAY_COLOR)}>
             <Flex flexDir={'column'} gap={2} w={'40%'}>
               <Heading>{USER_FORM_SECTIONS.BASIC_INFO}</Heading>
-              <UserBasicInfo
+              <UserInfoSection
                 roleSelectOptions={roleSelectOptions}
                 rolesLoading={rolesLoading}
               />
@@ -114,7 +112,7 @@ const UserFormLayout =({
             {/* Module Assignments Section */}
             <Flex flexDir={'column'} gap={2} w={'60%'}>
               <Heading>{USER_FORM_SECTIONS.MODULE_ASSIGNMENTS}</Heading>
-              <UserModuleAssignments
+              <ModuleAssignmentsSection
                 modules={modules}
                 isLoading={modulesLoading}
                 error={modulesError}
@@ -128,8 +126,8 @@ const UserFormLayout =({
             </Flex>
           </Flex>
 
-          {/* Action buttons section */}
-          <UserFormActions
+          {/* Navigation buttons section */}
+          <UserNavigationButtons
             onCancel={onCancel}
             onSubmit={() => methods.handleSubmit((data) => onSubmit(data, rolePermissions))()}
             loading={isSubmitting}

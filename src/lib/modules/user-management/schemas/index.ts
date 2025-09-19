@@ -1,4 +1,4 @@
 /* User management schema exports */
 
-/* User-related validation schemas */
-export * from './lifecycle';
+/* Form validation schemas */
+export * from './forms';

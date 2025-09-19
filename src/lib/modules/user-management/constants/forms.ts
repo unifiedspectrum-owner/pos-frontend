@@ -1,9 +1,11 @@
+/* Form configuration constants for user management module */
+
 /* Libraries imports */
 import { IconType } from 'react-icons'
 import { CreateUserFormData } from '../schemas'
 import { FaUser, FaEnvelope, FaUserShield, FaToggleOn } from 'react-icons/fa'
 import { FiPhone } from 'react-icons/fi'
-import { FormFieldStructure } from '@/lib/shared/types'
+import { FormFieldStructure } from '@shared/types'
 
 /* User creation tab type */
 export type UserCreationTabType = 'basic_info'

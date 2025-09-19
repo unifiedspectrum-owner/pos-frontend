@@ -14,13 +14,13 @@ import { USER_CREATION_FORM_QUESTIONS } from '@user-management/constants'
 import { getPhoneFieldErrorMessage } from '@/lib/shared/utils/formatting'
 
 /* Component props interface */
-interface UserBasicInfoProps {
+interface UserInfoSectionProps {
   roleSelectOptions: Array<{ label: string; value: string }>
   rolesLoading: boolean
 }
 
 /* Dynamic user information form with role selection */
-const UserBasicInfo: React.FC<UserBasicInfoProps> = ({ roleSelectOptions, rolesLoading }) => {
+const UserInfoSection: React.FC<UserInfoSectionProps> = ({ roleSelectOptions, rolesLoading }) => {
   const { control, formState: { errors } } = useFormContext<CreateUserFormData | UpdateUserFormData>() /* Form validation context */
   const { dialCodeOptions } = useCountries() /* Country dial codes for phone field */
 
@@ -100,7 +100,7 @@ const UserBasicInfo: React.FC<UserBasicInfoProps> = ({ roleSelectOptions, rolesL
                         {...commonProps}
                         value={field.value?.toString() || ''}
                         onChange={(value) => {
-                          console.log('[UserBasicInfo] Role selection changed to:', value)
+                          console.log('[UserInfoSection] Role selection changed to:', value)
                           field.onChange(value)
                         }}
                         options={rolesLoading ? [] : roleSelectOptions} /* Load roles dynamically */
@@ -138,4 +138,4 @@ const UserBasicInfo: React.FC<UserBasicInfoProps> = ({ roleSelectOptions, rolesL
   )
 }
 
-export default UserBasicInfo
+export default UserInfoSection

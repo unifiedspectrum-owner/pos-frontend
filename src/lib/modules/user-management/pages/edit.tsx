@@ -15,7 +15,7 @@ import { CreateUserFormData, createUserSchema } from '@user-management/schemas'
 import { useUserOperations } from '@user-management/hooks'
 import { USER_FORM_DEFAULT_VALUES, USER_PAGE_ROUTES } from '@user-management/constants'
 import { UserFormLayout } from '@user-management/forms/create/components'
-import { buildUpdateUserPayload, getChangedFields, mergeRoleAndUserPermissions, convertPermissionsToModuleAssignments } from '@user-management/utils/form'
+import { buildUpdateUserPayload, getChangedFields, mergeRoleAndUserPermissions, convertPermissionsToModuleAssignments } from '@user-management/utils'
 
 /* Role module imports */
 import { RolePermission } from '@role-management/types'

@@ -1,3 +1,5 @@
+/* Form validation schemas for user management */
+
 /* Shared module imports */
 import { PhoneNumberSchema } from "@shared/schema/validation";
 import z from "zod/v4";
@@ -35,44 +37,7 @@ export const createUserSchema = z.object({
 });
 
 /* Schema for updating existing user */
-export const updateUserSchema = z.object({
-  /* Basic user information - all optional for partial updates */
-  f_name: z.string()
-    .min(1, 'First name cannot be empty')
-    .max(100, 'First name cannot exceed 100 characters')
-    .regex(/^[a-zA-Z\s'-]+$/, 'First name contains invalid characters')
-    .optional(),
-
-  l_name: z.string()
-    .min(1, 'Last name cannot be empty')
-    .max(100, 'Last name cannot exceed 100 characters')
-    .regex(/^[a-zA-Z\s'-]+$/, 'Last name contains invalid characters')
-    .optional(),
-
-  email: z
-    .email('Invalid email format')
-    .max(255, 'Email cannot exceed 255 characters')
-    .toLowerCase()
-    .optional(),
-
-  phone: PhoneNumberSchema.optional(),
-
-  /* Role assignment */
-  role_id: z.string()
-    .min(1, 'Role ID must be an integer')
-    .optional(),
-
-  module_assignments: z.array(z.object({
-    module_id: z.string().min(1, 'Module ID is required'),
-    can_create: z.boolean(),
-    can_read: z.boolean(),
-    can_update: z.boolean(),
-    can_delete: z.boolean(),
-  })).optional(),
-
-  /* User account status management */
-  is_active: z.boolean().default(true).optional()
-}).refine(
+export const updateUserSchema = createUserSchema.partial().refine(
   (data) => Object.keys(data).length > 0,
   { message: 'At least one field must be provided for update' }
 );

@@ -1,6 +1,26 @@
+/* Filter options and field configurations for user management module */
+
 /* Libraries imports */
 import { IconType } from 'react-icons'
 import { FaUser, FaEnvelope, FaPhoneAlt, FaCalendarAlt, FaCheckCircle, FaTimesCircle, FaKey, FaDesktop, FaSignInAlt, FaLock, FaExclamationTriangle, FaUserShield, FaGlobe, FaFingerprint } from 'react-icons/fa'
+
+/* Filter options constants */
+
+/* User status filter options */
+export const USER_STATUS_FILTER_OPTIONS = [
+  { label: 'All Users', value: 'all' },
+  { label: 'Active', value: 'active' },
+  { label: 'Inactive', value: 'inactive' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'Suspended', value: 'suspended' }
+] as const
+
+/* User role filter options (will be populated dynamically from API) */
+export const USER_ROLE_FILTER_BASE_OPTIONS = [
+  { label: 'All Roles', value: 'all' }
+] as const
+
+/* Field configuration interfaces */
 
 /* User details field configuration interface */
 export interface UserDetailsFieldConfig {
@@ -33,7 +53,6 @@ export const USER_DETAILS_TAB = {
   STATISTICS_INFO: 'statistics_info',
   PERMISSIONS_INFO: 'permissions'
 } as const satisfies Record<string, UserDetailsTabType>
-
 
 /* Tab configuration for user details view */
 export const USER_DETAILS_TABS: UserDetailsTabConfig[] = [

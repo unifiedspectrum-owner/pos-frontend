@@ -2,13 +2,13 @@
 import { useState, useCallback } from 'react'
 
 /* Shared module imports */
-import { handleApiError } from '@shared/utils'
+import { handleApiError } from '@shared/utils/api'
 import { createToastNotification } from '@shared/utils/ui/notifications'
 import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 
 /* User module imports */
 import { userManagementService } from '@user-management/api'
-import { UserAccountDetails, UserAccountStatistics, UserPermissions, UserCreationApiRequest, UserUpdationApiRequest } from '@/lib/modules/user-management/types/management'
+import { UserAccountDetails, UserAccountStatistics, UserPermissions, UserCreationApiRequest, UserUpdationApiRequest } from '@user-management/types'
 import { AxiosError } from 'axios'
 
 /* Hook interface */

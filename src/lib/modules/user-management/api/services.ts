@@ -1,6 +1,8 @@
+/* User management API service methods */
+
 /* User module imports */
-import { UserBasicDetailsApiResponse, UserCreationApiRequest, UserCreationApiResponse, UserDeletionApiResponse, UserDetailsApiResponse, UserListApiResponse, UserUpdationApiResponse, UserUpdationApiRequest } from "@/lib/modules/user-management/types/management"
-import { userApiClient } from "@user-management/api/clients"
+import { UserBasicDetailsApiResponse, UserCreationApiRequest, UserCreationApiResponse, UserDeletionApiResponse, UserDetailsApiResponse, UserListApiResponse, UserUpdationApiResponse, UserUpdationApiRequest } from "@user-management/types"
+import { userApiClient } from "@user-management/api/client"
 import { USER_API_ROUTES } from "@user-management/constants"
 
 /* User management service with CRUD operations */

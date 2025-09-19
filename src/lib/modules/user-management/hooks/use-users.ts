@@ -7,7 +7,7 @@ import { handleApiError } from '@shared/utils'
 
 /* User module imports */
 import { userManagementService } from '@user-management/api'
-import { UserAccountDetails } from '@/lib/modules/user-management/types/management'
+import { UserAccountDetails } from '@user-management/types'
 import { AxiosError } from 'axios'
 
 /* Hook interface */
