@@ -1,7 +1,7 @@
 /* Role management API exports */
 
-/* API clients for role management endpoints */
-export * from './clients'
+/* HTTP client for role management endpoints */
+export * from './client'
 
-/* API services for role management operations */
+/* API service methods for role operations */
 export * from './services'

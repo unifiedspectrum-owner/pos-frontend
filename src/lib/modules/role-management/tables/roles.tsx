@@ -63,7 +63,6 @@ const RoleTable: React.FC<RoleTableProps> = ({
 
     return roles.filter(role => {
       const matchesSearch = role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        role.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         role.description.toLowerCase().includes(searchTerm.toLowerCase())
 
       const roleStatus = role.is_active ? ROLE_STATUS.ACTIVE : ROLE_STATUS.INACTIVE
@@ -94,7 +93,7 @@ const RoleTable: React.FC<RoleTableProps> = ({
     setDeleteConfirm({
       show: true,
       roleId,
-      roleName: role ? (role.display_name || role.name) : 'Selected Role'
+      roleName: role ? role.name : 'Selected Role'
     })
   }, [roles])
 
@@ -216,7 +215,7 @@ const RoleTable: React.FC<RoleTableProps> = ({
                   onClick={() => handleRoleRowClick(role.id)}
                 >
                   <Text w="8%" textAlign="center">{index + 1}</Text>
-                  <Text w="20%" fontWeight="medium">{role.display_name || role.name}</Text>
+                  <Text w="20%" fontWeight="medium">{role.name}</Text>
                   <Text w="35%">{role.description}</Text>
 
                   <Text w="12%" textAlign={'center'}>

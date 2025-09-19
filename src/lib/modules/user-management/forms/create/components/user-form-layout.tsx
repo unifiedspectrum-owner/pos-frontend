@@ -1,6 +1,6 @@
 /* Libraries imports */
-import React from 'react'
-import { FormProvider, UseFormReturn, FieldValues } from 'react-hook-form'
+import React, { useEffect } from 'react'
+import { FormProvider, UseFormReturn } from 'react-hook-form'
 import { Flex, Heading } from '@chakra-ui/react'
 import { lighten } from 'polished'
 
@@ -11,37 +11,78 @@ import { Breadcrumbs, FullPageLoader, ErrorMessageContainer } from '@shared/comp
 /* User module imports */
 import { USER_FORM_SECTIONS } from '@user-management/constants'
 import { UserBasicInfo } from '@user-management/forms'
+import UserModuleAssignments from '@user-management/forms/create/module-assignments'
+import { UserFormActions } from '@user-management/forms/create/components'
+
+/* Role module imports */
+import { useModules, useRoles } from '@role-management/hooks'
+import { RolePermission, ModuleAssignments } from '@role-management/types'
+import { CreateUserFormData } from '../../../schemas'
 
 /* Component props interface */
-interface UserFormLayoutProps<TFormData extends FieldValues = FieldValues> {
+interface UserFormLayoutProps {
   title: string
   isLoading?: boolean
   error?: string | null
-  methods: UseFormReturn<TFormData>
-  actions: React.ReactNode
+  methods: UseFormReturn<CreateUserFormData>
+  onSubmit: (data: CreateUserFormData, rolePermissions?: RolePermission[]) => void
+  onCancel: () => void
+  isSubmitting?: boolean
   onRetry?: () => void
   isRetrying?: boolean
+  submitText?: string
+  loadingText?: string
+  userPermissionsFromAPI?: ModuleAssignments[]
 }
 
 /* Shared layout component for user forms */
-const UserFormLayout = <TFormData extends FieldValues = FieldValues>({
+const UserFormLayout =({
   title,
   isLoading = false,
   error = null,
   onRetry,
   methods,
-  actions
-}: UserFormLayoutProps<TFormData>) => {
+  onSubmit,
+  onCancel,
+  isSubmitting = false,
+  submitText = "Create User",
+  loadingText = "Creating User...",
+  userPermissionsFromAPI = [],
+}: UserFormLayoutProps) => {
+  /* Modules data management hook with caching */
+  const { modules, isLoading: modulesLoading, error: modulesError, fetchModules } = useModules()
+
+  /* Role permissions management hook */
+  const { 
+    roleSelectOptions, loading: rolesLoading, error: rolesError, 
+    rolePermissions, permissionsLoading, permissionsError, fetchRolePermissions 
+  } = useRoles()
+
+  /* Watch for role selection changes */
+  const selectedRoleId = methods.watch('role_id')
+
+
+  /* Fetch modules on component mount */
+  useEffect(() => {
+    fetchModules();
+  }, [fetchModules])
+
+  /* Fetch role permissions when component mounts */
+  useEffect(() => {
+    fetchRolePermissions();
+  }, [fetchRolePermissions])
+
   /* Loading state display */
-  if (isLoading) {
+  if (isLoading || rolesLoading) {
     return <FullPageLoader />
   }
 
   /* Error state display */
-  if (error) {
+  if (error || rolesError) {
+    const displayError = error || rolesError
     return (
       <ErrorMessageContainer
-        error={error}
+        error={displayError}
         onRetry={onRetry}
       />
     )
@@ -60,16 +101,41 @@ const UserFormLayout = <TFormData extends FieldValues = FieldValues>({
             <Breadcrumbs />
           </Flex>
 
-          {/* Form content container */}
-          <Flex flexDir={'column'} p={5} gap={4} borderWidth={1} borderRadius={10} borderColor={lighten(0.3, GRAY_COLOR)}>
-            <Heading>{USER_FORM_SECTIONS.BASIC_INFO}</Heading>
-            <Flex>
-              <UserBasicInfo />
+          {/* User Information Section */}
+          <Flex p={5} gap={4} borderWidth={1} borderRadius={10} borderColor={lighten(0.3, GRAY_COLOR)}>
+            <Flex flexDir={'column'} gap={2} w={'40%'}>
+              <Heading>{USER_FORM_SECTIONS.BASIC_INFO}</Heading>
+              <UserBasicInfo
+                roleSelectOptions={roleSelectOptions}
+                rolesLoading={rolesLoading}
+              />
+            </Flex>
+
+            {/* Module Assignments Section */}
+            <Flex flexDir={'column'} gap={2} w={'60%'}>
+              <Heading>{USER_FORM_SECTIONS.MODULE_ASSIGNMENTS}</Heading>
+              <UserModuleAssignments
+                modules={modules}
+                isLoading={modulesLoading}
+                error={modulesError}
+                onRetry={fetchModules}
+                rolePermissions={rolePermissions}
+                permissionsLoading={permissionsLoading}
+                permissionsError={permissionsError}
+                selectedRoleId={selectedRoleId}
+                userPermissionsFromAPI={userPermissionsFromAPI}
+              />
             </Flex>
           </Flex>
 
           {/* Action buttons section */}
-          {actions}
+          <UserFormActions
+            onCancel={onCancel}
+            onSubmit={() => methods.handleSubmit((data) => onSubmit(data, rolePermissions))()}
+            loading={isSubmitting}
+            submitText={submitText}
+            loadingText={loadingText}
+          />
         </Flex>
       </Flex>
     </FormProvider>

@@ -23,6 +23,14 @@ export const createUserSchema = z.object({
 
   role_id: z.string().min(1, 'Role selection is required'),
 
+  module_assignments: z.array(z.object({
+    module_id: z.string().min(1, 'Module ID is required'),
+    can_create: z.boolean(),
+    can_read: z.boolean(),
+    can_update: z.boolean(),
+    can_delete: z.boolean(),
+  })).optional(),
+
   is_active: z.boolean(),
 });
 
@@ -53,6 +61,14 @@ export const updateUserSchema = z.object({
   role_id: z.string()
     .min(1, 'Role ID must be an integer')
     .optional(),
+
+  module_assignments: z.array(z.object({
+    module_id: z.string().min(1, 'Module ID is required'),
+    can_create: z.boolean(),
+    can_read: z.boolean(),
+    can_update: z.boolean(),
+    can_delete: z.boolean(),
+  })).optional(),
 
   /* User account status management */
   is_active: z.boolean().default(true).optional()

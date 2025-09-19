@@ -21,6 +21,7 @@ export const USER_FORM_DEFAULT_VALUES: CreateUserFormData = {
   email: '',
   phone: ['+91', ''],
   role_id: '',
+  module_assignments: [],
   is_active: true,
 }
 
@@ -41,6 +42,7 @@ export const USER_CREATION_TABS: UserCreationTabConfig[] = [
 /* Section heading constants */
 export const USER_FORM_SECTIONS = {
   BASIC_INFO: "User Information",
+  MODULE_ASSIGNMENTS: "Module Permissions",
 } as const
 
 /* User creation form field configurations */
@@ -56,7 +58,7 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
     is_active: true,
     display_order: 1,
     grid: {
-      col_span: 2
+      col_span: 3
     }
   },
   {
@@ -70,7 +72,7 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
     is_active: true,
     display_order: 2,
     grid: {
-      col_span: 2
+      col_span: 3
     }
   },
   {
@@ -84,39 +86,11 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
     is_active: true,
     display_order: 3,
     grid: {
-      col_span: 2
+      col_span: 3
     }
   },
   {
     id: 4,
-    type: "INPUT",
-    label: "Email Address",
-    schema_key: "email",
-    placeholder: "Enter email address",
-    left_icon: FaEnvelope,
-    is_required: true,
-    is_active: true,
-    display_order: 4,
-    grid: {
-      col_span: 2
-    }
-  },
-  {
-    id: 5,
-    type: "PHONE_NUMBER",
-    label: "Phone Number",
-    schema_key: "phone",
-    placeholder: "Enter phone number",
-    left_icon: FiPhone,
-    is_required: true,
-    is_active: true,
-    display_order: 5,
-    grid: {
-      col_span: 2
-    }
-  },
-  {
-    id: 6,
     type: "TOGGLE",
     label: "Account Status",
     schema_key: "is_active",
@@ -124,13 +98,41 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
     left_icon: FaToggleOn,
     is_required: false,
     is_active: true,
-    display_order: 6,
+    display_order: 4,
     toggle_text: {
       true: "Active",
       false: "Inactive"
     },
     grid: {
-      col_span: 2
+      col_span: 3
+    }
+  },
+  {
+    id: 5,
+    type: "INPUT",
+    label: "Email Address",
+    schema_key: "email",
+    placeholder: "Enter email address",
+    left_icon: FaEnvelope,
+    is_required: true,
+    is_active: true,
+    display_order: 5,
+    grid: {
+      col_span: 3
+    }
+  },
+  {
+    id: 6,
+    type: "PHONE_NUMBER",
+    label: "Phone Number",
+    schema_key: "phone",
+    placeholder: "Enter phone number",
+    left_icon: FiPhone,
+    is_required: true,
+    is_active: true,
+    display_order: 6,
+    grid: {
+      col_span: 3
     }
   }
 ]

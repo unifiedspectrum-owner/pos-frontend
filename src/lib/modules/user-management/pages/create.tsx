@@ -10,8 +10,11 @@ import { useRouter } from 'next/navigation'
 import { CreateUserFormData, createUserSchema } from '@user-management/schemas'
 import { useUserOperations } from '@user-management/hooks'
 import { USER_FORM_DEFAULT_VALUES, USER_PAGE_ROUTES } from '@user-management/constants'
-import { UserFormLayout, UserFormActions } from '@user-management/forms/create/components'
+import { UserFormLayout } from '@user-management/forms/create/components'
 import { buildCreateUserPayload } from '@user-management/utils/form'
+
+/* Role module imports */
+import { RolePermission } from '@role-management/types'
 
 /* User creation page with shared components */
 const CreateUserPage: React.FC = () => {
@@ -24,15 +27,14 @@ const CreateUserPage: React.FC = () => {
     defaultValues: USER_FORM_DEFAULT_VALUES
   })
 
-  const { handleSubmit } = methods
-
   /* Handle form submission with API call and navigation */
-  const onSubmit = async (data: CreateUserFormData) => {
+  const onSubmit = async (data: CreateUserFormData, rolePermissions?: RolePermission[]) => {
     try {
-      /* Build payload using utility function */
-      const payload = buildCreateUserPayload(data)
+      /* Build payload using utility function with role permissions filtering */
+      const payload = buildCreateUserPayload(data, rolePermissions)
 
       console.log('Form data before submission:', data)
+      console.log('Role permissions:', rolePermissions)
       console.log('Payload being sent:', payload)
 
       const success = await createUser(payload) /* Submit user creation request */
@@ -51,18 +53,12 @@ const CreateUserPage: React.FC = () => {
   }
 
   return (
-    <UserFormLayout<CreateUserFormData>
+    <UserFormLayout
       title="Create New User"
       methods={methods}
-      actions={
-        <UserFormActions
-          onCancel={handleCancel}
-          onSubmit={handleSubmit(onSubmit)}
-          loading={isCreating}
-          submitText="Create User"
-          loadingText="Creating User..."
-        />
-      }
+      onSubmit={onSubmit}
+      onCancel={handleCancel}
+      isSubmitting={isCreating}
     />
   )
 }

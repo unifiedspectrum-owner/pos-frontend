@@ -1,13 +1,13 @@
 /* Libraries imports */
 import { useState, useCallback, useRef } from 'react'
+import { AxiosError } from 'axios'
 
 /* Shared module imports */
-import { handleApiError } from '@shared/utils'
+import { handleApiError } from '@shared/utils/api'
 
 /* Role module imports */
 import { roleManagementService } from '@role-management/api'
 import { Module } from '@role-management/types'
-import { AxiosError } from 'axios'
 
 /* Hook interface */
 interface UseModulesReturn {

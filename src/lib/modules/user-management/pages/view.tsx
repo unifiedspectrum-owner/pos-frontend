@@ -16,6 +16,9 @@ import { getStatusBadgeColor } from '@shared/utils/ui/badge-colors'
 import { useUserOperations } from '@user-management/hooks'
 import { USER_DETAILS_TABS, USER_DETAILS, UserDetailsTabType, USER_DETAILS_TAB } from '@user-management/constants'
 
+/* Role module imports */
+import { useRoles, useModules } from '@role-management/hooks'
+
 /* Component props interface */
 interface UserDetailsPageProps {
   userId: string
@@ -25,6 +28,10 @@ interface UserDetailsPageProps {
 const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ userId }) => {
   /* User operations hook for data fetching */
   const { fetchUserDetails, userDetails: user_details, userStatistics: user_statistics, permissions, isFetching, fetchError } = useUserOperations()
+
+  /* Role permissions and modules hooks */
+  const { rolePermissions, fetchRolePermissions } = useRoles()
+  const { modules, fetchModules } = useModules()
 
   /* Active tab state management */
   const [activeTab, setActiveTab] = useState<UserDetailsTabType>(USER_DETAILS_TAB.PROFILE_INFO)
@@ -50,12 +57,87 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ userId }) => {
     setActiveTab(e.value as UserDetailsTabType)
   }, [])
 
+  /* Memoized merged permissions data combining user and role permissions */
+  const mergedPermissions = useMemo(() => {
+    if (!user_details?.role_details || !modules.length || !rolePermissions.length) {
+      return []
+    }
+
+    const userRoleId = user_details.role_details.id.toString()
+    const userRolePermissions = rolePermissions.filter(
+      rp => rp.role_id.toString() === userRoleId
+    )
+
+    /* Create merged permissions for each module that has either role or user permissions */
+    const permissionsMap = new Map()
+
+    /* Add role permissions */
+    userRolePermissions.forEach(rolePerm => {
+      const moduleData = modules.find(m => m.id === rolePerm.module_id)
+      if (moduleData) {
+        permissionsMap.set(rolePerm.module_id, {
+          module_id: rolePerm.module_id,
+          module_name: moduleData.name,
+          role_name: user_details.role_details?.name || '',
+          role_can_create: Boolean(Number(rolePerm.can_create)),
+          role_can_read: Boolean(Number(rolePerm.can_read)),
+          role_can_update: Boolean(Number(rolePerm.can_update)),
+          role_can_delete: Boolean(Number(rolePerm.can_delete)),
+          user_can_create: false,
+          user_can_read: false,
+          user_can_update: false,
+          user_can_delete: false,
+          permission_expires_at: null
+        })
+      }
+    })
+
+    /* Add user permissions */
+    permissions.forEach(userPerm => {
+      const existing = permissionsMap.get(userPerm.module_id)
+      if (existing) {
+        /* Update existing entry with user permissions */
+        permissionsMap.set(userPerm.module_id, {
+          ...existing,
+          user_can_create: Boolean(userPerm.can_create),
+          user_can_read: Boolean(userPerm.can_read),
+          user_can_update: Boolean(userPerm.can_update),
+          user_can_delete: Boolean(userPerm.can_delete),
+          permission_expires_at: userPerm.permission_expires_at
+        })
+      } else {
+        /* Create new entry for user-only permissions */
+        const moduleData = modules.find(m => m.id === userPerm.module_id)
+        if (moduleData) {
+          permissionsMap.set(userPerm.module_id, {
+            module_id: userPerm.module_id,
+            module_name: moduleData.name,
+            role_name: user_details.role_details?.name || '',
+            role_can_create: false,
+            role_can_read: false,
+            role_can_update: false,
+            role_can_delete: false,
+            user_can_create: Boolean(userPerm.can_create),
+            user_can_read: Boolean(userPerm.can_read),
+            user_can_update: Boolean(userPerm.can_update),
+            user_can_delete: Boolean(userPerm.can_delete),
+            permission_expires_at: userPerm.permission_expires_at
+          })
+        }
+      }
+    })
+
+    return Array.from(permissionsMap.values())
+  }, [user_details, modules, rolePermissions, permissions])
+
   /* Fetch user data on component mount */
   useEffect(() => {
     if (userId) {
       fetchUserDetails(userId)
+      fetchRolePermissions()
+      fetchModules()
     }
-  }, [userId, fetchUserDetails])
+  }, [userId, fetchUserDetails, fetchRolePermissions, fetchModules])
 
   /* Loading state display */
   if (isFetching) {
@@ -215,7 +297,7 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ userId }) => {
                                     </Badge>
                                   </HStack>
                                   <Text fontSize="md" fontWeight="600" color="gray.900">
-                                    {value || 'N/A'}
+                                    {value as string || 'N/A'}
                                   </Text>
                                 </VStack>
                               );
@@ -323,8 +405,8 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ userId }) => {
 
                   {/* Module permissions list with accordion */}
                   <Box w="full">
-                    <Heading size="sm" color="gray.700" mb={4}>Module Permissions ({permissions.length})</Heading>
-                    {permissions.length === 0 ? (
+                    <Heading size="sm" color="gray.700" mb={4}>Module Permissions ({mergedPermissions.length})</Heading>
+                    {mergedPermissions.length === 0 ? (
                     /* Empty state for no permissions */
                     <Box
                       p={8}
@@ -348,10 +430,10 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ userId }) => {
                   ) : (
                     /* Expandable permission cards */
                     <Accordion.Root collapsible multiple w="full">
-                      {permissions.map((permission) => (
+                      {mergedPermissions.map((permission) => (
                         <Accordion.Item
-                          key={`${permission.module_code}-${permission.role_code}`}
-                          value={`permission-${permission.module_code}`}
+                          key={`${permission.module_id}-${permission.role_name}`}
+                          value={`permission-${permission.module_id}`}
                           bg="gray.50"
                           borderRadius="8px"
                           borderWidth={1}
@@ -366,19 +448,8 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ userId }) => {
                             <HStack flex={1} textAlign="left">
                               <Icon as={FaUserShield} color={PRIMARY_COLOR} boxSize={4} />
                               <Text fontSize="md" fontWeight="600" color="gray.800">
-                                {permission.module_display_name}
+                                {permission.module_name}
                               </Text>
-                              <Badge
-                                colorScheme="blue"
-                                size="sm"
-                                px={2}
-                                py={1}
-                                borderRadius="full"
-                                fontSize="xs"
-                                fontWeight="700"
-                              >
-                                {permission.role_name}
-                              </Badge>
                             </HStack>
                             <Accordion.ItemIndicator />
                           </Accordion.ItemTrigger>

@@ -1,4 +1,4 @@
-/* Role management module schema exports */
+/* Role management schema exports */
 
-/* Form validation schemas */
-export * from './validation'
+/* Form validation schemas and types */
+export * from './forms'

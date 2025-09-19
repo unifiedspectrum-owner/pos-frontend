@@ -12,6 +12,9 @@ export * from './hooks'
 /* Configuration constants for role management */
 export * from './constants'
 
+/* React contexts for state management */
+export * from './contexts'
+
 /* UI components for role management */
 export * from './components'
 

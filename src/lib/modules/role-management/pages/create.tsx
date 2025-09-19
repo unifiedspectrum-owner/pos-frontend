@@ -10,8 +10,8 @@ import { useRouter } from 'next/navigation'
 import { CreateRoleFormData, createRoleSchema } from '@role-management/schemas'
 import { useRoleOperations } from '@role-management/hooks'
 import { ROLE_FORM_DEFAULT_VALUES, ROLE_PAGE_ROUTES, ROLE_FORM_MODES } from '@role-management/constants'
-import { RoleFormLayout } from '@role-management/forms/create/components'
-import { buildCreateRolePayload } from '@role-management/utils/form'
+import { RoleFormLayout } from '@role-management/forms'
+import { buildCreateRolePayload } from '@role-management/utils'
 
 /* Role creation page with tab navigation */
 const CreateRolePage: React.FC = () => {

@@ -1,19 +1,10 @@
 /* Role management constants exports */
 
-/* API routing constants for role endpoints */
-export * from './api-routes'
+/* API and page routing constants */
+export * from './routes'
 
-/* Page routing constants for role navigation */
-export * from './page-routes'
-
-/* Role status constants and labels */
-export * from './role-status'
-
-/* Filter options for role table */
-export * from './filter-options'
+/* Role status and filtering constants */
+export * from './status'
 
 /* Form configuration constants */
-export * from './form-configs'
-
-/* Field configuration constants */
-export * from './field-configs'
+export * from './forms'

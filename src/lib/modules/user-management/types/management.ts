@@ -2,7 +2,7 @@
 import { ValidationError } from "@/lib/shared";
 
 /* Role module imports */
-import { Role } from "@role-management/types";
+import { Role, ModuleAssignments } from "@role-management/types";
 
 /* API response for paginated user list */
 export interface UserListApiResponse {
@@ -115,19 +115,12 @@ export interface UserAccountStatistics {
 
 /* User module permissions with role and direct access rights */
 export interface UserPermissions {
+  module_id: number;
   module_name: string;
-  module_code: string;
-  module_display_name: string;
-  role_can_create: boolean;
-  role_can_read: boolean;
-  role_can_update: boolean;
-  role_can_delete: boolean;
-  role_name: string;
-  role_code: string;
-  user_can_create: boolean;
-  user_can_read: boolean;
-  user_can_update: boolean;
-  user_can_delete: boolean;
+  can_create: boolean;
+  can_read: boolean;
+  can_update: boolean;
+  can_delete: boolean;
   permission_expires_at: string;
 }
 
@@ -138,16 +131,18 @@ export interface UserCreationApiRequest {
   email: string;
   phone: string;
   role_id: number;
+  module_assignments?: ModuleAssignments[];
   is_active: boolean;
 }
 
-/* Request payload for creating new user account */
+/* Request payload for updating existing user account */
 export interface UserUpdationApiRequest {
   f_name?: string;
   l_name?: string;
   email?: string;
   phone?: string;
   role_id?: number;
+  module_assignments?: ModuleAssignments[];
   is_active?: boolean;
 }
 

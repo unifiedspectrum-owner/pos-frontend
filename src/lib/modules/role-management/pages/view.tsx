@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import { CreateRoleFormData } from '@role-management/schemas'
 import { useRoleOperations } from '@role-management/hooks'
 import { ROLE_FORM_DEFAULT_VALUES, ROLE_PAGE_ROUTES, ROLE_FORM_MODES } from '@role-management/constants'
-import { RoleFormLayout } from '@role-management/forms/create/components'
+import { RoleFormLayout } from '@role-management/forms'
 
 /* Component props interface */
 interface ViewRolePageProps {
@@ -50,8 +50,6 @@ const ViewRolePage: React.FC<ViewRolePageProps> = ({ roleId }) => {
         /* Prepare form data structure */
         const formData: CreateRoleFormData = {
           name: role.name,
-          code: role.code,
-          display_name: role.display_name,
           description: role.description,
           is_active: Boolean(role.is_active),
           module_assignments: moduleAssignments

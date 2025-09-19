@@ -11,15 +11,18 @@ import { useCountries } from '@shared/hooks'
 import { CreateUserFormData, UpdateUserFormData } from '@user-management/schemas'
 import { USER_CREATION_FORM_QUESTIONS } from '@user-management/constants'
 
-/* Role module imports */
-import { useRoles } from '@role-management/hooks'
 import { getPhoneFieldErrorMessage } from '@/lib/shared/utils/formatting'
 
+/* Component props interface */
+interface UserBasicInfoProps {
+  roleSelectOptions: Array<{ label: string; value: string }>
+  rolesLoading: boolean
+}
+
 /* Dynamic user information form with role selection */
-const UserBasicInfo: React.FC = () => {
+const UserBasicInfo: React.FC<UserBasicInfoProps> = ({ roleSelectOptions, rolesLoading }) => {
   const { control, formState: { errors } } = useFormContext<CreateUserFormData | UpdateUserFormData>() /* Form validation context */
   const { dialCodeOptions } = useCountries() /* Country dial codes for phone field */
-  const { roleSelectOptions, loading: rolesLoading } = useRoles() /* Available user roles */
 
   return (
     <SimpleGrid w={'100%'} columns={[1,6]} gap={6}>
@@ -28,7 +31,9 @@ const UserBasicInfo: React.FC = () => {
         .sort((a, b) => Number(a.display_order) - Number(b.display_order)) /* Sort by display order */
         .map((field) => {
           const schemaKey = field.schema_key as keyof (CreateUserFormData | UpdateUserFormData)
-          const fieldError = errors[schemaKey]
+          if (schemaKey == "module_assignments") return null;
+          
+          const fieldError = errors[schemaKey];
 
           /* Shared field properties for all input types */
           const commonProps = {
@@ -95,7 +100,7 @@ const UserBasicInfo: React.FC = () => {
                         {...commonProps}
                         value={field.value?.toString() || ''}
                         onChange={(value) => {
-                          console.log('Role selection changed:', value)
+                          console.log('[UserBasicInfo] Role selection changed to:', value)
                           field.onChange(value)
                         }}
                         options={rolesLoading ? [] : roleSelectOptions} /* Load roles dynamically */

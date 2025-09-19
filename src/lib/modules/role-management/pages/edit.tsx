@@ -13,8 +13,8 @@ import { createToastNotification } from '@shared/utils/ui/notifications'
 import { CreateRoleFormData, createRoleSchema } from '@role-management/schemas'
 import { useRoleOperations } from '@role-management/hooks'
 import { ROLE_FORM_DEFAULT_VALUES, ROLE_PAGE_ROUTES, ROLE_FORM_MODES } from '@role-management/constants'
-import { RoleFormLayout } from '@role-management/forms/create/components'
-import { buildUpdateRolePayload, getChangedFields } from '@role-management/utils/form'
+import { RoleFormLayout } from '@role-management/forms'
+import { buildUpdateRolePayload, getChangedFields } from '@role-management/utils'
 
 /* Component props interface */
 interface EditRolePageProps {
@@ -57,8 +57,6 @@ const EditRolePage: React.FC<EditRolePageProps> = ({ roleId }) => {
         /* Prepare form data structure */
         const formData: CreateRoleFormData = {
           name: role.name,
-          code: role.code,
-          display_name: role.display_name,
           description: role.description,
           is_active: Boolean(role.is_active),
           module_assignments: moduleAssignments

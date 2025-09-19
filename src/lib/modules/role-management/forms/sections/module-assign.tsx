@@ -1,22 +1,24 @@
 /* Libraries imports */
 import React, { useEffect } from 'react'
-import { Text, Box, GridItem, SimpleGrid } from '@chakra-ui/react'
+import { Text, Flex, HStack } from '@chakra-ui/react'
 import { useFormContext, useFieldArray } from 'react-hook-form'
 import { HiOutlineViewGrid } from 'react-icons/hi'
+import { lighten } from 'polished'
 
 /* Shared module imports */
-import { CheckboxGroupField } from '@shared/components/form-elements'
 import { EmptyStateContainer, ErrorMessageContainer } from '@shared/components/common'
+import { GRAY_COLOR, PRIMARY_COLOR } from '@shared/config'
 
 /* Role module imports */
 import { CreateRoleFormData } from '@role-management/schemas'
-import { useFormMode } from '@role-management/forms/create/components'
+import { useFormMode } from '@role-management/contexts'
 import { Module, RolePermission } from '@role-management/types'
 import { ModuleAssignmentsSkeleton } from '@role-management/components'
 import { MODULE_PERMISSION_OPTIONS } from '@role-management/constants'
+import { ModuleAssignmentsTable } from '@role-management/tables'
 
-/* Module assignments tab interface */
-interface ModuleAssignmentsTabProps {
+/* Module assignments section interface */
+interface ModuleAssignmentsSectionProps {
   readonly?: boolean
   modules?: Module[]
   isLoading?: boolean
@@ -24,8 +26,8 @@ interface ModuleAssignmentsTabProps {
   onRetry?: () => void
 }
 
-/* Module assignments tab component */
-const ModuleAssignmentsTab: React.FC<ModuleAssignmentsTabProps> = ({
+/* Module assignments section component */
+const ModuleAssignmentsSection: React.FC<ModuleAssignmentsSectionProps> = ({
   readonly = false,
   modules = [],
   isLoading = false,
@@ -103,25 +105,17 @@ const ModuleAssignmentsTab: React.FC<ModuleAssignmentsTabProps> = ({
   }
 
   return (
-    <SimpleGrid w={'100%'} columns={[1, 1, 6]} gap={6}>
-      {/* Header section */}
-      <GridItem colSpan={[1, 6]}>
-        <Box>
-          <Text fontSize="lg" fontWeight="semibold" mb={1}>Module Permissions</Text>
-          <Text fontSize="sm" color="gray.600">
-            Select the permissions for each module that this role should have access to.
-          </Text>
-          {/* General module assignments error */}
-          {!isReadonly && errors.module_assignments && (
-            <Text fontSize="sm" color="red.500" mt={2}>
-              {errors.module_assignments.message}
-            </Text>
-          )}
-        </Box>
-      </GridItem>
-
+    <Flex flexDir={'column'} w={'100%'}>
+      <HStack borderWidth={1} borderTopRadius={'md'} bg={lighten(0.45, PRIMARY_COLOR)} borderColor={lighten(0.3, GRAY_COLOR)} color={GRAY_COLOR}>
+        <Text w="40%" p={3} borderColor={lighten(0.3, GRAY_COLOR)} borderRightWidth={1}>Module</Text>
+        <Text w="12%" p={3}  textAlign="center" title={'Select All'}>All</Text>
+        <Text w="12%" p={3}  textAlign="center" title={'Create'}>C</Text>
+        <Text w="12%" p={3}  textAlign="center" title={'Read'}>R</Text>
+        <Text w="12%" p={3}  textAlign="center" title={'Update'}>U</Text>
+        <Text w="12%" p={3}  textAlign="center" title={'Delete'}>D</Text>
+      </HStack>
       {/* Modules grid */}
-      {modules.map((module) => {
+      {modules.map((module, index) => {
         const fieldIndex = fields.findIndex(field => field.module_id.toString() === module.id.toString())
 
         if (fieldIndex === -1) return null
@@ -129,30 +123,23 @@ const ModuleAssignmentsTab: React.FC<ModuleAssignmentsTabProps> = ({
         /* CRUD permissions options */
         const permissionOptions = MODULE_PERMISSION_OPTIONS
 
-        /* Get field-specific error */
-        const fieldError = errors.module_assignments?.[fieldIndex]
-        const hasFieldError = !isReadonly && !!fieldError
-
         return (
-          <GridItem key={module.id} colSpan={[1, 3]} borderWidth={1} p={3} borderRadius={'md'}>
-            <CheckboxGroupField
-              label={module.display_name}
+          <React.Fragment key={module.id}>
+            <ModuleAssignmentsTable
+              label={module.name}
               options={permissionOptions}
               control={control}
               moduleIndex={fieldIndex}
-              columns={4}
-              isInValid={hasFieldError}
-              required={false}
-              errorMessage={hasFieldError ? fieldError?.message : undefined}
               disabled={isReadonly}
               readOnly={isReadonly}
-              helpText={module.description || `Configure permissions for ${module.display_name} module`}
+              helpText={module.description || `Configure permissions for ${module.name} module`}
+              isLastRow={(modules.length - 1) === index}
             />
-          </GridItem>
+          </React.Fragment>
         )
       })}
-    </SimpleGrid>
+    </Flex>
   )
 }
 
-export default ModuleAssignmentsTab
+export default ModuleAssignmentsSection

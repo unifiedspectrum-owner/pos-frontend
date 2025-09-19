@@ -1,20 +1,20 @@
 /* Libraries imports */
 import { useState, useCallback } from 'react'
+import { AxiosError } from 'axios'
 
 /* Shared module imports */
-import { handleApiError } from '@shared/utils'
+import { handleApiError } from '@shared/utils/api'
 import { createToastNotification } from '@shared/utils/ui/notifications'
 import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 
 /* Role module imports */
 import { roleManagementService } from '@role-management/api'
-import { RoleCreationApiRequest, RoleUpdationApiRequest, Role, RolePermission } from '@role-management/types'
-import { AxiosError } from 'axios'
+import { RoleCreationRequest, RoleUpdateRequest, Role, RolePermission } from '@role-management/types'
 
 /* Hook interface */
 interface UseRoleOperationsReturn {
   /* Create operations */
-  createRole: (roleData: RoleCreationApiRequest) => Promise<boolean>
+  createRole: (roleData: RoleCreationRequest) => Promise<boolean>
   isCreating: boolean
   createError: string | null
   /* Fetch operations */
@@ -22,7 +22,7 @@ interface UseRoleOperationsReturn {
   isFetching: boolean
   fetchError: string | null
   /* Update operations */
-  updateRole: (roleId: string, roleData: RoleUpdationApiRequest) => Promise<boolean>
+  updateRole: (roleId: string, roleData: RoleUpdateRequest) => Promise<boolean>
   isUpdating: boolean
   updateError: string | null
   /* Delete operations */
@@ -44,7 +44,7 @@ export const useRoleOperations = (): UseRoleOperationsReturn => {
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   /* Create new role operation */
-  const createRole = useCallback(async (roleData: RoleCreationApiRequest): Promise<boolean> => {
+  const createRole = useCallback(async (roleData: RoleCreationRequest): Promise<boolean> => {
     try {
       setIsCreating(true)
       setCreateError(null)
@@ -143,7 +143,7 @@ export const useRoleOperations = (): UseRoleOperationsReturn => {
   }, [])
 
   /* Update role operation */
-  const updateRole = useCallback(async (roleId: string, roleData: RoleUpdationApiRequest): Promise<boolean> => {
+  const updateRole = useCallback(async (roleId: string, roleData: RoleUpdateRequest): Promise<boolean> => {
     try {
       setIsUpdating(true)
       setUpdateError(null)

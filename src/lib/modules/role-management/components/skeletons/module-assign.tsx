@@ -1,6 +1,6 @@
 /* Libraries imports */
 import React from 'react'
-import { SimpleGrid, GridItem, Skeleton, VStack, HStack, Text, Box } from '@chakra-ui/react'
+import { SimpleGrid, GridItem, Skeleton, VStack, HStack, Box } from '@chakra-ui/react'
 
 /* Props interface for module assignments skeleton */
 interface ModuleAssignmentsSkeletonProps {
@@ -25,14 +25,14 @@ const ModuleAssignmentsSkeleton: React.FC<ModuleAssignmentsSkeletonProps> = ({
       {Array.from({ length: count }).map((_, index) => (
         <GridItem key={index} colSpan={[1, 3]}>
           <Box borderWidth={1} p={3} borderRadius={'md'} bg="gray.50">
-            <VStack align="start" spacing={3}>
+            <VStack align="start" gap={3}>
               {/* Module name skeleton */}
               <Skeleton height="20px" width="120px" />
 
               {/* Permission checkboxes grid skeleton */}
               <SimpleGrid columns={4} gap={2} w="100%">
                 {Array.from({ length: 4 }).map((_, checkboxIndex) => (
-                  <HStack key={checkboxIndex} spacing={2}>
+                  <HStack key={checkboxIndex} gap={2}>
                     <Skeleton height="16px" width="16px" borderRadius="sm" />
                     <Skeleton height="16px" width="50px" />
                   </HStack>

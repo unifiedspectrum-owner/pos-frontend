@@ -1,7 +1,7 @@
 /* Role management loading components exports */
 
 /* Role table skeleton loading component */
-export * from './table-skeleton'
+export * from './table-list'
 
 /* Module assignments skeleton loading component */
-export * from './module-assignments-skeleton'
+export * from './module-assign'

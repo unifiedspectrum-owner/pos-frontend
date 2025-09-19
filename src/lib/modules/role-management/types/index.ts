@@ -1,7 +1,10 @@
 /* Role management type exports */
 
-/* Role management and CRUD operation types */
-export * from './management'
+/* Core entity interfaces */
+export * from './entities'
 
-/* Role form types and enums */
-export * from './forms'
+/* API request and response interfaces */
+export * from './api'
+
+/* UI-specific types */
+export * from './ui'

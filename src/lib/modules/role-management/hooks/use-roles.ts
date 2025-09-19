@@ -1,14 +1,14 @@
 /* Libraries imports */
+import { AxiosError } from 'axios'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 
 /* Shared module imports */
 import { PaginationInfo } from '@shared/types'
-import { handleApiError } from '@shared/utils'
+import { handleApiError } from '@shared/utils/api'
 
 /* Role module imports */
 import { roleManagementService } from '@role-management/api'
-import { Role } from '@role-management/types'
-import { AxiosError } from 'axios'
+import { Role, RolePermission } from '@role-management/types'
 
 /* Hook interface */
 interface UseRolesParams {
@@ -21,11 +21,15 @@ interface UseRolesReturn {
   roles: Role[]
   roleOptions: Array<{ label: string; value: string }>
   roleSelectOptions: Array<{ label: string; value: string }>
+  rolePermissions: RolePermission[]
   loading: boolean
+  permissionsLoading: boolean
   error: string | null
+  permissionsError: string | null
   lastUpdated: string
   pagination?: PaginationInfo
   fetchRoles: (page?: number, limit?: number) => Promise<void>
+  fetchRolePermissions: () => Promise<void>
   refetch: () => Promise<void>
 }
 
@@ -39,8 +43,11 @@ export const useRoles = (params: UseRolesParams = {}): UseRolesReturn => {
 
   /* Hook state */
   const [roles, setRoles] = useState<Role[]>([])
+  const [rolePermissions, setRolePermissions] = useState<RolePermission[]>([])
   const [loading, setLoading] = useState<boolean>(autoFetch)
+  const [permissionsLoading, setPermissionsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const [permissionsError, setPermissionsError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string>('')
   const [pagination, setPagination] = useState<PaginationInfo>()
   const [currentPage, setCurrentPage] = useState<number>(initialPage)
@@ -91,6 +98,40 @@ export const useRoles = (params: UseRolesParams = {}): UseRolesReturn => {
     }
   }, [currentPage, currentLimit])
 
+  /* Fetch role permissions from API */
+  const fetchRolePermissions = useCallback(async () => {
+    try {
+      setPermissionsLoading(true)
+      setPermissionsError(null)
+
+      console.log('[useRoles] Fetching all role permissions')
+
+      const response = await roleManagementService.listAllRolePermissions()
+
+      console.log('[useRoles] Role permissions API response:', response)
+
+      if (response.success) {
+        setRolePermissions(response.data.permissions)
+        console.log('[useRoles] Successfully fetched', response.data.permissions.length, 'role permissions')
+      } else {
+        const errorMsg = response.message || 'Failed to fetch role permissions'
+        setPermissionsError(errorMsg)
+        console.error('[useRoles] Role permissions API error:', errorMsg)
+      }
+    } catch (error: unknown) {
+      const errorMsg = 'Failed to load role permissions data'
+      console.error('[useRoles] Role permissions fetch error:', error)
+      const err = error as AxiosError
+      handleApiError(err, {
+        title: 'Failed to Load Role Permissions'
+      })
+      setRolePermissions([])
+      setPermissionsError(errorMsg)
+    } finally {
+      setPermissionsLoading(false)
+    }
+  }, [])
+
   /* Refetch with current parameters */
   const refetch = useCallback(async () => {
     await fetchRoles(currentPage, currentLimit)
@@ -104,8 +145,8 @@ export const useRoles = (params: UseRolesParams = {}): UseRolesReturn => {
 
     if (roles.length > 0) {
       const roleSelectOptions = roles.map(role => ({
-        label: role.display_name || role.name,
-        value: role.code
+        label: role.name,
+        value: role.id.toString()
       }))
       options.push(...roleSelectOptions)
     }
@@ -116,7 +157,7 @@ export const useRoles = (params: UseRolesParams = {}): UseRolesReturn => {
   /* Transform roles to select options for form fields */
   const roleSelectOptions = useMemo(() => {
     return roles.map(role => ({
-      label: role.display_name || role.name,
+      label: role.name,
       value: role.id.toString()
     }))
   }, [roles])
@@ -132,11 +173,15 @@ export const useRoles = (params: UseRolesParams = {}): UseRolesReturn => {
     roles,
     roleOptions,
     roleSelectOptions,
+    rolePermissions,
     loading,
+    permissionsLoading,
     error,
+    permissionsError,
     lastUpdated,
     pagination,
     fetchRoles,
+    fetchRolePermissions,
     refetch
   }
 }

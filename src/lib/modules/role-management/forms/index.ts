@@ -1,4 +1,10 @@
 /* Role management forms exports */
 
-/* Role creation forms */
-export * from './create'
+/* Main form layout component */
+export { default as RoleFormLayout } from './layout'
+
+/* Navigation and action buttons */
+export { default as NavigationButtons } from './navigation-buttons'
+
+/* Form sections */
+export * from './sections'

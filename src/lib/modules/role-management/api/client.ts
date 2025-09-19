@@ -1,3 +1,5 @@
+/* HTTP client configuration for role management API */
+
 /* External library imports */
 import axios from "axios"
 

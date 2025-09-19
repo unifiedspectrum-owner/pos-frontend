@@ -1,7 +1,7 @@
 "use client"
 
 /* Libraries imports */
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
@@ -14,8 +14,12 @@ import { createToastNotification } from '@shared/utils/ui/notifications'
 import { CreateUserFormData, createUserSchema } from '@user-management/schemas'
 import { useUserOperations } from '@user-management/hooks'
 import { USER_FORM_DEFAULT_VALUES, USER_PAGE_ROUTES } from '@user-management/constants'
-import { UserFormLayout, UserFormActions } from '@user-management/forms/create/components'
-import { buildUpdateUserPayload, getChangedFields } from '@user-management/utils/form'
+import { UserFormLayout } from '@user-management/forms/create/components'
+import { buildUpdateUserPayload, getChangedFields, mergeRoleAndUserPermissions, convertPermissionsToModuleAssignments } from '@user-management/utils/form'
+
+/* Role module imports */
+import { RolePermission } from '@role-management/types'
+import { useRoles } from '@role-management/hooks'
 
 /* Component props interface */
 interface EditUserPageProps {
@@ -28,7 +32,8 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [originalData, setOriginalData] = useState<CreateUserFormData | null>(null)
   const [isFormReady, setIsFormReady] = useState(false)
-  const { fetchUserDetails, userDetails, updateUser, isUpdating, isFetching } = useUserOperations()
+  const { fetchUserDetails, userDetails, permissions, updateUser, isUpdating, isFetching } = useUserOperations()
+  const { rolePermissions, fetchRolePermissions } = useRoles()
 
   /* Form configuration with Zod validation schema */
   const methods = useForm<CreateUserFormData>({
@@ -36,37 +41,49 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
     defaultValues: USER_FORM_DEFAULT_VALUES
   })
 
-  const { handleSubmit, reset } = methods;
+  const { reset } = methods;
 
-  const fetchUserData =useCallback(async () => {
+  const fetchUserData = useCallback(async () => {
     if (userId) {
       try {
         /* Reset error and form ready state before fetching */
         setFetchError(null)
         setIsFormReady(false)
 
-        /* Fetch basic user details for editing */
-        const success = await fetchUserDetails(userId, true)
+        /* Fetch user details and role permissions in parallel */
+        const [userSuccess] = await Promise.all([
+          fetchUserDetails(userId, false),
+          fetchRolePermissions()
+        ])
 
-        if (!success) {
+        if (!userSuccess) {
           setFetchError('Failed to load user details')
         }
       } catch {
         setFetchError('An error occurred while loading user details')
       }
     }
-  }, [fetchUserDetails, userId])
+  }, [fetchUserDetails, fetchRolePermissions, userId])
 
   /* Fetch user data and populate form */
   useEffect(() => {
     fetchUserData()
   }, [userId, fetchUserData])
 
-  /* Populate form when user details are loaded */
+  /* Populate form when user details, permissions, and role permissions are loaded */
   useEffect(() => {
-    if (userDetails) {
+    if (userDetails && rolePermissions.length > 0) {
       /* Parse phone number from API format */
       const parsedPhone = parsePhoneFromAPI(userDetails.phone)
+
+      /* Merge role permissions with user permissions for display */
+      /* If user has no custom permissions, still show role permissions */
+      const moduleAssignments = mergeRoleAndUserPermissions(
+        permissions,
+        rolePermissions,
+        userDetails.role_details?.id.toString(),
+        userDetails.role_details?.id.toString() // original role ID (same as current for initial load)
+      )
 
       /* Prepare form data */
       const formData: CreateUserFormData = {
@@ -76,6 +93,7 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
         phone: parsedPhone,
         role_id: userDetails.role_details?.id.toString() || '',
         is_active: Boolean(userDetails.is_active),
+        module_assignments: moduleAssignments,
       }
 
       /* Store original data for comparison */
@@ -87,11 +105,11 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
       /* Mark form as ready after data is populated */
       setIsFormReady(true)
     }
-  }, [userDetails, reset])
+  }, [userDetails, permissions, rolePermissions, reset])
 
 
   /* Handle form submission with change detection */
-  const onSubmit = async (data: CreateUserFormData) => {
+  const onSubmit = async (data: CreateUserFormData, passedRolePermissions?: RolePermission[]) => {
     try {
       /* Detect what fields have changed using utility function */
       const changedFields = getChangedFields(data, originalData)
@@ -106,12 +124,20 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
         return
       }
 
-      /* Build payload using utility function */
-      const payload = buildUpdateUserPayload(changedFields)
+      /* Use role permissions from hook (passed from UserFormLayout) or fallback to hook data */
+      const currentRolePermissions = passedRolePermissions || rolePermissions
+
+      /* Build payload using utility function with role permissions filtering */
+      const payload = buildUpdateUserPayload(
+        changedFields,
+        currentRolePermissions,
+        userDetails?.role_details?.id.toString()
+      )
 
       console.log('Original data:', originalData)
       console.log('Current data:', data)
       console.log('Changed fields:', changedFields)
+      console.log('Role permissions:', currentRolePermissions)
       console.log('Payload being sent:', payload)
 
       /* Call updateUser API with only changed fields */
@@ -131,22 +157,24 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
     router.push(USER_PAGE_ROUTES.HOME)
   }
 
+  /* Memoize converted permissions to prevent infinite re-renders */
+  const userPermissionsFromAPI = useMemo(() => {
+    return convertPermissionsToModuleAssignments(permissions)
+  }, [permissions])
+
   return (
-    <UserFormLayout<CreateUserFormData>
+    <UserFormLayout
       title="Edit User"
       isLoading={(isFetching && !fetchError) || !isFormReady}
       error={fetchError || (!isFetching && !userDetails ? 'User details not found' : null)}
       onRetry={fetchUserData}
       methods={methods}
-      actions={
-        <UserFormActions
-          onCancel={handleCancel}
-          onSubmit={handleSubmit(onSubmit)}
-          loading={isUpdating}
-          submitText="Update User"
-          loadingText="Updating User..."
-        />
-      }
+      onSubmit={onSubmit}
+      onCancel={handleCancel}
+      isSubmitting={isUpdating}
+      submitText="Update User"
+      loadingText="Updating User..."
+      userPermissionsFromAPI={userPermissionsFromAPI}
     />
   )
 }
