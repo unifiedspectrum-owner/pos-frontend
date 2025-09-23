@@ -20,6 +20,7 @@ import { clearStorageData, hasStorageData, loadDataFromStorage, saveFormDataToSt
 import { planService } from '@plan-management/api'
 import { useTabValidation, useFormSubmission, useTabNavigation } from '@plan-management/hooks'
 import { AUTO_SAVE_DEBOUNCE_MS, DEFAULT_PLAN_TAB, PLAN_FORM_TITLES, STORAGE_KEYS, ERROR_MESSAGES, PLAN_FORM_MODES } from '@plan-management/config'
+import { CREATE_PLAN_FORM_DEFAULT_VALUES } from '@plan-management/constants'
 
 /* Component props interface */
 interface PlanFormContainerProps {
@@ -52,7 +53,7 @@ const PlanFormContainer: React.FC<PlanFormContainerProps> = ({ mode, planId, tit
   const methods = useForm<CreatePlanFormData>({
     resolver: zodResolver(createPlanSchema),
     mode: 'onChange',
-    defaultValues: createPlanSchema.parse({})
+    defaultValues: CREATE_PLAN_FORM_DEFAULT_VALUES
   })
   const { setValue, reset, getValues, watch } = methods
 

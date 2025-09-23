@@ -1,3 +1,5 @@
+"use client"
+
 /* Libraries imports */
 import { useState, useEffect, useCallback } from 'react'
 import { AxiosError } from 'axios'

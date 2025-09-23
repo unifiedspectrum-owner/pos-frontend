@@ -5,7 +5,7 @@ import { useFormContext, useFieldArray } from 'react-hook-form'
 /* Types & Schemas */
 import { CreatePlanFormData, createAddonSchema, CreateAddonFormData } from '@plan-management/schemas/validation/plans'
 import { useTabValidation, useResourceManagement, useResourceCreation, useTabValidationNavigation, useResourceConfirmation } from '@plan-management/hooks'
-import { Addon, AddonAssignment, PlanFormMode } from '@plan-management/types'
+import { Addon, PlanFormMode } from '@plan-management/types'
 import { PLAN_FORM_MODES } from '@plan-management/config'
 import { ConfirmationDialog } from '@shared/components'
 import { TabNavigation, SearchHeader } from '@plan-management/components'
@@ -28,7 +28,6 @@ const PlanAddonConfiguration: React.FC<PlanAddonConfigurationProps> = ({
   mode,
   onNext, 
   onPrevious, 
-  isFirstTab = false,
   isActive = true
 }) => {
   /* Form context and validation hooks */
@@ -47,7 +46,6 @@ const PlanAddonConfiguration: React.FC<PlanAddonConfigurationProps> = ({
     resources: addons,
     filteredResources: filteredAddons,
     loading,
-    error,
     searchTerm,
     setSearchTerm,
     showSearch,
@@ -61,7 +59,6 @@ const PlanAddonConfiguration: React.FC<PlanAddonConfigurationProps> = ({
     toggleCreateForm: toggleCreateAddon,
     createForm: createAddonForm,
     isSubmitting: createAddonSubmitting,
-    createError: createAddonError,
     handleSubmit: handleCreateAddon,
   } = useResourceCreation<CreateAddonFormData>(
     'addons',
@@ -165,7 +162,6 @@ const PlanAddonConfiguration: React.FC<PlanAddonConfigurationProps> = ({
           showCreateAddon={showCreateAddon}
           createAddonForm={createAddonForm}
           createAddonSubmitting={createAddonSubmitting}
-          createAddonError={createAddonError}
           handleCreateAddon={handleCreateAddon}
         />
       )}

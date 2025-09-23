@@ -3,11 +3,13 @@ import { UseFormGetValues } from 'react-hook-form'
 import { CreatePlanFormData } from '@plan-management/schemas/validation/plans'
 import { PlanFormMode } from '@plan-management/types/plans'
 import { planService } from '@plan-management/api'
-import { clearStorageData, formatFormDataToApiData, createToastNotification } from '@plan-management/utils'
-import { toaster } from '@/components/ui/toaster'
+import { clearStorageData, formatFormDataToApiData } from '@plan-management/utils'
 import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 import { PLAN_FORM_MODES } from '@plan-management/config'
 import { useResourceErrors } from '@shared/contexts'
+import { createToastNotification } from '@shared/utils/ui'
+import { AxiosError } from 'axios'
+import { handleApiError } from '@shared/utils/api'
 
 /* Custom hook for handling form submission logic */
 export const useFormSubmission = (
@@ -31,7 +33,7 @@ export const useFormSubmission = (
       if (LOADING_DELAY_ENABLED) await new Promise(resolve => setTimeout(resolve, LOADING_DELAY))
       
       /* Transform and submit data to appropriate endpoint */
-      const apiData = formatFormDataToApiData(data, mode === PLAN_FORM_MODES.EDIT)
+      const apiData = formatFormDataToApiData(data)
       const response = await (mode === PLAN_FORM_MODES.CREATE 
         ? planService.createSubscriptionPlan(apiData)
         : planService.updateSubscriptionPlan(planId || parseInt(window.location.pathname.split('/').pop()!, 10), apiData))
@@ -44,11 +46,10 @@ export const useFormSubmission = (
         
         const planName = getValues('name')
         const actionText = mode === PLAN_FORM_MODES.CREATE ? 'Created' : 'Updated'
-        toaster.create(createToastNotification(
-          'success',
-          `Plan ${actionText} Successfully`,
-          `"${planName}" has been ${actionText.toLowerCase()} ${mode === PLAN_FORM_MODES.CREATE ? 'and is ready to use' : 'with the latest changes'}.`
-        ))
+        createToastNotification({
+          title: `Plan ${actionText} Successfully`,
+          description: `"${planName}" has been ${actionText.toLowerCase()} ${mode === PLAN_FORM_MODES.CREATE ? 'and is ready to use' : 'with the latest changes'}.`
+        })
         
         console.log(`[PlanFormSubmission] Plan ${mode === PLAN_FORM_MODES.CREATE ? 'created' : 'updated'} successfully`)
         onSuccess?.()
@@ -71,7 +72,10 @@ export const useFormSubmission = (
     } catch (error: any) {
       /* Handle unexpected errors */
       console.error(`[PlanFormSubmission] Error ${mode === PLAN_FORM_MODES.CREATE ? 'creating' : 'updating'} plan:`, error)
-      
+      const err = error as AxiosError;
+      handleApiError(err, {
+        title: `Failed to ${mode === PLAN_FORM_MODES.CREATE ? 'Create' : 'Update'} Plan`
+      })
       let errorMessage = '';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;

@@ -7,13 +7,11 @@ export const createPlanSchema = z.object({
   name: z.string()
     .min(1, 'Name is required')
     .trim()
-    .regex(/^[a-zA-Z\s]+$/, 'Only letters and spaces are allowed')
-    .default(''),
+    .regex(/^[a-zA-Z\s]+$/, 'Only letters and spaces are allowed'),
   description: z.string()
-    .min(3, 'Description must be at least 3 characters')
-    .default(''),
-  is_active: z.boolean().default(true),
-  is_custom: z.boolean().default(false),
+    .min(3, 'Description must be at least 3 characters'),
+  is_active: z.boolean(),
+  is_custom: z.boolean(),
 
   /* Device and User Limits */
   included_devices_count: z.string()
@@ -21,42 +19,36 @@ export const createPlanSchema = z.object({
     .refine((val) => {
       const num = Number(val);
       return !isNaN(num) && num >= 0 && Number.isInteger(num);
-    }, 'Included devices count must be a non-negative integer')
-    .default(''),
+    }, 'Included devices count must be a non-negative integer'),
   max_users_per_branch: z.string()
     .min(1, 'Max users per branch is required')
     .refine((val) => {
       const num = Number(val);
       return !isNaN(num) && num >= 1 && Number.isInteger(num);
-    }, 'Max users per branch must be at least 1')
-    .default(''),
+    }, 'Max users per branch must be at least 1'),
   included_branches_count: z.string()
     .min(1, 'Included branches count is required')
     .refine((val) => {
       const num = Number(val);
       return !isNaN(num) && num >= 1 && Number.isInteger(num);
     }, 'Included branches count must be a non-negative integer')
-    .nullable()
-    .default(''),
+    .nullable(),
   additional_device_cost: z.string()
     .min(1, 'Additional device cost is required')
     .refine((val) => {
       const num = Number(val);
       return !isNaN(num) && num >= 0;
-    }, 'Additional device cost must be a non-negative number')
-    .default(''),
+    }, 'Additional device cost must be a non-negative number'),
 
   /* Pricing Configuration */
   monthly_price: z.string()
-    .min(1, 'Monthly price is required')
-    .default(''),
+    .min(1, 'Monthly price is required'),
   annual_discount_percentage: z.string()
     .min(1, 'Annual discount percentage is required')
     .refine((val) => {
       const num = Number(val);
       return !isNaN(num) && num >= 0 && num <= 100;
-    }, 'Annual discount must be between 0 and 100')
-    .default(''),
+    }, 'Annual discount must be between 0 and 100'),
   // biennial_discount_percentage: z.string()
   //   .min(1, 'Biennial discount percentage is required')
   //   .refine((val) => {
@@ -82,38 +74,34 @@ export const createPlanSchema = z.object({
     .refine((val) => {
       const num = Number(val);
       return !isNaN(num) && num >= 0;
-    }, 'Monthly fee must be a non-negative number')
-    .default(''),
+    }, 'Monthly fee must be a non-negative number'),
   monthly_fee_byo_processor: z.string()
     .min(1, 'Monthly fee (BYO processor) is required')
     .refine((val) => {
       const num = Number(val);
       return !isNaN(num) && num >= 0;
-    }, 'Monthly fee must be a non-negative number')
-    .default(''),
+    }, 'Monthly fee must be a non-negative number'),
   card_processing_fee_percentage: z.string()
     .min(1, 'Card processing fee percentage is required')
     .refine((val) => {
       const num = Number(val);
       return !isNaN(num) && num >= 0 && num <= 100;
-    }, 'Processing fee percentage must be between 0 and 100')
-    .default(''),
+    }, 'Processing fee percentage must be between 0 and 100'),
   card_processing_fee_fixed: z.string()
     .min(1, 'Fixed processing fee is required')
     .refine((val) => {
       const num = Number(val);
       return !isNaN(num) && num >= 0;
-    }, 'Fixed processing fee must be a non-negative number')
-    .default(''),
+    }, 'Fixed processing fee must be a non-negative number'),
 
   /* Feature Selection */
-  feature_ids: z.array(z.number()).default([]),
+  feature_ids: z.array(z.number()),
 
   /* Add-on Configuration */
   addon_assignments: z.array(z.object({
     addon_id: z.number(),
-    is_included: z.boolean().default(false),
-    feature_level: z.enum(['basic', 'custom']).default('basic'),
+    is_included: z.boolean(),
+    feature_level: z.enum(['basic', 'custom']),
     default_quantity: z.number()
       .min(0, 'Default quantity must be non-negative')
       .nullable(),
@@ -146,10 +134,10 @@ export const createPlanSchema = z.object({
   }, {
     message: 'Default quantity must be within the minimum and maximum quantity range',
     path: ['default_quantity']
-  })).default([]),
+  })),
 
   /* Support SLA Selection */
-  support_sla_ids: z.array(z.number().positive('SLA ID must be positive')).default([]),
+  support_sla_ids: z.array(z.number().positive('SLA ID must be positive')),
 
 
   /* Volume Discount Configuration */
@@ -189,7 +177,7 @@ export const createPlanSchema = z.object({
   }, {
     message: 'Maximum branches must be greater than minimum branches',
     path: ['max_branches']
-  })).default([]).superRefine((discounts, ctx) => {
+  })).superRefine((discounts, ctx) => {
     /* Prevent overlapping volume discount ranges */
     if (!discounts || discounts.length <= 1) return;
     

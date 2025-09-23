@@ -1,3 +1,5 @@
+"use client"
+
 /* Libraries imports */
 import { useState, useCallback } from 'react'
 

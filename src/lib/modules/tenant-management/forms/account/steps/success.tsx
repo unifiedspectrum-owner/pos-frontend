@@ -174,7 +174,7 @@ const SuccessStep: React.FC<SuccessStepProps> = ({ onComplete }) => {
     }, 0)
     
     const totalAmount = baseCost + addonsCost
-    const suffix = getBillingCycleLabel(billingCycle)
+    const suffix = getBillingCycleLabel({billingCycle})
     return `$${totalAmount.toLocaleString()}/${suffix}`
   }
 

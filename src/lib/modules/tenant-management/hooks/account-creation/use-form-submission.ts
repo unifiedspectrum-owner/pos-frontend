@@ -34,7 +34,7 @@ interface SubmissionState {
 }
 
 /* Custom hook for handling tenant form submission to API */
-export const useFormSubmission = () => {
+export const useTenantFormSubmission = () => {
   /* State management for submission process */
   const [state, setState] = useState<SubmissionState>({
     isSubmitting: false,

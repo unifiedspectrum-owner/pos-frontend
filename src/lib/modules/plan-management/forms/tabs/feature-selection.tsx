@@ -38,7 +38,6 @@ const PlanFeatureSelection: React.FC<PlanFeatureSelectionProps> = ({
     resources: features, 
     filteredResources: filteredFeatures,
     loading, 
-    error, 
     searchTerm, 
     setSearchTerm,
     showSearch, 
@@ -60,7 +59,6 @@ const PlanFeatureSelection: React.FC<PlanFeatureSelectionProps> = ({
     toggleCreateForm: toggleCreateFeature,
     createForm: createFeatureForm, 
     isSubmitting: createFeatureSubmitting,
-    createError: createFeatureError, 
     handleSubmit: handleCreateFeature,
   } = useResourceCreation<CreateFeatureFormData>(
     'features', 

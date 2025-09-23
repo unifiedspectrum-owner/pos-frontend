@@ -48,7 +48,7 @@ const OrganizationAddonsSummary: React.FC<OrganizationAddonsSummaryProps> = ({
             <Text fontSize="xl" fontWeight="bold" color={PRIMARY_COLOR}>
               ${calculateTotalOrgAddonCost().toFixed(2)}
               <Text as="span" fontSize="sm" color="gray.600" ml={1}>
-                /{getBillingCycleLabel(billingCycle)}
+                /{getBillingCycleLabel({billingCycle})}
               </Text>
             </Text>
           </Flex>

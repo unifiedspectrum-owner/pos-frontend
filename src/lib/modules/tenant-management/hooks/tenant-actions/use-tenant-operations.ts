@@ -1,3 +1,5 @@
+"use client"
+
 /* Libraries imports */
 import { useState, useCallback } from 'react'
 import { AxiosError } from 'axios'
@@ -8,7 +10,7 @@ import { createToastNotification } from '@shared/utils/ui/notifications'
 import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 
 /* Tenant management module imports */
-import { tenantManagementService } from '@tenant-management/api'
+import { tenantActionsService } from '@tenant-management/api'
 
 /* Hook interface */
 interface UseTenantOperationsReturn {
@@ -38,7 +40,7 @@ export const useTenantOperations = (): UseTenantOperationsReturn => {
       console.log('[useTenantOperations] Deleting tenant:', tenantId)
 
       /* Call tenant deletion API */
-      const response = await tenantManagementService.deleteTenant(tenantId)
+      const response = await tenantActionsService.deleteTenant({tenant_id : tenantId})
 
       /* Check if deletion was successful */
       if (response.success) {

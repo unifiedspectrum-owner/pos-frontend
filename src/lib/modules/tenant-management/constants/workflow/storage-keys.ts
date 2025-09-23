@@ -1,5 +1,6 @@
 /* Tenant module imports */
-import { VerificationConfig } from "@/lib/modules/tenant-management/hooks/account-creation/creation";
+
+import { VerificationConfig } from "@tenant-management/hooks/account-creation"
 
 /* LocalStorage keys for tenant account creation process */
 export const TENANT_ACCOUNT_CREATION_LS_KEYS = {

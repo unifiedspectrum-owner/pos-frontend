@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm, FieldValues, DefaultValues } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { planService } from '@plan-management/api';
@@ -36,15 +36,8 @@ export function useResourceManagement<T extends { id: number; name: string; disp
     clearAllErrors = () => {};
   }
 
-  /* Load resources when shouldLoad is true and data hasn't been loaded yet */
-  useEffect(() => {
-    if (shouldLoad && !hasLoaded) {
-      fetchResources();
-    }
-  }, [shouldLoad, hasLoaded]);
-
   /* API fetch function */
-  const fetchResources = async () => {
+  const fetchResources = useCallback(() => async () => {
     try {
       setLoading(true);
       setError('');
@@ -106,7 +99,14 @@ export function useResourceManagement<T extends { id: number; name: string; disp
     } finally {
       setLoading(false);
     }
-  };
+  }, [addError, clearAllErrors, loading, removeError, resourceKey, sortBy]);
+
+  /* Load resources when shouldLoad is true and data hasn't been loaded yet */
+  useEffect(() => {
+    if (shouldLoad && !hasLoaded) {
+      fetchResources();
+    }
+  }, [shouldLoad, hasLoaded, fetchResources]);
 
   /* Search functionality */
   const filteredResources = resources.filter((resource: any) => {
@@ -152,17 +152,15 @@ export function useResourceCreation<T extends FieldValues>(
   const [createError, setCreateError] = useState<any>(null);
 
   /* Resource error context (optional) */
-  let addError: any, removeError: any, clearAllErrors: any;
+  let addError: any, removeError: any;
   try {
     const context = useResourceErrors();
     addError = context.addError;
     removeError = context.removeError;
-    clearAllErrors = context.clearAllErrors;
   } catch {
     /* Context not available, use no-ops */
     addError = () => {};
     removeError = () => {};
-    clearAllErrors = () => {};
   }
 
   /* Create form setup */

@@ -1,6 +1,6 @@
 /* Dynamic form component for creating new SLAs with configurable fields and validation */
 import React from 'react'
-import { Box, Flex, HStack, SimpleGrid, GridItem, Alert } from '@chakra-ui/react'
+import { Box, Flex, HStack, SimpleGrid, GridItem } from '@chakra-ui/react'
 import { Controller, UseFormReturn, FieldValues, SubmitHandler } from 'react-hook-form'
 import { lighten } from 'polished'
 import { FiSave } from 'react-icons/fi'

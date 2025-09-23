@@ -50,7 +50,6 @@ export const formatApiDataToFormData = (apiPlanData: PlanDetails): CreatePlanFor
 /* Transform form data to API submission format */
 export const formatFormDataToApiData = (
   formData: CreatePlanFormData, 
-  isUpdate?: boolean
 ): CreateSubscriptionPlanAPIPayloadRequest => {
   return {
     /* Core plan details */

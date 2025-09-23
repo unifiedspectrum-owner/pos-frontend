@@ -1,3 +1,5 @@
+"use client"
+
 /* React and Chakra UI imports */
 import React, { useState, useEffect } from 'react'
 import { Dialog, Portal, VStack, HStack, Text, Icon, SimpleGrid, GridItem, Flex } from '@chakra-ui/react'

@@ -132,7 +132,7 @@ const AddonsGrid: React.FC<AddonsGridProps> = ({
                           fontWeight="medium"
                           color={lighten(0.2, GRAY_COLOR)}
                         >
-                          Price: $<Text as={'b'}>{addon.base_price ?? 0}</Text>
+                          Price: $<Text as={'b'}>{addon.addon_price ?? 0}</Text>
                         </Text>
                         <Text 
                           fontSize="xs" 

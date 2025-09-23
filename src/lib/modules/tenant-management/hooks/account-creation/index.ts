@@ -1,7 +1,7 @@
 /* Tenant account creation hooks module exports */
 
 /* Form submission and account creation workflow hooks */
-export { useFormSubmission } from './use-form-submission';
+export { useTenantFormSubmission } from './use-form-submission';
 
 /* Account verification and OTP management hooks */
 export { useOTPVerification, type VerificationConfig, type StepType } from './use-account-verification';

@@ -37,7 +37,7 @@ const PlanDetailsSummary: React.FC<PlanDetailsSummaryProps> = ({
           <Text fontSize="xl" fontWeight="bold" color={PRIMARY_COLOR}>
             ${planTotalAMount.toFixed(2)}
             <Text as="span" fontSize="sm" color="gray.600" ml={1}>
-              /{getBillingCycleLabel(billingCycle)}
+              /{getBillingCycleLabel({billingCycle})}
             </Text>
           </Text>
         </Flex>
@@ -67,7 +67,7 @@ const PlanDetailsSummary: React.FC<PlanDetailsSummaryProps> = ({
           <Flex flexDir={'column'} textAlign={'start'} justifyContent={'center'}>
             <Text>Billing Cycle</Text>
             <Text fontSize="md" fontWeight="bold" textTransform={'capitalize'} color={PRIMARY_COLOR}>
-              {getBillingCycleLabel(billingCycle).concat('ly')}
+              {getBillingCycleLabel({billingCycle, withExt: true})}
             </Text>
           </Flex>
 

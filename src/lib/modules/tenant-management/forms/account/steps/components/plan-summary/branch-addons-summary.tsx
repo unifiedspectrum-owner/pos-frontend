@@ -67,7 +67,7 @@ const BranchAddonsSummary: React.FC<BranchAddonsSummaryProps> = ({
           <Text fontSize="xl" fontWeight="bold" color={PRIMARY_COLOR}>
             ${totalBranchAddonsCost.toFixed(2)}
             <Text as="span" fontSize="sm" color="gray.600" ml={1}>
-              /{getBillingCycleLabel(billingCycle)}
+              /{getBillingCycleLabel({billingCycle})}
             </Text>
           </Text>
         </Flex>
@@ -110,7 +110,7 @@ const BranchAddonsSummary: React.FC<BranchAddonsSummaryProps> = ({
                     <Text fontSize="md" fontWeight="bold">
                       ${branchTotal.toFixed(2)}
                       <Text as="span" fontSize="sm" ml={1}>
-                        /{getBillingCycleLabel(billingCycle)}
+                        /{getBillingCycleLabel({billingCycle})}
                       </Text>
                     </Text>
                     <Accordion.ItemIndicator />

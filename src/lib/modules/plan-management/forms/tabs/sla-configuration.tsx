@@ -48,7 +48,6 @@ const PlanSlaConfiguration: React.FC<PlanSlaConfigurationProps> = ({
     resources: slas,
     filteredResources: filteredSlas,
     loading,
-    error,
     searchTerm,
     setSearchTerm,
     showSearch,
@@ -70,7 +69,6 @@ const PlanSlaConfiguration: React.FC<PlanSlaConfigurationProps> = ({
     toggleCreateForm: toggleCreateSla,
     createForm: createSlaForm,
     isSubmitting: createSlaSubmitting,
-    createError: createSlaError,
     handleSubmit: handleCreateSla,
   } = useResourceCreation<CreateSlaFormData>(
     'slas',
@@ -168,7 +166,6 @@ const PlanSlaConfiguration: React.FC<PlanSlaConfigurationProps> = ({
           showCreateSla={showCreateSla}
           createSlaForm={createSlaForm}
           createSlaSubmitting={createSlaSubmitting}
-          createSlaError={createSlaError}
           handleCreateSla={handleCreateSla}
         />
       )}

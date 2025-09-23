@@ -40,7 +40,7 @@ export const usePlanPricingCalculation = (
     const annualDiscountPercent = planDetails?.annual_discount_percentage || 0
     const annualPrice = Math.floor(monthlyPrice * 12 * (1 - annualDiscountPercent / 100))
     const planPrice = billingCycle === PLAN_BILLING_CYCLES[1] ? annualPrice : monthlyPrice
-    const planTotalAmount = planPrice * planDetails.included_branches_count
+    const planTotalAmount = planPrice * planDetails.included_branches_count!
 
     /* Calculate addon price with billing cycle adjustment */
     const calculateSingleAddonPrice = (addonMonthlyPrice: number): number => {
