@@ -1,12 +1,12 @@
 /* React and Chakra UI component imports */
 import React from 'react';
-import { Flex, HStack, Text, Button, Box, Input, InputGroup } from '@chakra-ui/react';
+import { Flex, HStack, Text, Button, Box } from '@chakra-ui/react';
 import { FiSearch, FiPlus, FiX } from 'react-icons/fi';
 import { lighten } from 'polished';
 
 /* Shared module imports */
 import { PRIMARY_COLOR, GRAY_COLOR } from '@shared/config';
-import { PrimaryButton } from '@shared/components/form-elements';
+import { PrimaryButton, TextInputField } from '@shared/components/form-elements';
 
 /* Props interface for search header component */
 interface SearchHeaderProps {
@@ -84,23 +84,25 @@ const SearchHeader: React.FC<SearchHeaderProps> = ({
         maxH={showSearch ? "60px" : "0"}
         opacity={showSearch ? 1 : 0}
       >
-        <InputGroup flex="1" startElementProps={{padding:'12px'}} startElement={<FiSearch />}>
-          <Input
-            p={'12px'}
-            borderRadius={'2xl'}
-            size={'xl'}
-            bg={lighten(0.72, GRAY_COLOR)}
-            placeholder={searchPlaceholder}
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            borderColor={lighten(0.3, GRAY_COLOR)}
-            _focus={{
+        <TextInputField
+          label=""
+          value={searchTerm}
+          placeholder={searchPlaceholder}
+          isInValid={false}
+          required={false}
+          onChange={(e) => onSearchChange(e.target.value)}
+          leftIcon={<FiSearch />}
+          inputProps={{
+            borderRadius: '2xl',
+            bg: lighten(0.72, GRAY_COLOR),
+            borderColor: lighten(0.3, GRAY_COLOR),
+            _focus: {
               borderColor: PRIMARY_COLOR,
               borderRadius: '2xl',
               boxShadow: `0 0 0 1px ${PRIMARY_COLOR}`
-            }}
-          />
-        </InputGroup>
+            }
+          }}
+        />
       </Box>
     </Flex>
   );

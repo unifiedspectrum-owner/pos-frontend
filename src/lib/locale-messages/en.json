@@ -3,6 +3,12 @@
     "title": "Hello world!",
     "about": "Go to the about page"
   },
+  "AccessForbidden": {
+    "title": "Access Forbidden",
+    "buttons": {
+      "refresh": "Refresh"
+    }
+  },
   "PlanManagement": {
     "title": "Plan Management",
     "buttons": {

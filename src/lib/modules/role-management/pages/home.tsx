@@ -7,17 +7,20 @@ import { useRouter } from '@/i18n/navigation'
 
 /* Shared module imports */
 import { HeaderSection, ErrorMessageContainer } from '@shared/components'
+import { usePermissions } from '@shared/contexts'
+import { PERMISSION_ACTIONS } from '@shared/constants/rbac'
 
 /* Role module imports */
 import { RoleTable } from '@role-management/tables'
 import { useRoles } from '@role-management/hooks'
-import { ROLE_PAGE_ROUTES } from '@role-management/constants'
+import { ROLE_PAGE_ROUTES, ROLE_MODULE_NAME } from '@role-management/constants'
 
 const RoleManagement: React.FC = () => {
-  /* Navigation and routing */
+  /* Navigation and permissions */
   const router = useRouter()
+  const { hasSpecificPermission } = usePermissions()
 
-  /* Custom hooks */
+  /* Data operations */
   const { roles, loading, error, lastUpdated, pagination, fetchRoles, refetch } = useRoles()
 
   /* Navigation handlers */
@@ -35,10 +38,10 @@ const RoleManagement: React.FC = () => {
     <Flex w={'100%'} flexDir={'column'}>
       {/* Header with navigation and actions */}
       <HeaderSection
-        showAddButton={true}
+        showAddButton={hasSpecificPermission(ROLE_MODULE_NAME, PERMISSION_ACTIONS.CREATE)}
         translation={'RoleManagement'}
         loading={loading}
-        handleAdd={handleAddRole}
+        handleAdd={hasSpecificPermission(ROLE_MODULE_NAME, PERMISSION_ACTIONS.CREATE) ? handleAddRole : undefined}
         handleRefresh={handleRefresh}
       />
 

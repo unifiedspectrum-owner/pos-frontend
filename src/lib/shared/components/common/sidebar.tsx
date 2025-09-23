@@ -1,5 +1,7 @@
-/* React and external library imports */
-import React, { useState } from 'react';
+"use client"
+
+/* Libraries imports */
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Box, Flex, VStack, Button, Text } from '@chakra-ui/react';
 import { FaChartLine } from 'react-icons/fa';
@@ -7,74 +9,89 @@ import { FiLayers, FiList, FiPlus, FiGrid, FiUsers, FiShield } from 'react-icons
 import { MdClose } from 'react-icons/md';
 import { IconType } from 'react-icons';
 
-/* Interface for sidebar menu items structure */
+/* Shared module imports */
+import { usePermissions } from '@shared/contexts';
+import { PermissionTypes } from '@shared/types/validation';
+import { PRIMARY_COLOR, SECONDARY_COLOR, WHITE_COLOR } from '@shared/config';
+import { ADMIN_PAGE_ROUTES } from '@shared/constants';
+
+/* Sidebar menu item interface */
 export interface SidebarMenuItems {
-  id: number; /* Unique menu item identifier */
-  icon: IconType; /* Icon component for menu item */
-  label: string; /* Display label for menu item */
-  base_path: string; /* Base path for navigation */
-  sub_menu_items: { /* Submenu items array */
-    id: number; /* Unique submenu item identifier */
-    label: string; /* Display label for submenu item */
-    icon: IconType; /* Icon component for submenu item */
-    path: string; /* Relative path for submenu item */
+  id: number;
+  icon: IconType;
+  label: string;
+  path: string;
+  module_code: string;
+  sub_menu_items: {
+    id: number;
+    label: string;
+    icon: IconType;
+    path: string;
+    requires_permission?: PermissionTypes;
   }[];
 }
 
-/* Sample menu data configuration */
+/* Menu configuration with admin routes */
 const menuItems: SidebarMenuItems[] = [
-  { 
-    id: 1, 
-    icon: FaChartLine, 
+  {
+    id: 1,
+    icon: FaChartLine,
     label: 'Dashboard',
-    base_path: '/dashboard',
+    path: ADMIN_PAGE_ROUTES.DASHBOARD.HOME,
+    module_code: 'dashboard',
     sub_menu_items: [
       {
         id: 1,
         label: 'Overview',
         icon: FaChartLine,
-        path: '/overview'
+        path: ADMIN_PAGE_ROUTES.DASHBOARD.HOME,
+        requires_permission: 'READ'
       }
     ]
   },
-  { 
-    id: 2, 
-    icon: FiLayers, 
+  {
+    id: 2,
+    icon: FiLayers,
     label: 'Plan Management',
-    base_path: 'plan-management',
+    path: ADMIN_PAGE_ROUTES.PLAN_MANAGEMENT.HOME,
+    module_code: 'plan-management',
     sub_menu_items: [
-      { 
-        id: 1, 
-        label: 'Manage Plans', 
+      {
+        id: 1,
+        label: 'Manage Plans',
         icon: FiList,
-        path: '/'
-
+        path: ADMIN_PAGE_ROUTES.PLAN_MANAGEMENT.HOME,
+        requires_permission: 'READ'
       },
-      { 
-        id: 2, 
-        label: 'Create Plan', 
+      {
+        id: 2,
+        label: 'Create Plan',
         icon: FiPlus,
-        path: '/create'
+        path: ADMIN_PAGE_ROUTES.PLAN_MANAGEMENT.CREATE,
+        requires_permission: 'CREATE'
       },
     ]
   },
-  { 
-    id: 3, 
-    icon: FiGrid, 
+  {
+    id: 3,
+    icon: FiGrid,
     label: 'Tenant Management',
-    base_path: 'tenant-management',
+    path: ADMIN_PAGE_ROUTES.TENANT_MANAGEMENT.HOME,
+    module_code: 'tenant-management',
     sub_menu_items: [
-      { 
-        id: 1, 
-        label: 'Manage Tenants', 
+      {
+        id: 1,
+        label: 'Manage Tenants',
         icon: FiList,
-        path: '/'
+        path: ADMIN_PAGE_ROUTES.TENANT_MANAGEMENT.HOME,
+        requires_permission: 'READ'
       },
-      { 
-        id: 2, 
-        label: 'Create tenant', 
+      {
+        id: 2,
+        label: 'Create Tenant',
         icon: FiPlus,
-        path: '/create'
+        path: ADMIN_PAGE_ROUTES.TENANT_MANAGEMENT.CREATE,
+        requires_permission: 'CREATE'
       },
     ]
   },
@@ -82,19 +99,22 @@ const menuItems: SidebarMenuItems[] = [
     id: 4,
     icon: FiUsers,
     label: 'User Management',
-    base_path: 'user-management',
+    path: ADMIN_PAGE_ROUTES.USER_MANAGEMENT.HOME,
+    module_code: 'user-management',
     sub_menu_items: [
       {
         id: 1,
         label: 'Manage Users',
         icon: FiList,
-        path: '/'
+        path: ADMIN_PAGE_ROUTES.USER_MANAGEMENT.HOME,
+        requires_permission: 'READ'
       },
       {
         id: 2,
         label: 'Create User',
         icon: FiPlus,
-        path: '/create'
+        path: ADMIN_PAGE_ROUTES.USER_MANAGEMENT.CREATE,
+        requires_permission: 'CREATE'
       },
     ]
   },
@@ -102,37 +122,75 @@ const menuItems: SidebarMenuItems[] = [
     id: 5,
     icon: FiShield,
     label: 'Role Management',
-    base_path: 'role-management',
+    path: ADMIN_PAGE_ROUTES.ROLE_MANAGEMENT.HOME,
+    module_code: 'role-management',
     sub_menu_items: [
       {
         id: 1,
         label: 'Manage Roles',
         icon: FiList,
-        path: '/'
+        path: ADMIN_PAGE_ROUTES.ROLE_MANAGEMENT.HOME,
+        requires_permission: 'READ'
       },
       {
         id: 2,
         label: 'Create Role',
         icon: FiPlus,
-        path: '/create'
+        path: ADMIN_PAGE_ROUTES.ROLE_MANAGEMENT.CREATE,
+        requires_permission: 'CREATE'
       },
     ]
   }
 ];
 
-/* Main sidebar navigation component */
+/* Main admin sidebar component */
 export const Sidebar = () => {
-  /* State for expanded section and active item */
+  /* Component state */
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
   const [activeItem, setActiveItem] = useState<number>(2);
-  
-  /* Color theme values */
-  const primaryBg = '#885CF7'; /* Primary background color */
-  const secondaryBg = '#562dc6'; /* Secondary background color */
-  const textColor = 'white'; /* Main text color */
-  const mutedTextColor = 'whiteAlpha.800'; /* Muted text color */
+  const [filteredMenuItems, setFilteredMenuItems] = useState<SidebarMenuItems[]>([]);
 
-  /* Handle main menu icon click */
+  /* Permission context */
+  const { permissions, hasModuleAccess, hasSpecificPermission, loading } = usePermissions();
+
+  /* Filter menu items by user permissions */
+  useEffect(() => {
+    if (!loading && permissions.length > 0) {
+      const filtered = menuItems.filter(item => {
+        /* Check module access */
+        if (!hasModuleAccess(item.module_code)) {
+          console.log(`[Sidebar] Access denied for module: ${item.module_code}`);
+          return false;
+        }
+
+        /* Filter sub-items by permissions */
+        const filteredSubItems = item.sub_menu_items.filter(subItem => {
+          if (!subItem.requires_permission) return true;
+          return hasSpecificPermission(item.module_code, subItem.requires_permission);
+        });
+
+        /* Show module only if accessible sub-items exist */
+        return filteredSubItems.length > 0;
+      }).map(item => ({
+        ...item,
+        sub_menu_items: item.sub_menu_items.filter(subItem => {
+          if (!subItem.requires_permission) return true;
+          return hasSpecificPermission(item.module_code, subItem.requires_permission);
+        })
+      }));
+
+      console.log('[Sidebar] Filtered menu items:', filtered);
+      setFilteredMenuItems(filtered);
+    } else if (!loading && permissions.length === 0) {
+      /* No permissions available */
+      setFilteredMenuItems([]);
+    } else {
+      /* Loading state - prevent UI flash */
+      setFilteredMenuItems([]);
+    }
+  }, [permissions, loading, hasModuleAccess, hasSpecificPermission]);
+
+  /* Toggle expanded section */
   const handleIconClick = (itemID?: number) => {
     if (!itemID) {
       setExpandedSection(null);
@@ -141,42 +199,43 @@ export const Sidebar = () => {
     }
   };
 
-  /* Handle submenu item click */
+  /* Set active menu item */
   const handleSubItemClick = (subItemID: number) => {
     setActiveItem(subItemID);
   };
 
   return (
     <Flex h="100vh" p={3}>
-      {/* Main icon-only sidebar */}
+      {/* Icon sidebar */}
       <Flex
-        position="relative" bg={secondaryBg} color={textColor} w="auto"
+        position="relative" bg={PRIMARY_COLOR} color={WHITE_COLOR} w="auto"
         flexDirection="column" transition="all 0.2s" borderLeftRadius="2xl"
         borderRightWidth={1} borderRightRadius={expandedSection == null ? '2xl' : '0'}
       >
-        {/* Application logo section */}
+        {/* Logo section */}
         <Flex p={5} mb={4}>
           <Flex w={10} h={10} align="center" justify="center">
-            <Text color={textColor} fontWeight="bold" fontSize="xl">
-              US {/* Logo placeholder */}
+            <Text color={WHITE_COLOR} fontWeight="bold" fontSize="xl">
+              US
             </Text>
           </Flex>
         </Flex>
 
-        {/* Main navigation icons */}
+        {/* Navigation icons */}
         <VStack as="nav" flex={1} px={3} gap={2} align="stretch">
           {
-            menuItems.map((item) => {
+            filteredMenuItems.map((item) => {
               const Icon = item.icon;
               return (
                 <Button
                   key={item.id}
+                  title={item.label}
                   onClick={() => handleIconClick(item.id)}
-                  bg={expandedSection === item.id ? primaryBg : ''} /* Active state */
-                  _hover={{ bg: primaryBg }}
+                  bg={expandedSection === item.id ? SECONDARY_COLOR : ''}
+                  _hover={{ bg: SECONDARY_COLOR }}
                   w="full" p={3} borderRadius="lg" transition="all 0.2s"
                   display="flex" alignItems="center" justifyContent="center"
-                  color={textColor} variant="ghost" size="lg" h="auto"
+                  color={WHITE_COLOR} variant="ghost" size="lg" h="auto"
                 >
                   <Icon className="w-5 h-5" />
                 </Button>
@@ -186,58 +245,57 @@ export const Sidebar = () => {
         </VStack>
       </Flex>
 
-      {/* Expandable submenu panel */}
+      {/* Expandable submenu */}
       <Box
-        position="relative" bg={secondaryBg}
-        color={textColor} transition="all 0.3s ease-in-out"
+        position="relative" bg={PRIMARY_COLOR}
+        color={WHITE_COLOR} transition="all 0.3s ease-in-out"
         overflow="hidden" borderRightRadius="2xl"
-        w={expandedSection ? '224px' : '0'} /* Dynamic width based on expansion */
+        w={expandedSection ? '224px' : '0'}
       >
         <Flex flexDir={'column'}>
           {expandedSection && (
             <>
-              {/* Submenu header with title and close button */}
+              {/* Submenu header */}
               <Flex
                 align="center" justify="space-between"
-                borderBottomWidth="1px" borderColor={'white'} p={5}
+                borderBottomWidth="1px" borderColor={WHITE_COLOR} p={5}
               >
                 <Text fontSize="md" fontWeight="semibold">
-                  {menuItems.find(item => item.id === expandedSection)?.label}
+                  {filteredMenuItems.find(item => item.id === expandedSection)?.label}
                 </Text>
 
-                {/* Close expansion button */}
-                <Button 
-                  background={secondaryBg} 
-                  _hover={{background: primaryBg}} 
+                {/* Close button */}
+                <Button
+                  background={PRIMARY_COLOR}
+                  _hover={{background: SECONDARY_COLOR}}
                   onClick={() => handleIconClick()}
                 >
                   <MdClose width={10} height={10}/>
                 </Button>
               </Flex>
 
-              {/* Submenu items list */}
+              {/* Submenu items */}
               <VStack gap={1} p={2} align="stretch">
                 {
-                  menuItems.find(item => item.id === expandedSection)
+                  filteredMenuItems.find(item => item.id === expandedSection)
                     ?.sub_menu_items.map((subItem) => {
-                      const basePath = menuItems.find(item => item.id === expandedSection)?.base_path || '/';
                       const Icon = subItem.icon;
                       return (
                         <Button
                           key={subItem.id}
                           onClick={() => handleSubItemClick(subItem.id)}
-                          bg={activeItem === subItem.id ? primaryBg : 'transparent'} /* Active state styling */
-                          color={activeItem === subItem.id ? textColor : mutedTextColor}
+                          bg={activeItem === subItem.id ? SECONDARY_COLOR : 'transparent'}
+                          color={activeItem === subItem.id ? WHITE_COLOR : 'whiteAlpha.800'}
                           fontWeight={activeItem === subItem.id ? 'medium' : 'normal'}
                           _hover={{
-                            bg: primaryBg,
-                            color: textColor,
+                            bg: SECONDARY_COLOR,
+                            color: WHITE_COLOR,
                           }}
-                          justifyContent="flex-start" size="sm" px={4} py={3} borderRadius="lg" 
+                          justifyContent="flex-start" size="sm" px={4} py={3} borderRadius="lg"
                           fontSize="sm" transition="all 0.2s" variant="ghost" w="full"
                         >
                           <Icon width={10} height={10}/>
-                          <Link key={subItem.id} href={`${basePath}${subItem.path}`}>
+                          <Link key={subItem.id} href={subItem.path}>
                             {subItem.label}
                           </Link>
                         </Button>

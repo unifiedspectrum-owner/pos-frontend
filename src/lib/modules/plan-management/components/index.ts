@@ -7,5 +7,8 @@ export { default as ResourceSkeleton } from './resource-skeleton';
 /* Search and filter header component */
 export { default as SearchHeader } from './search-header';
 
+/* Skeleton components for loading states */
+export * from './skeletons';
+
 /* Navigation component for tabs */
 export { default as TabNavigation } from './tab-navigation';

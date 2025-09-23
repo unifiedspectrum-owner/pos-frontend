@@ -1,5 +1,8 @@
 /* Routing constants for user management module */
 
+/* User Module Name */
+export const USER_MODULE_NAME = 'user-management';
+
 /* API routing constants */
 
 /* User API endpoints */
@@ -9,6 +12,7 @@ export const USER_API_ROUTES = {
   CREATE: '',
   UPDATE: '/:id',
   DELETE: '/:id',
+  PERMISSIONS_SUMMARY: '/permissions/summary',
 } as const
 
 /* Authentication API endpoints */

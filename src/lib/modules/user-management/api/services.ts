@@ -1,7 +1,7 @@
 /* User management API service methods */
 
 /* User module imports */
-import { UserBasicDetailsApiResponse, UserCreationApiRequest, UserCreationApiResponse, UserDeletionApiResponse, UserDetailsApiResponse, UserListApiResponse, UserUpdationApiResponse, UserUpdationApiRequest } from "@user-management/types"
+import { UserBasicDetailsApiResponse, UserCreationApiRequest, UserCreationApiResponse, UserDeletionApiResponse, UserDetailsApiResponse, UserListApiResponse, UserUpdationApiResponse, UserUpdationApiRequest, UserPermissionsSummaryApiResponse } from "@user-management/types"
 import { userApiClient } from "@user-management/api/client"
 import { USER_API_ROUTES } from "@user-management/constants"
 
@@ -77,6 +77,17 @@ export const userManagementService = {
       return response.data
     } catch (error) {
       console.error('[UserManagementService] Failed to delete user:', error)
+      throw error
+    }
+  },
+
+  /* Get users permissions summary */
+  async getUserPermissions(): Promise<UserPermissionsSummaryApiResponse> {
+    try {
+      const response = await userApiClient.get<UserPermissionsSummaryApiResponse>(USER_API_ROUTES.PERMISSIONS_SUMMARY)
+      return response.data
+    } catch (error) {
+      console.error('[UserManagementService] Failed to get users permissions summary:', error)
       throw error
     }
   },

@@ -7,17 +7,20 @@ import { useRouter } from '@/i18n/navigation'
 
 /* Shared module imports */
 import { HeaderSection, ErrorMessageContainer } from '@shared/components'
+import { usePermissions } from '@shared/contexts'
+import { PERMISSION_ACTIONS } from '@shared/constants/rbac'
 
 /* User module imports */
 import UserTable from '@user-management/tables/users'
 import { useUsers } from '@user-management/hooks'
-import { USER_PAGE_ROUTES } from '@user-management/constants'
+import { USER_PAGE_ROUTES, USER_MODULE_NAME } from '@user-management/constants'
 
 const UserManagement: React.FC = () => {
-  /* Navigation and routing */
+  /* Navigation and permissions */
   const router = useRouter()
+  const { hasSpecificPermission } = usePermissions()
 
-  /* Custom hooks */
+  /* Data operations */
   const { users, loading, error, lastUpdated, pagination, fetchUsers, refetch } = useUsers()
 
   /* Navigation handlers */
@@ -35,10 +38,10 @@ const UserManagement: React.FC = () => {
     <Flex w={'100%'} flexDir={'column'}>
       {/* Header with navigation and actions */}
       <HeaderSection
-        showAddButton={true}
+        showAddButton={hasSpecificPermission(USER_MODULE_NAME, PERMISSION_ACTIONS.CREATE)}
         translation={'UserManagement'}
         loading={loading}
-        handleAdd={handleAddUser}
+        handleAdd={hasSpecificPermission(USER_MODULE_NAME, PERMISSION_ACTIONS.CREATE) ? handleAddUser : undefined}
         handleRefresh={handleRefresh}
       />
 

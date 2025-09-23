@@ -1,74 +1,40 @@
 "use client"
 
 /* React and Chakra UI component imports */
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { Flex } from '@chakra-ui/react'
 import { useRouter } from '@/i18n/navigation'
 import { useTranslations } from 'next-intl'
 
 /* Shared module imports */
 import { HeaderSection, ErrorMessageContainer } from '@shared/components'
-import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
+import { usePermissions } from '@shared/contexts'
+import { PERMISSION_ACTIONS } from '@shared/constants/rbac'
 
 /* Plan module imports */
 import PlanTable from '@plan-management/tables/plans'
-import { Plan } from '@plan-management/types/plans'
-import { planService } from '@plan-management/api'
+import { PLAN_MODULE_NAME, PLAN_PAGE_ROUTES } from '@plan-management/constants'
+import { usePlans } from '@plan-management/hooks'
 
 /* Main plan management list component */
 const PlanManagement: React.FC = () => {
-  const router = useRouter(); /* Next.js router for navigation */
-  const [plans, setPlans] = useState<Plan[]>([]); /* Array of subscription plans */
-  const [loading, setLoading] = useState<boolean>(true); /* Loading state for data fetching */
-  const [error, setError] = useState<string | null>(null); /* Error message state */
-  const [lastUpdated, setLastUpdated] = useState<string>(''); /* Timestamp of last data update */
+  /* Navigation and translation hooks */
+  const router = useRouter()
+  const t = useTranslations('PlanManagement')
+  const { hasSpecificPermission } = usePermissions()
 
-  /* Fetch plans on component mount */
-  useEffect(() => {
-    fetchPlans();
-  }, []);
-
-  const t = useTranslations('PlanManagement');
+  /* Plans data hook */
+  const { plans, loading, error, lastUpdated, refetch } = usePlans()
 
   /* Handle manual refresh of plan data */
   const handleRefresh = () => {
-    fetchPlans();
-    console.log(`[PlanManagement] ${t('messages.dataRefreshed')}`);
-  };
+    refetch()
+    console.log(`[PlanManagement] ${t('messages.dataRefreshed')}`)
+  }
 
   /* Navigate to plan creation page */
   const handleAddPlan = () => {
-    router.push('/admin/plan-management/create');
-  };
-
-  /* Fetch subscription plans from API */
-  const fetchPlans = async() => {
-    try {
-      setLoading(true); /* Show loading state */
-      setError(null); /* Clear previous errors */
-
-      /* Add artificial delay if enabled for testing */
-      if (LOADING_DELAY_ENABLED) {
-        await new Promise(resolve => setTimeout(resolve, LOADING_DELAY));
-      }
-
-      /* Call API to get all subscription plans */
-      const response = await planService.getAllSubscriptionPlans();
-      
-      /* Handle successful response */
-      if (response.data.success && response.data.data) {
-        setPlans(response.data.data); /* Update plans state */
-        setLastUpdated(response.data.timestamp); /* Update last fetched timestamp */
-      } else {
-        /* Handle API error response */
-        setError(response.data.message || t('errors.fetchFailed'));
-      }
-
-    } catch (error: unknown) {
-      setError(error as string); /* Pass error to ErrorMessageContainer */
-    } finally {
-      setLoading(false); /* Hide loading state */
-    }
+    router.push(PLAN_PAGE_ROUTES.CREATE)
   }
 
   return (
@@ -77,8 +43,9 @@ const PlanManagement: React.FC = () => {
       <HeaderSection
         translation={'PlanManagement'}
         loading={loading}
-        handleAdd={handleAddPlan}
+        handleAdd={hasSpecificPermission(PLAN_MODULE_NAME, PERMISSION_ACTIONS.CREATE) ? handleAddPlan : undefined}
         handleRefresh={handleRefresh}
+        showAddButton={hasSpecificPermission(PLAN_MODULE_NAME, PERMISSION_ACTIONS.CREATE)}
       />
       
       {/* Conditional rendering based on error state */}
@@ -87,16 +54,16 @@ const PlanManagement: React.FC = () => {
         <ErrorMessageContainer
           error={error}
           title={t('errors.loadingPlans')}
-          onRetry={fetchPlans}
+          onRetry={refetch}
           isRetrying={loading}
           testId="plan-management-error"
         />
       ) : (
         /* Show plan table when no errors */
-        <PlanTable 
-          plans={plans} 
-          lastUpdated={lastUpdated} 
-          onPlanDeleted={fetchPlans} 
+        <PlanTable
+          plans={plans}
+          lastUpdated={lastUpdated}
+          onRefresh={refetch}
           loading={loading}
         />
       )}

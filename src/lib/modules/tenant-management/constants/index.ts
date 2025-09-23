@@ -4,6 +4,9 @@ export * from './business-config'
 /* Form field configurations */
 export * from './forms'
 
+/* Route constants */
+export * from './routes'
+
 /* Workflow and step configurations */
 export * from './workflow'
 

@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { Box, Flex, Text, VStack, HStack } from '@chakra-ui/react';
 import { lighten } from 'polished';

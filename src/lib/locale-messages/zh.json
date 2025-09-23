@@ -3,6 +3,12 @@
     "title": "你好世界！",
     "about": "转到关于页面"
   },
+  "AccessForbidden": {
+    "title": "访问被禁止",
+    "buttons": {
+      "refresh": "刷新权限"
+    }
+  },
   "PlanManagement": {
     "title": "套餐管理",
     "buttons": {

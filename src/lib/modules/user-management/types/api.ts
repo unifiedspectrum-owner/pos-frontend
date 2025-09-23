@@ -7,7 +7,7 @@ import { ValidationError } from "@shared/types";
 import { ModuleAssignment } from "@role-management/types";
 
 /* User module imports */
-import { UserAccountDetails, UserAccountStatistics, UserPermissions } from '@user-management/types';
+import { UserAccountDetails, UserAccountStatistics, UserPermissions, UsersFullPermissions } from '@user-management/types';
 
 /* API response for paginated user list */
 export interface UserListApiResponse {
@@ -110,4 +110,19 @@ export interface UserCreationApiResponse {
   validation_errors?: ValidationError[];
   error?: string;
   timestamp: string;
+}
+
+/* User permissions summary response */
+export interface UserPermissionsSummaryApiResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user_id: string;
+    name: string | null;
+    role_id: number;
+    role_name: string;
+    permissions: UsersFullPermissions[]
+  };
+  error?: string;
+  timestamp?: string;
 }

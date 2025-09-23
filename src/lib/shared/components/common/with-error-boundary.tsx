@@ -1,4 +1,5 @@
 /* React and Chakra UI component imports */
+'use client';
 import React from 'react';
 
 /* Shared module imports */
@@ -28,7 +29,7 @@ export function withErrorBoundary<P extends object>(
 export function withFormErrorBoundary<P extends object>(
   WrappedComponent: React.ComponentType<P>,
   options?: {
-    onError?: (error: Error, errorInfo: any) => void;
+    onError?: (error: Error, errorInfo: unknown) => void;
     maxRetries?: number;
     componentName?: string;
   }

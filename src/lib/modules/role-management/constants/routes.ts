@@ -1,5 +1,8 @@
 /* Routing constants for role management module */
 
+/* Role Module Name */
+export const ROLE_MODULE_NAME = 'role-management';
+
 /* Role API endpoints */
 export const ROLE_API_ROUTES = {
   LIST: '/list',

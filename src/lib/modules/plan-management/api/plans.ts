@@ -18,7 +18,7 @@ import {
 
 /* HTTP client for subscription plan API endpoints */
 const apiClient = axios.create({
-  baseURL: `${BACKEND_BASE_URL}/subscription-plans`,
+  baseURL: `${BACKEND_BASE_URL}/plans`,
   headers: {
     'Content-Type': 'application/json',
   },

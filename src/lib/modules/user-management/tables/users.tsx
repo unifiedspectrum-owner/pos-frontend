@@ -14,15 +14,17 @@ import { GoDotFill } from 'react-icons/go'
 
 /* Shared module imports */
 import { ConfirmationDialog, EmptyStateContainer, Pagination, TextInputField, TableFilterSelect } from '@shared/components'
+import { usePermissions } from '@shared/contexts'
 import { PaginationInfo } from '@shared/types'
 import { GRAY_COLOR, PRIMARY_COLOR, ERROR_RED_COLOR } from '@shared/config'
+import { PERMISSION_ACTIONS } from '@shared/constants/rbac'
 import { getStatusBadgeColor } from '@shared/utils'
 
 /* User module imports */
 import { UserAccountDetails } from '@user-management/types'
 import { UserTableSkeleton } from '@user-management/components'
 import { useUserOperations } from '@user-management/hooks'
-import { USER_PAGE_ROUTES, USER_STATUS_FILTER_OPTIONS } from '@user-management/constants'
+import { USER_PAGE_ROUTES, USER_STATUS_FILTER_OPTIONS, USER_MODULE_NAME } from '@user-management/constants'
 
 /* Role module imports */
 import { useRoles } from '@role-management/hooks'
@@ -48,10 +50,11 @@ const UserTable: React.FC<UserTableProps> = ({
   users, lastUpdated, onRefresh,
   onPageChange, loading = false, pagination
 }) => {
-  /* Router for navigation */
+  /* Navigation and permissions */
   const router = useRouter()
+  const { hasSpecificPermission } = usePermissions()
 
-  /* Custom hooks */
+  /* Data operations */
   const { roleOptions, loading: rolesLoading } = useRoles()
   const { deleteUser, isDeleting } = useUserOperations()
 
@@ -251,36 +254,42 @@ const UserTable: React.FC<UserTableProps> = ({
                     </Badge>
                   </Text>
 
-                  <ButtonGroup w="15%">
-                    <IconButton
-                      bg="none"
-                      color="black"
-                      _hover={{ color: PRIMARY_COLOR }}
-                      onClick={(e) => handleViewUser(user.id, e)}
-                      title="View user details"
-                    >
-                      <HiOutlineEye size={18} />
-                    </IconButton>
-                    <IconButton
-                      bg="none"
-                      color="black"
-                      _hover={{ color: PRIMARY_COLOR }}
-                      onClick={(e) => handleEditUser(user.id, e)}
-                      title="Edit user"
-                    >
-                      <HiOutlinePencilAlt size={18} />
-                    </IconButton>
-                    <IconButton
-                      bg="none"
-                      color="black"
-                      _hover={{ color: ERROR_RED_COLOR }}
-                      onClick={(e) => handleDeleteUser(user.id, e)}
-                      title="Delete user"
-                      disabled={isDeleting}
-                      loading={isDeleting && deleteConfirm.userId === user.id}
-                    >
-                      <HiOutlineTrash size={18} />
-                    </IconButton>
+                  <ButtonGroup w="15%" justifyContent={'center'}>
+                    {hasSpecificPermission(USER_MODULE_NAME, PERMISSION_ACTIONS.READ) && (
+                      <IconButton
+                        bg="none"
+                        color="black"
+                        _hover={{ color: PRIMARY_COLOR }}
+                        onClick={(e) => handleViewUser(user.id, e)}
+                        title="View user details"
+                      >
+                        <HiOutlineEye size={18} />
+                      </IconButton>
+                    )}
+                    {hasSpecificPermission(USER_MODULE_NAME, PERMISSION_ACTIONS.UPDATE) && (
+                      <IconButton
+                        bg="none"
+                        color="black"
+                        _hover={{ color: PRIMARY_COLOR }}
+                        onClick={(e) => handleEditUser(user.id, e)}
+                        title="Edit user"
+                      >
+                        <HiOutlinePencilAlt size={18} />
+                      </IconButton>
+                    )}
+                    {hasSpecificPermission(USER_MODULE_NAME, PERMISSION_ACTIONS.DELETE) && (
+                      <IconButton
+                        bg="none"
+                        color="black"
+                        _hover={{ color: ERROR_RED_COLOR }}
+                        onClick={(e) => handleDeleteUser(user.id, e)}
+                        title="Delete user"
+                        disabled={isDeleting}
+                        loading={isDeleting && deleteConfirm.userId === user.id}
+                      >
+                        <HiOutlineTrash size={18} />
+                      </IconButton>
+                    )}
                   </ButtonGroup>
                 </HStack>
               )

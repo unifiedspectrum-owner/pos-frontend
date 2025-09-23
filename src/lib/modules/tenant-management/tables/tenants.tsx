@@ -2,9 +2,7 @@
 
 /* Libraries imports */
 import React, { useState, useMemo, useCallback } from 'react'
-import { 
-  Badge, ButtonGroup, Flex, Heading, HStack, IconButton, Text, Select, Portal, createListCollection 
-} from '@chakra-ui/react'
+import { Badge, ButtonGroup, Flex, Heading, HStack, IconButton, Text } from '@chakra-ui/react'
 import { useRouter } from 'next/navigation'
 import { lighten } from 'polished'
 
@@ -15,116 +13,104 @@ import { LuSearch } from 'react-icons/lu'
 import { GoDotFill } from 'react-icons/go'
 
 /* Shared module imports */
-import { ConfirmationDialog, EmptyStateContainer, Pagination, TextInputField } from '@shared/components'
-import { createToastNotification } from '@shared/utils/ui/notifications'
+import { ConfirmationDialog, EmptyStateContainer, Pagination, TextInputField, TableFilterSelect } from '@shared/components'
+import { usePermissions } from '@shared/contexts'
 import { PaginationInfo } from '@shared/types'
-import { 
-  GRAY_COLOR, PRIMARY_COLOR, SUCCESS_GREEN_COLOR, SUCCESS_GREEN_COLOR2, 
-  ERROR_RED_COLOR, WARNING_ORANGE_COLOR, LOADING_DELAY, LOADING_DELAY_ENABLED 
-} from '@shared/config'
+import { GRAY_COLOR, PRIMARY_COLOR, ERROR_RED_COLOR, WARNING_ORANGE_COLOR } from '@shared/config'
+import { PERMISSION_ACTIONS } from '@shared/constants/rbac'
+import { getStatusBadgeColor } from '@shared/utils/ui'
 
 /* Tenant module imports */
 import { TenantWithPlanDetails } from '@tenant-management/types/account/list'
 import { TenantTableSkeleton, TenantSuspensionModal, TenantHoldModal, TenantActivationModal } from '@tenant-management/components'
-import { TENANT_STATUS_FILTER_OPTIONS, TENANT_SUBSCRIPTION_FILTER_OPTIONS } from '@tenant-management/constants'
-import { tenantActionsService } from '@tenant-management/api'
-import { handleApiError } from '@/lib/shared'
-import { AxiosError } from 'axios'
+import { TENANT_STATUS_FILTER_OPTIONS, TENANT_SUBSCRIPTION_FILTER_OPTIONS, TENANT_PAGE_ROUTES, TENANT_STATUS_VALUES, TENANT_MODULE_NAME } from '@tenant-management/constants'
+import { useTenantOperations } from '@tenant-management/hooks'
 
 /* Component interfaces */
 interface TenantTableProps {
-  tenants: TenantWithPlanDetails[]
-  lastUpdated: string
-  onTenantDeleted?: () => void
-  onPageChange?: (page: number, limit: number) => void
-  loading?: boolean
-  pagination?: PaginationInfo
+  tenants: TenantWithPlanDetails[] /* Array of tenant data to display */
+  lastUpdated: string /* Timestamp of last data refresh */
+  onRefresh?: () => void /* Callback when tenant is deleted or modified */
+  onPageChange?: (page: number, limit: number) => void /* Pagination handler */
+  loading?: boolean /* Loading state indicator */
+  pagination?: PaginationInfo /* Pagination configuration */
 }
 
-interface DeleteConfirmState {
-  show: boolean
-  tenantId?: string
-  organizationName?: string
-}
-
-interface SuspensionModalState {
-  show: boolean
-  tenantId?: string
-  organizationName?: string
-}
-
-interface HoldModalState {
-  show: boolean
-  tenantId?: string
-  organizationName?: string
-}
-
-interface ActivationModalState {
-  show: boolean
-  tenantId?: string
-  organizationName?: string
+/* Modal state for tenant operations */
+interface ModalState {
+  show: boolean /* Modal visibility flag */
+  tenantId?: string /* Selected tenant ID */
+  organizationName?: string /* Selected tenant organization name */
 }
 
 /* Tenant table component with CRUD operations */
 const TenantTable: React.FC<TenantTableProps> = ({ 
   tenants, 
   lastUpdated, 
-  onTenantDeleted, 
+  onRefresh,
   onPageChange,
   loading = false,
   pagination
 }) => {
-  /* Router for navigation */
+  /* Navigation and permissions */
   const router = useRouter()
+  const { hasSpecificPermission } = usePermissions()
 
-  /* Component state */
+  /* Data operations */
+  const { deleteTenant, isDeleting } = useTenantOperations()
+
+  /* UI state management */
   const [selectedTenantID, setSelectedTenantID] = useState<string | null>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState>({ show: false })
-  const [suspensionModal, setSuspensionModal] = useState<SuspensionModalState>({ show: false })
-  const [holdModal, setHoldModal] = useState<HoldModalState>({ show: false })
-  const [activationModal, setActivationModal] = useState<ActivationModalState>({ show: false })
-  const [isDeleting, setIsDeleting] = useState<boolean>(false)
   const [searchTerm, setSearchTerm] = useState<string>('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [subscriptionFilter, setSubscriptionFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>(TENANT_STATUS_FILTER_OPTIONS[0].value)
+  const [subscriptionFilter, setSubscriptionFilter] = useState<string>(TENANT_SUBSCRIPTION_FILTER_OPTIONS[0].value)
 
-  /* Chakra UI select collections for filters */
-  const statusCollection = useMemo(() => createListCollection({ items: TENANT_STATUS_FILTER_OPTIONS }), [])
-  const subscriptionCollection = useMemo(() => createListCollection({ items: TENANT_SUBSCRIPTION_FILTER_OPTIONS }), [])
+  /* Modal states */
+  const [deleteConfirm, setDeleteConfirm] = useState<ModalState>({ show: false })
+  const [suspensionModal, setSuspensionModal] = useState<ModalState>({ show: false })
+  const [holdModal, setHoldModal] = useState<ModalState>({ show: false })
+  const [activationModal, setActivationModal] = useState<ModalState>({ show: false })
 
-  /* Filtered tenants based on search and filters */
+  /* Data filtering logic */
   const filteredTenants = useMemo(() => {
     if (loading) return [] /* Skip filtering during data load */
-    
+
     return tenants.filter(tenant => {
+      /* Search by organization name or tenant ID */
       const matchesSearch = tenant.organization_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tenant.tenant_id.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesStatus = statusFilter === 'all' || tenant.tenant_status === statusFilter
-      const matchesSubscription = subscriptionFilter === 'all' || 
-        (subscriptionFilter === 'none' && !tenant.subscription_status) ||
+
+      /* Filter by tenant status */
+      const matchesStatus = statusFilter === TENANT_STATUS_FILTER_OPTIONS[0].value || tenant.tenant_status === statusFilter
+
+      /* Filter by subscription status */
+      const matchesSubscription = subscriptionFilter === TENANT_SUBSCRIPTION_FILTER_OPTIONS[0].value ||
+        (subscriptionFilter === TENANT_SUBSCRIPTION_FILTER_OPTIONS.find(opt => opt.value === 'none')?.value && !tenant.subscription_status) ||
         tenant.subscription_status === subscriptionFilter
-      
+
       return matchesSearch && matchesStatus && matchesSubscription
     })
   }, [tenants, searchTerm, statusFilter, subscriptionFilter, loading])
 
-  /* Navigation handlers */
+  /* Table interaction handlers */
   const handleTenantRowClick = useCallback((tenantId: string) => {
-    setSelectedTenantID(prev => prev === tenantId ? null : tenantId)
+    setSelectedTenantID(prev => prev === tenantId ? null : tenantId) /* Toggle row selection */
   }, [])
 
+  /* Navigation action handlers */
   const handleViewTenant = useCallback((tenantId: string, event: React.MouseEvent) => {
-    event.stopPropagation()
-    router.push(`/admin/tenant-management/view/${tenantId}`)
+    event.stopPropagation() /* Prevent row selection */
+    router.push(TENANT_PAGE_ROUTES.VIEW.replace(':id', tenantId))
   }, [router])
 
   const handleEditTenant = useCallback((tenantId: string, event: React.MouseEvent) => {
-    event.stopPropagation()
-    router.push(`/admin/tenant-management/edit/${tenantId}`)
+    event.stopPropagation() /* Prevent row selection */
+    router.push(TENANT_PAGE_ROUTES.EDIT.replace(':id', tenantId))
   }, [router])
 
+  /* Tenant action modal handlers */
   const handleDeleteTenant = useCallback((tenantId: string, event: React.MouseEvent) => {
-    event.stopPropagation()
+    event.stopPropagation() /* Prevent row selection */
     const tenant = tenants.find(t => t.tenant_id === tenantId)
     setDeleteConfirm({
       show: true,
@@ -134,7 +120,7 @@ const TenantTable: React.FC<TenantTableProps> = ({
   }, [tenants])
 
   const handleHoldTenant = useCallback((tenantId: string, event: React.MouseEvent) => {
-    event.stopPropagation()
+    event.stopPropagation() /* Prevent row selection */
     const tenant = tenants.find(t => t.tenant_id === tenantId)
     setHoldModal({
       show: true,
@@ -144,7 +130,7 @@ const TenantTable: React.FC<TenantTableProps> = ({
   }, [tenants])
 
   const handleSuspendTenant = useCallback((tenantId: string, event: React.MouseEvent) => {
-    event.stopPropagation()
+    event.stopPropagation() /* Prevent row selection */
     const tenant = tenants.find(t => t.tenant_id === tenantId)
     setSuspensionModal({
       show: true,
@@ -153,71 +139,8 @@ const TenantTable: React.FC<TenantTableProps> = ({
     })
   }, [tenants])
 
-  /* Data operations */
-  const handleConfirmDelete = useCallback(async () => {
-    if (!deleteConfirm.tenantId) return
-
-    setIsDeleting(true)
-    try {
-      /* Artificial delay for testing loading states */
-      if (LOADING_DELAY_ENABLED) {
-        await new Promise(resolve => setTimeout(resolve, LOADING_DELAY));
-      }
-
-      /* Call tenant deletion API */
-      const response = await tenantActionsService.deleteTenant({ tenant_id: deleteConfirm.tenantId })
-      
-      if (response.success) {
-        createToastNotification({
-          type: 'success',
-          title: 'Organization Deleted',
-          description: `The organization '${deleteConfirm.organizationName}' has been successfully deleted.`
-        })
-        onTenantDeleted?.() /* Trigger parent refresh */
-      } else {
-        createToastNotification({
-          type: 'error',
-          title: 'Failed to Delete Organization',
-          description: response.message || 'An error occurred while deleting the organization.'
-        })
-      }
-    } catch (error: unknown) {
-      console.error('[TenantTable] Error deleting tenant:', error);
-      const err = error as AxiosError
-      handleApiError(err, {
-        title: 'Failed to Delete Organization'
-      })
-    } finally {
-      setIsDeleting(false)
-      setDeleteConfirm({ show: false })
-    }
-  }, [deleteConfirm, onTenantDeleted])
-
-  const handleCancelDelete = useCallback(() => {
-    setDeleteConfirm({ show: false })
-  }, [])
-
-  /* Suspension modal handlers */
-  const handleCloseSuspensionModal = useCallback(() => {
-    setSuspensionModal({ show: false })
-  }, [])
-
-  const handleSuspensionSuccess = useCallback(() => {
-    onTenantDeleted?.() /* Trigger parent refresh to update tenant list */
-  }, [onTenantDeleted])
-
-  /* Hold modal handlers */
-  const handleCloseHoldModal = useCallback(() => {
-    setHoldModal({ show: false })
-  }, [])
-
-  const handleHoldSuccess = useCallback(() => {
-    onTenantDeleted?.() /* Trigger parent refresh to update tenant list */
-  }, [onTenantDeleted])
-
-  /* Activation handlers */
   const handleActivateTenant = useCallback((tenantId: string, event: React.MouseEvent) => {
-    event.stopPropagation()
+    event.stopPropagation() /* Prevent row selection */
     const tenant = tenants.find(t => t.tenant_id === tenantId)
     setActivationModal({
       show: true,
@@ -226,76 +149,47 @@ const TenantTable: React.FC<TenantTableProps> = ({
     })
   }, [tenants])
 
-  /* Activation modal handlers */
+  /* Delete confirmation handlers */
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteConfirm.tenantId) return
+
+    const success = await deleteTenant(deleteConfirm.tenantId, deleteConfirm.organizationName)
+
+    if (success) {
+      onRefresh?.() /* Trigger parent refresh */
+    }
+
+    setDeleteConfirm({ show: false })
+  }, [deleteConfirm.tenantId, deleteConfirm.organizationName, deleteTenant, onRefresh])
+
+  const handleCancelDelete = useCallback(() => {
+    setDeleteConfirm({ show: false })
+  }, [])
+
+  /* Modal close and success handlers */
+  const handleCloseSuspensionModal = useCallback(() => {
+    setSuspensionModal({ show: false })
+  }, [])
+
+  const handleSuspensionSuccess = useCallback(() => {
+    onRefresh?.() /* Trigger parent refresh */
+  }, [onRefresh])
+
+  const handleCloseHoldModal = useCallback(() => {
+    setHoldModal({ show: false })
+  }, [])
+
+  const handleHoldSuccess = useCallback(() => {
+    onRefresh?.() /* Trigger parent refresh */
+  }, [onRefresh])
+
   const handleCloseActivationModal = useCallback(() => {
     setActivationModal({ show: false })
   }, [])
 
   const handleActivationSuccess = useCallback(() => {
-    onTenantDeleted?.() /* Trigger parent refresh to update tenant list */
-  }, [onTenantDeleted])
-
-  /* UI helper functions */
-  const getStatusBadgeColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return {
-          color: SUCCESS_GREEN_COLOR2,
-          bg: lighten(0.45, SUCCESS_GREEN_COLOR),
-          borderColor: lighten(0.35, SUCCESS_GREEN_COLOR)
-        }
-      case 'suspended':
-      case 'suspend':
-        return {
-          color: WARNING_ORANGE_COLOR,
-          bg: lighten(0.4, WARNING_ORANGE_COLOR),
-          borderColor: lighten(0.3, WARNING_ORANGE_COLOR)
-        }
-      case 'cancelled':
-        return {
-          color: ERROR_RED_COLOR,
-          bg: lighten(0.35, ERROR_RED_COLOR),
-          borderColor: lighten(0.3, ERROR_RED_COLOR)
-        }
-      case 'trial':
-      case 'trialing':
-        return {
-          color: '#3b82f6', /* Blue */
-          bg: lighten(0.4, '#3b82f6'),
-          borderColor: lighten(0.3, '#3b82f6')
-        }
-      case 'setup':
-        return {
-          color: '#6366f1', /* Indigo */
-          bg: lighten(0.4, '#6366f1'),
-          borderColor: lighten(0.3, '#6366f1')
-        }
-      case 'past_due':
-        return {
-          color: '#f59e0b', /* Amber */
-          bg: lighten(0.4, '#f59e0b'),
-          borderColor: lighten(0.3, '#f59e0b')
-        }
-      case 'incomplete':
-        return {
-          color: '#ef4444', /* Red */
-          bg: lighten(0.4, '#ef4444'),
-          borderColor: lighten(0.3, '#ef4444')
-        }
-      case 'paused':
-        return {
-          color: '#8b5cf6', /* Purple */
-          bg: lighten(0.4, '#8b5cf6'),
-          borderColor: lighten(0.3, '#8b5cf6')
-        }
-      default:
-        return {
-          color: lighten(0.2, GRAY_COLOR),
-          bg: lighten(0.4, GRAY_COLOR),
-          borderColor: lighten(0.3, GRAY_COLOR)
-        }
-    }
-  }
+    onRefresh?.() /* Trigger parent refresh */
+  }, [onRefresh])
 
   return (
     <Flex p={5} flexDir="column" w="100%" gap={3}>
@@ -308,9 +202,9 @@ const TenantTable: React.FC<TenantTableProps> = ({
       {/* Main table container */}
       <Flex gap={6} p={5} flexDir="column" borderWidth={1} borderColor={lighten(0.3, GRAY_COLOR)} borderRadius={10}>
         
-        {/* Search and filters row */}
+        {/* Search and filter controls */}
         <HStack w="100%" gap={3}>
-          {/* Search input */}
+          {/* Search input field */}
           <Flex w="60%">
             <TextInputField
               label=""
@@ -328,107 +222,27 @@ const TenantTable: React.FC<TenantTableProps> = ({
             />
           </Flex>
 
-          {/* Filter dropdowns */}
+          {/* Filter dropdown controls */}
           <Flex w="40%" gap={3}>
-            {/* Tenant status filter */}
-            <Select.Root 
-              value={[statusFilter]} 
-              onValueChange={(e) => setStatusFilter(e.value[0])}
-              size="sm"
-              collection={statusCollection}
+            {/* Status filter dropdown */}
+            <TableFilterSelect
+              value={statusFilter}
+              onValueChange={setStatusFilter}
+              options={TENANT_STATUS_FILTER_OPTIONS}
+              placeholder="Filter by Status"
               disabled={loading}
-            >
-              <Select.Control>
-                <Select.Trigger
-                  borderRadius="2xl"
-                  borderColor={lighten(0.3, GRAY_COLOR)}
-                  _hover={{ borderColor: lighten(0.2, GRAY_COLOR) }}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  gap={2}
-                  pl={3}
-                  pr={3}
-                >
-                  <MdOutlineFilterList size={16} color={lighten(0.2, GRAY_COLOR)} />
-                  <Select.ValueText placeholder="Filter by Status" />
-                </Select.Trigger>
-              </Select.Control>
-              <Portal>
-                <Select.Positioner>
-                  <Select.Content 
-                    borderRadius="2xl" 
-                    p={2} 
-                    gap={1}
-                    maxH="200px"
-                    overflowY="auto"
-                  >
-                    {statusCollection.items.map((item) => (
-                      <Select.Item 
-                        key={item.value} 
-                        item={item}
-                        p={2}
-                        borderRadius="lg"
-                        _hover={{ bg: lighten(0.4, GRAY_COLOR) }}
-                      >
-                        {item.label}
-                        <Select.ItemIndicator />
-                      </Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Positioner>
-              </Portal>
-            </Select.Root>
-            
-            {/* Subscription status filter */}
-            <Select.Root 
-              value={[subscriptionFilter]} 
-              onValueChange={(e) => setSubscriptionFilter(e.value[0])}
-              size="sm"
-              collection={subscriptionCollection}
+              icon={<MdOutlineFilterList size={16} color={lighten(0.2, GRAY_COLOR)} />}
+            />
+
+            {/* Subscription filter dropdown */}
+            <TableFilterSelect
+              value={subscriptionFilter}
+              onValueChange={setSubscriptionFilter}
+              options={TENANT_SUBSCRIPTION_FILTER_OPTIONS}
+              placeholder="Filter by Subscription"
               disabled={loading}
-            >
-              <Select.Control>
-                <Select.Trigger
-                  borderRadius="2xl"
-                  borderColor={lighten(0.3, GRAY_COLOR)}
-                  _hover={{ borderColor: lighten(0.2, GRAY_COLOR) }}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  gap={2}
-                  pl={3}
-                  pr={3}
-                >
-                  <MdOutlineFilterList size={16} color={lighten(0.2, GRAY_COLOR)} />
-                  <Select.ValueText placeholder="Filter by Subscription" />
-                </Select.Trigger>
-              </Select.Control>
-              <Portal>
-                <Select.Positioner>
-                  <Select.Content 
-                    borderRadius="2xl" 
-                    p={2} 
-                    gap={1}
-                    maxH="200px"
-                    overflowY="auto"
-                  >
-                    {subscriptionCollection.items.map((item) => (
-                      <Select.Item 
-                        key={item.value} 
-                        item={item}
-                        p={2}
-                        borderRadius="lg"
-                        _hover={{ bg: lighten(0.4, GRAY_COLOR) }}
-                      >
-                        {item.label}
-                        <Select.ItemIndicator />
-                      </Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Positioner>
-              </Portal>
-            </Select.Root>
+              icon={<MdOutlineFilterList size={16} color={lighten(0.2, GRAY_COLOR)} />}
+            />
           </Flex>
         </HStack>
 
@@ -441,8 +255,13 @@ const TenantTable: React.FC<TenantTableProps> = ({
             <Text w="15%" textAlign={'center'} _hover={{fontWeight:'bold', color: PRIMARY_COLOR, cursor: 'pointer'}}>Status</Text>
             <Text w="10%" textAlign={'center'} _hover={{fontWeight:'bold', color: PRIMARY_COLOR, cursor: 'pointer'}}>Plan Name</Text>
             <Text w="17%" textAlign={'center'} _hover={{fontWeight:'bold', color: PRIMARY_COLOR, cursor: 'pointer'}}>Subscription</Text>
-            <Text w="15%" textAlign="center">Status Actions</Text>
-            <Text w="15%" textAlign="center">Actions</Text>
+            {hasSpecificPermission(TENANT_MODULE_NAME, PERMISSION_ACTIONS.UPDATE) && (
+              <Text w="15%" textAlign="center">Status Actions</Text>
+            )}
+            {hasSpecificPermission(TENANT_MODULE_NAME, PERMISSION_ACTIONS.UPDATE) 
+            ? <Text w="15%" textAlign="center">Actions</Text>
+            : <Text w="30%" textAlign="center">Actions</Text>
+            }
           </HStack>
 
           {/* Data rows */}
@@ -527,75 +346,82 @@ const TenantTable: React.FC<TenantTableProps> = ({
                     )}
                   </Text>
 
-                  <ButtonGroup w="15%" justifyContent="center">
-                    {/* If tenant is held or suspended, show only activate button */}
-                    {(tenant.tenant_status.toLowerCase() === 'hold' || 
-                      tenant.tenant_status.toLowerCase() === 'suspended' ||
-                      tenant.tenant_status.toLowerCase() === 'suspend') ? (
-                      <IconButton 
-                        bg="none" 
-                        color="black"
-                        _hover={{ color: "green.500" }}
-                        onClick={(e) => handleActivateTenant(tenant.tenant_id, e)}
-                        title="Activate tenant"
-                      >
-                        <MdPlayArrow size={20} />
-                      </IconButton>
-                    ) : (
-                      /* If tenant is active, show hold and suspend buttons */
-                      <>
-                        <IconButton 
-                          bg="none" 
+                  {hasSpecificPermission(TENANT_MODULE_NAME, PERMISSION_ACTIONS.UPDATE) && (
+                    <ButtonGroup w="15%" justifyContent="center">
+                      {/* If tenant is held or suspended, show only activate button */}
+                      {(tenant.tenant_status.toLowerCase() === TENANT_STATUS_VALUES.HOLD ||
+                        tenant.tenant_status.toLowerCase() === TENANT_STATUS_VALUES.SUSPENDED) ? (
+                        <IconButton
+                          bg="none"
                           color="black"
-                          _hover={{ color: WARNING_ORANGE_COLOR }}
-                          onClick={(e) => handleHoldTenant(tenant.tenant_id, e)}
-                          title="Hold tenant"
+                          _hover={{ color: "green.500" }}
+                          onClick={(e) => handleActivateTenant(tenant.tenant_id, e)}
+                          title="Activate tenant"
                         >
-                          <MdPause size={20} />
+                          <MdPlayArrow size={20} />
                         </IconButton>
-                        <IconButton 
-                          bg="none" 
-                          color="black"
-                          _hover={{ color: ERROR_RED_COLOR }}
-                          onClick={(e) => handleSuspendTenant(tenant.tenant_id, e)}
-                          title="Suspend tenant"
-                        >
-                          <MdBlock size={20} />
-                        </IconButton>
-                      </>
-                    )}
-                  </ButtonGroup>
+                      ) : (
+                        /* If tenant is active, show hold and suspend buttons */
+                        <>
+                          <IconButton
+                            bg="none"
+                            color="black"
+                            _hover={{ color: WARNING_ORANGE_COLOR }}
+                            onClick={(e) => handleHoldTenant(tenant.tenant_id, e)}
+                            title="Hold tenant"
+                          >
+                            <MdPause size={20} />
+                          </IconButton>
+                          <IconButton
+                            bg="none"
+                            color="black"
+                            _hover={{ color: ERROR_RED_COLOR }}
+                            onClick={(e) => handleSuspendTenant(tenant.tenant_id, e)}
+                            title="Suspend tenant"
+                          >
+                            <MdBlock size={20} />
+                          </IconButton>
+                        </>
+                      )}
+                    </ButtonGroup>
+                  )}
                   
-                  <ButtonGroup w="15%">
-                    <IconButton 
-                      bg="none" 
-                      color="black"
-                      _hover={{ color: PRIMARY_COLOR }}
-                      onClick={(e) => handleViewTenant(tenant.tenant_id, e)}
-                      title="View tenant details"
-                    >
-                      <HiOutlineEye size={20} />
-                    </IconButton>
-                    <IconButton 
-                      bg="none" 
-                      color="black"
-                      _hover={{ color: PRIMARY_COLOR }}
-                      onClick={(e) => handleEditTenant(tenant.tenant_id, e)}
-                      title="Edit tenant"
-                    >
-                      <HiOutlinePencilAlt size={20} />
-                    </IconButton>
-                    <IconButton 
-                      bg="none" 
-                      color="black"
-                      _hover={{ color: ERROR_RED_COLOR }}
-                      onClick={(e) => handleDeleteTenant(tenant.tenant_id, e)}
-                      title="Delete tenant"
-                      disabled={isDeleting}
-                      loading={isDeleting && deleteConfirm.tenantId === tenant.tenant_id}
-                    >
-                      <HiOutlineTrash size={20} />
-                    </IconButton>
+                  <ButtonGroup w={hasSpecificPermission(TENANT_MODULE_NAME, PERMISSION_ACTIONS.UPDATE) ? '15%' : '30%'} justifyContent={'center'}>
+                    {hasSpecificPermission(TENANT_MODULE_NAME, PERMISSION_ACTIONS.READ) && (
+                      <IconButton
+                        bg="none"
+                        color="black"
+                        _hover={{ color: PRIMARY_COLOR }}
+                        onClick={(e) => handleViewTenant(tenant.tenant_id, e)}
+                        title="View tenant details"
+                      >
+                        <HiOutlineEye size={20} />
+                      </IconButton>
+                    )}
+                    {hasSpecificPermission(TENANT_MODULE_NAME, PERMISSION_ACTIONS.UPDATE) && (
+                      <IconButton
+                        bg="none"
+                        color="black"
+                        _hover={{ color: PRIMARY_COLOR }}
+                        onClick={(e) => handleEditTenant(tenant.tenant_id, e)}
+                        title="Edit tenant"
+                      >
+                        <HiOutlinePencilAlt size={20} />
+                      </IconButton>
+                    )}
+                    {hasSpecificPermission(TENANT_MODULE_NAME, PERMISSION_ACTIONS.DELETE) && (
+                      <IconButton
+                        bg="none"
+                        color="black"
+                        _hover={{ color: ERROR_RED_COLOR }}
+                        onClick={(e) => handleDeleteTenant(tenant.tenant_id, e)}
+                        title="Delete tenant"
+                        disabled={isDeleting}
+                        loading={isDeleting && deleteConfirm.tenantId === tenant.tenant_id}
+                      >
+                        <HiOutlineTrash size={20} />
+                      </IconButton>
+                    )}
                   </ButtonGroup>
                 </HStack>
               )

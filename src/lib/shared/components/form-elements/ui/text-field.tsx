@@ -1,3 +1,5 @@
+"use client"
+
 /* React and Chakra UI component imports */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Input, InputGroup, InputProps } from '@chakra-ui/react';

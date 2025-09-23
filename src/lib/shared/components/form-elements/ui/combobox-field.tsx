@@ -1,3 +1,5 @@
+"use client"
+
 /* React and Chakra UI component imports */
 import React, { useEffect } from 'react';
 import { Combobox, Portal, useFilter, useListCollection } from '@chakra-ui/react';

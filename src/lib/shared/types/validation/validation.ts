@@ -7,9 +7,12 @@ export interface ValidationError {
 }
 
 /* Generic payload validation response with optional validated data */
-export interface PayloadValidationResponse<T> { 
-  isValid: boolean; 
-  data?: T, 
-  errors?: ValidationError[]; 
-  message?: string 
+export interface PayloadValidationResponse<T> {
+  isValid: boolean;
+  data?: T;
+  errors?: ValidationError[];
+  message?: string;
 }
+
+/* RBAC permission operation types */
+export type PermissionTypes = "CREATE" | "READ" | "UPDATE" | "DELETE";

@@ -4,4 +4,4 @@
 export { default as UserInfoSection } from './user-info'
 
 /* Module assignments section */
-export { default as ModuleAssignmentsSection } from './module-assignments'
+export { default as ModuleAssignmentsSection } from './module-assign'

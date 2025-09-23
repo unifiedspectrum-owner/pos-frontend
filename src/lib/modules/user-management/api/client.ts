@@ -17,9 +17,14 @@ const userApiClient = axios.create({
 /* Attach auth token to requests */
 userApiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken')
+    /* Get token from localStorage first, fallback to sample token for development */
+    const token = localStorage.getItem('accessToken');
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+      console.log('[UserAPI] Using token for request:', token.substring(0, 20) + '...');
+    } else {
+      console.log('[UserAPI] No token available for request');
     }
     return config
   },

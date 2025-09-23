@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 import { CreateUserFormData, createUserSchema } from '@user-management/schemas'
 import { useUserOperations } from '@user-management/hooks'
 import { USER_FORM_DEFAULT_VALUES, USER_PAGE_ROUTES } from '@user-management/constants'
-import { UserFormLayout } from '@user-management/forms/create/components'
+import { UserFormLayout } from '@user-management/forms'
 import { buildCreateUserPayload } from '@user-management/utils'
 
 /* Role module imports */

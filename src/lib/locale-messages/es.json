@@ -3,6 +3,12 @@
     "title": "¡Hola mundo!",
     "about": "Ir a la página acerca de"
   },
+  "AccessForbidden": {
+    "title": "Acceso Prohibido",
+    "buttons": {
+      "refresh": "Actualizar Permisos"
+    }
+  },
   "PlanManagement": {
     "title": "Gestión de Planes",
     "buttons": {

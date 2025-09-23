@@ -21,3 +21,10 @@ export const TENANT_SUBSCRIPTION_FILTER_OPTIONS = [
   { label: 'Paused', value: 'paused' },
   { label: 'No Subscription', value: 'none' },
 ] as const
+
+/* Tenant status values for conditional logic */
+export const TENANT_STATUS_VALUES = {           
+  ACTIVE: 'active',
+  HOLD: 'hold',
+  SUSPENDED: 'suspended',
+} as const  

@@ -53,3 +53,19 @@ export interface UserPermissions {
   can_delete: boolean;
   permission_expires_at: string;
 }
+
+/* User permissions combining role and direct permissions */
+export interface UsersFullPermissions {
+  module_name: string;
+  module_id: string;
+  module_code: string;
+  role_can_create: boolean;
+  role_can_read: boolean;
+  role_can_update: boolean;
+  role_can_delete: boolean;
+
+  user_can_create: boolean;
+  user_can_read: boolean;
+  user_can_update: boolean;
+  user_can_delete: boolean;
+}

@@ -15,13 +15,15 @@ import { GoDotFill } from 'react-icons/go'
 
 /* Shared module imports */
 import { ConfirmationDialog, EmptyStateContainer, Pagination, TextInputField, TableFilterSelect } from '@shared/components'
+import { usePermissions } from '@shared/contexts'
 import { PaginationInfo } from '@shared/types'
 import { GRAY_COLOR, PRIMARY_COLOR, ERROR_RED_COLOR } from '@shared/config'
+import { PERMISSION_ACTIONS } from '@shared/constants/rbac'
 import { getStatusBadgeColor } from '@shared/utils'
 
 /* Role module imports */
 import { Role } from '@role-management/types'
-import { ROLE_PAGE_ROUTES, ROLE_STATUS_FILTER_OPTIONS, ROLE_STATUS, ROLE_STATUS_LABELS } from '@role-management/constants'
+import { ROLE_PAGE_ROUTES, ROLE_STATUS_FILTER_OPTIONS, ROLE_STATUS, ROLE_STATUS_LABELS, ROLE_MODULE_NAME } from '@role-management/constants'
 import { RoleTableSkeleton } from '@role-management/components'
 import { useRoleOperations } from '@role-management/hooks'
 
@@ -45,10 +47,11 @@ interface DeleteConfirmState {
 const RoleTable: React.FC<RoleTableProps> = ({
   roles, lastUpdated, onRefresh, onPageChange, loading = false, pagination
 }) => {
-  /* Router for navigation */
+  /* Navigation and permissions */
   const router = useRouter()
+  const { hasSpecificPermission } = usePermissions()
 
-  /* Custom hooks */
+  /* Data operations */
   const { deleteRole, isDeleting } = useRoleOperations()
 
   /* Component state */
@@ -236,36 +239,42 @@ const RoleTable: React.FC<RoleTableProps> = ({
 
                   <Text w="10%" textAlign={'center'} fontWeight="medium">{role.user_count}</Text>
 
-                  <ButtonGroup w="15%">
-                    <IconButton
-                      bg="none"
-                      color="black"
-                      _hover={{ color: PRIMARY_COLOR }}
-                      onClick={(e) => handleViewRole(role.id, e)}
-                      title="View role details"
-                    >
-                      <HiOutlineEye size={18} />
-                    </IconButton>
-                    <IconButton
-                      bg="none"
-                      color="black"
-                      _hover={{ color: PRIMARY_COLOR }}
-                      onClick={(e) => handleEditRole(role.id, e)}
-                      title="Edit role"
-                    >
-                      <HiOutlinePencilAlt size={18} />
-                    </IconButton>
-                    <IconButton
-                      bg="none"
-                      color="black"
-                      _hover={{ color: ERROR_RED_COLOR }}
-                      onClick={(e) => handleDeleteRole(role.id, e)}
-                      title="Delete role"
-                      disabled={isDeleting}
-                      loading={isDeleting && deleteConfirm.roleId === role.id}
-                    >
-                      <HiOutlineTrash size={18} />
-                    </IconButton>
+                  <ButtonGroup w="15%" justifyContent={'center'}>
+                    {hasSpecificPermission(ROLE_MODULE_NAME, PERMISSION_ACTIONS.READ) && (
+                      <IconButton
+                        bg="none"
+                        color="black"
+                        _hover={{ color: PRIMARY_COLOR }}
+                        onClick={(e) => handleViewRole(role.id, e)}
+                        title="View role details"
+                      >
+                        <HiOutlineEye size={18} />
+                      </IconButton>
+                    )}
+                    {hasSpecificPermission(ROLE_MODULE_NAME, PERMISSION_ACTIONS.UPDATE) && (
+                      <IconButton
+                        bg="none"
+                        color="black"
+                        _hover={{ color: PRIMARY_COLOR }}
+                        onClick={(e) => handleEditRole(role.id, e)}
+                        title="Edit role"
+                      >
+                        <HiOutlinePencilAlt size={18} />
+                      </IconButton>
+                    )}
+                    {hasSpecificPermission(ROLE_MODULE_NAME, PERMISSION_ACTIONS.DELETE) && (
+                      <IconButton
+                        bg="none"
+                        color="black"
+                        _hover={{ color: ERROR_RED_COLOR }}
+                        onClick={(e) => handleDeleteRole(role.id, e)}
+                        title="Delete role"
+                        disabled={isDeleting}
+                        loading={isDeleting && deleteConfirm.roleId === role.id}
+                      >
+                        <HiOutlineTrash size={18} />
+                      </IconButton>
+                    )}
                   </ButtonGroup>
                 </HStack>
               )

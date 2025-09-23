@@ -11,3 +11,6 @@ export { useAddonManagement } from './use-addon-management';
 
 /* Branch configuration and management */
 export { useBranchManagement } from './use-branch-management';
+
+/* Tenant list data fetching and management */
+export { useTenants } from './use-tenants';
