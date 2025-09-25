@@ -2,9 +2,10 @@
 
 /* React and Chakra UI component imports */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Input, InputGroup, InputProps } from '@chakra-ui/react';
+import { Input, InputGroup, InputProps, IconButton } from '@chakra-ui/react';
 import { Field } from '@/components/ui/field';
 import { lighten } from 'polished';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 /* Shared module imports */
 import { GRAY_COLOR } from '@shared/config';
@@ -25,30 +26,35 @@ interface TextInputFieldProps {
   inputProps?: InputProps; /* Additional Chakra input props */
   isDebounced?: boolean; /* Whether to debounce input changes */
   debounceMs?: number; /* Debounce delay in milliseconds */
+  type?: 'text' | 'password'; /* Input type - defaults to 'text' */
   rightIcon?: React.ReactNode
   leftIcon?: React.ReactNode
 }
 
 const TextInputField: React.FC<TextInputFieldProps> = ({
-  label, 
-  value, 
-  placeholder, 
-  isInValid, 
-  required, 
+  label,
+  value,
+  placeholder,
+  isInValid,
+  required,
   errorMessage,
-  disabled, 
-  readOnly = false, 
-  onChange, 
-  onBlur, 
+  disabled,
+  readOnly = false,
+  onChange,
+  onBlur,
   name,
   inputProps,
   isDebounced = true,
   debounceMs = 300,
+  type = 'text',
   rightIcon,
   leftIcon
 }) => {
   /* Local state for immediate UI updates */
   const [localValue, setLocalValue] = useState(value);
+
+  /* Password visibility state */
+  const [showPassword, setShowPassword] = useState(false);
   
   /* Refs for tracking debouncing state */
   const isTypingRef = useRef(false); /* Track if user is actively typing */
@@ -130,6 +136,14 @@ const TextInputField: React.FC<TextInputFieldProps> = ({
     onBlur?.(e);
   };
 
+  /* Toggle password visibility */
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  /* Determine input type and icons */
+  const inputType = type === 'password' ? (showPassword ? 'text' : 'password') : type;
+
   return (
     <Field 
       label={label} 
@@ -147,10 +161,22 @@ const TextInputField: React.FC<TextInputFieldProps> = ({
         }
       }}
     >
-      <InputGroup alignItems={'center'} startElementProps={{fontSize: 'lg'}} startElement={leftIcon ? leftIcon : undefined} endElement={rightIcon ? rightIcon : undefined}>
+      <InputGroup alignItems={'center'} startElementProps={{fontSize: 'lg'}} startElement={leftIcon ? leftIcon : undefined} 
+        endElement={ type === "password" ? 
+          <IconButton
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            variant="ghost"
+            size="sm"
+            onClick={togglePasswordVisibility}
+            color="gray.500"
+            _hover={{ color: 'gray.700' }}
+          >
+            {showPassword ? <FaEyeSlash /> : <FaEye />}
+          </IconButton> : rightIcon ? rightIcon : undefined
+        }>
       <Input
         h={'48px'}
-        type={'text'}
+        type={inputType}
         borderColor={isInValid ? 'red.500' : lighten(0.3, GRAY_COLOR)}
         borderRadius={'md'}
         placeholder={placeholder}

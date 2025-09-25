@@ -5,15 +5,26 @@ export const TENANT_MODULE_NAME = 'tenant-management';
 
 /* Tenant API endpoints */
 export const TENANT_API_ROUTES = {
+  BASE_URL: '/tenants',
   LIST: '/list',
-  DETAILS: '/:id',
-  CREATE: '',
-  UPDATE: '/:id',
-  DELETE: '/:id',
+  DETAILS: '/details/:id',
+  ACCOUNT: {
+    CREATE: '/account/create',
+    REQUEST_OTP: '/account/request-otp',
+    VERIFY_OTP: '/account/verify-otp',
+    STATUS: '/account/status',
+    ASSIGN_PLAN: '/account/assign-plan',
+    GET_ASSIGNED_PLAN: '/account/get-assigned-plan',
+  },
+  PAYMENT: {
+    INITIATE: '/account/payment/initiate',
+    STATUS: '/account/payment/status',
+  },
   ACTIONS: {
-    SUSPEND: '/:id/suspend',
-    ACTIVATE: '/:id/activate',
-    HOLD: '/:id/hold'
+    SUSPEND: '/suspend',
+    ACTIVATE: '/activate',
+    HOLD: '/hold',  
+    DELETE: '/:id'
   }
 } as const;
 

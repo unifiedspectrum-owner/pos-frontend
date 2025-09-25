@@ -4,7 +4,7 @@ import { GridItem, SimpleGrid } from '@chakra-ui/react'
 import { Controller, useFormContext } from 'react-hook-form'
 
 /* Shared module imports */
-import { TextInputField, PhoneNumberField, SelectField, SwitchField } from '@shared/components'
+import { TextInputField, PhoneNumberField, SelectField, SwitchField, FileField } from '@shared/components'
 import { useCountries } from '@shared/hooks'
 
 /* User module imports */
@@ -66,6 +66,20 @@ const UserInfoSection: React.FC<UserInfoSectionProps> = ({ roleSelectOptions, ro
                   />
                 </GridItem>
               )
+
+            case 'FILE':
+              return(
+                 <GridItem key={field.id} colSpan={{ base: 1, md: field.grid.col_span }}>
+                  <FileField 
+                    label={''} 
+                    value={''} 
+                    placeholder={''} 
+                    isInValid={false} 
+                    required={false} 
+                    name={''} 
+                  />
+                </GridItem>
+              );
 
             case 'PHONE_NUMBER': /* Phone number with country code */
               return (

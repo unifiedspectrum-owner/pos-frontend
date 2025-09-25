@@ -14,6 +14,7 @@ export { default as withErrorBoundary, withFormErrorBoundary, withTabErrorBounda
 /* State display components */
 export { default as EmptyStateContainer } from './empty-state-container'; /* Empty state placeholder */
 export { default as FullPageLoader } from './full-page-loader'; /* Full page loading component */
+export { default as LoaderWrapper } from './loader-wrapper'; /* Component wrapper with loading state */
 
 /* Data navigation components */
 export { default as Pagination } from './pagination'; /* Reusable pagination component */

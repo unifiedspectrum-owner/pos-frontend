@@ -136,5 +136,19 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
     grid: {
       col_span: 3
     }
-  }
+  },
+  {
+    id: 10,
+    type: "FILE",
+    label: "Name",
+    schema_key: "f_name",
+    placeholder: "Enter first name",
+    left_icon: FaUser,
+    is_required: true,
+    is_active: true,
+    display_order: 10,
+    grid: {
+      col_span: 6
+    }
+  },
 ]

@@ -8,6 +8,9 @@ import { FaCreditCard, FaPhoneAlt, FaEnvelope, FaRedo, FaInfoCircle, FaCode, FaB
 /* Shared module imports */
 import { PrimaryButton, SecondaryButton } from '@shared/components/form-elements/buttons'
 
+/* Tenant module imports */
+import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
+
 /* Payment failed step component props interface */
 interface PaymentFailedStepProps {
   onRetryPayment: () => void
@@ -99,7 +102,7 @@ const PaymentFailedStep: React.FC<PaymentFailedStepProps> = ({
 
   /* Load retry attempts on component mount */
   useEffect(() => {
-    const attempts = localStorage.getItem('payment_retry_attempts')
+    const attempts = localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.PAYMENT_RETRY_ATTEMPTS)
     setRetryAttempts(attempts ? parseInt(attempts) : 0)
   }, [])
 

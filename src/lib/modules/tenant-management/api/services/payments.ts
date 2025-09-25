@@ -6,6 +6,7 @@ import {
   PaymentStatusApiResponse,
 } from "@tenant-management/types/payment"
 import { tenantApiClient } from "@tenant-management/api/clients"
+import { TENANT_API_ROUTES } from "@tenant-management/constants/routes"
 
 /* Service object containing payment management API methods */
 export const paymentService = {
@@ -13,7 +14,7 @@ export const paymentService = {
   /* Initiate subscription payment process */
   async initiateTenantSubscriptionPayment(data: InitiateSubscriptionPaymentApiRequest): Promise<InitiateSubscriptionPaymentApiResponse> {
     try {
-      const response = await tenantApiClient.post<InitiateSubscriptionPaymentApiResponse>('/account/payment/initiate', data)
+      const response = await tenantApiClient.post<InitiateSubscriptionPaymentApiResponse>(TENANT_API_ROUTES.PAYMENT.INITIATE, data)
       return response.data
     } catch (error) {
       console.error('[PaymentService] Failed to initiate payment:', error)
@@ -24,7 +25,7 @@ export const paymentService = {
   /* Get payment status for tenant subscription */
   async getPaymentStatusForTenant(data: PaymentStatusApiRequest): Promise<PaymentStatusApiResponse> {
     try {
-      const response = await tenantApiClient.post<PaymentStatusApiResponse>('/account/payment/status', data)
+      const response = await tenantApiClient.post<PaymentStatusApiResponse>(TENANT_API_ROUTES.PAYMENT.STATUS, data)
       return response.data
     } catch (error) {
       console.error('[PaymentService] Failed to get payment status:', error)

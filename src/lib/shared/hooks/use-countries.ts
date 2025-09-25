@@ -6,6 +6,7 @@ import { countryApiService } from '@shared/api'
 import { CountryData, State } from '@shared/types'
 import { handleApiError } from '@shared/utils'
 import { COUNTRIES_CACHE_DURATION } from '@shared/config'
+import { CACHE_STORAGE_KEYS } from '@shared/constants'
 import { AxiosError } from 'axios'
 
 /* Hook options interface */
@@ -64,8 +65,8 @@ export const useCountries = (options: UseCountriesOptions = {}): UseCountriesRet
 
       /* Check cache first if enabled */
       if (cacheResults) {
-        const cachedCountries = localStorage.getItem('cached_countries')
-        const cacheTimestamp = localStorage.getItem('cached_countries_timestamp')
+        const cachedCountries = localStorage.getItem(CACHE_STORAGE_KEYS.CACHED_COUNTRIES)
+        const cacheTimestamp = localStorage.getItem(CACHE_STORAGE_KEYS.CACHED_COUNTRIES_TIMESTAMP)
 
         if (cachedCountries && cacheTimestamp) {
           const isValidCache = Date.now() - parseInt(cacheTimestamp) < COUNTRIES_CACHE_DURATION
@@ -87,8 +88,8 @@ export const useCountries = (options: UseCountriesOptions = {}): UseCountriesRet
         
         /* Cache results if enabled */
         if (cacheResults) {
-          localStorage.setItem('cached_countries', JSON.stringify(fetchedCountries))
-          localStorage.setItem('cached_countries_timestamp', Date.now().toString())
+          localStorage.setItem(CACHE_STORAGE_KEYS.CACHED_COUNTRIES, JSON.stringify(fetchedCountries))
+          localStorage.setItem(CACHE_STORAGE_KEYS.CACHED_COUNTRIES_TIMESTAMP, Date.now().toString())
         }
         
         console.log('Countries fetched successfully:', fetchedCountries.length, 'countries')
@@ -265,8 +266,8 @@ export const useCountries = (options: UseCountriesOptions = {}): UseCountriesRet
 
 /* Clear cached countries */
 export const clearCountriesCache = () => {
-  localStorage.removeItem('cached_countries')
-  localStorage.removeItem('cached_countries_timestamp')
+  localStorage.removeItem(CACHE_STORAGE_KEYS.CACHED_COUNTRIES)
+  localStorage.removeItem(CACHE_STORAGE_KEYS.CACHED_COUNTRIES_TIMESTAMP)
   console.log('Countries cache cleared')
 }
 

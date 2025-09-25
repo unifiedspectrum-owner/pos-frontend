@@ -6,9 +6,13 @@ import axios from "axios"
 /* Shared module imports */
 import { BACKEND_BASE_URL } from "@shared/config"
 
+/* Auth management module imports */
+import { AUTH_STORAGE_KEYS } from "@auth-management/constants"
+import { USER_API_ROUTES } from "@user-management/constants"
+
 /* HTTP client configured for user management API endpoints */
 const userApiClient = axios.create({
-  baseURL: `${BACKEND_BASE_URL}/users`,
+  baseURL: `${BACKEND_BASE_URL}${USER_API_ROUTES.BASE_URL}`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -18,7 +22,7 @@ const userApiClient = axios.create({
 userApiClient.interceptors.request.use(
   (config) => {
     /* Get token from localStorage first, fallback to sample token for development */
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -40,8 +44,8 @@ userApiClient.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('loggedIn')
+      localStorage.removeItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN)
+      localStorage.removeItem(AUTH_STORAGE_KEYS.LOGGED_IN)
       window.dispatchEvent(new Event('authStateChanged'))
     }
     return Promise.reject(error)

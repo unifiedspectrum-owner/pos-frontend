@@ -5,6 +5,7 @@ export const ROLE_MODULE_NAME = 'role-management';
 
 /* Role API endpoints */
 export const ROLE_API_ROUTES = {
+  BASE_URL: '/users/roles',
   LIST: '/list',
   DETAILS: '/:id',
   CREATE: '',

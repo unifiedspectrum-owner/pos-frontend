@@ -13,7 +13,9 @@ export const TENANT_ACCOUNT_CREATION_LS_KEYS = {
   PAYMENT_ACKNOWLEDGED: 'payment_acknowledged',
   FAILED_PAYMENT_INTENT: 'failed_payment_intent',
   OTP_STATE: 'otp_state',
-  COMPLETED_STEPS: 'completed_steps'
+  COMPLETED_STEPS: 'completed_steps',
+  PENDING_STATE_RESTORE: 'pending_state_restore',
+  PAYMENT_RETRY_ATTEMPTS: 'payment_retry_attempts'
 } as const
 
 /* Verification configurations */

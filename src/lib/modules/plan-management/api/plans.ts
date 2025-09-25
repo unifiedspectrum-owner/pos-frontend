@@ -1,24 +1,26 @@
 import axios, { AxiosResponse } from "axios";
 import { BACKEND_BASE_URL } from "@shared/config";
-import { 
-  AddOnsListAPIResponse, 
-  CreateAddonAPIResponse, 
-  CreateFeatureAPIResponse, 
-  CreatePlanAddOnPayloadRequest, 
-  CreatePlanAPIResponse, 
-  CreatePlanFeaturePayloadRequest, 
-  CreatePlanSLAPayloadRequest, 
-  CreateSlaAPIResponse, 
-  CreateSubscriptionPlanAPIPayloadRequest, 
-  FeaturesListAPIResponse, 
-  GetPlanDetailsAPIResponse, 
-  PlansListAPIResponse, 
-  SlaListAPIResponse 
+import { AUTH_STORAGE_KEYS } from "@auth-management/constants";
+import {
+  AddOnsListAPIResponse,
+  CreateAddonAPIResponse,
+  CreateFeatureAPIResponse,
+  CreatePlanAddOnPayloadRequest,
+  CreatePlanAPIResponse,
+  CreatePlanFeaturePayloadRequest,
+  CreatePlanSLAPayloadRequest,
+  CreateSlaAPIResponse,
+  CreateSubscriptionPlanAPIPayloadRequest,
+  FeaturesListAPIResponse,
+  GetPlanDetailsAPIResponse,
+  PlansListAPIResponse,
+  SlaListAPIResponse
 } from "@plan-management/types/plans";
+import { PLAN_API_ROUTES } from "@plan-management/constants/routes";
 
 /* HTTP client for subscription plan API endpoints */
 const apiClient = axios.create({
-  baseURL: `${BACKEND_BASE_URL}/plans`,
+  baseURL: `${BACKEND_BASE_URL}${PLAN_API_ROUTES.BASE_URL}`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -27,7 +29,7 @@ const apiClient = axios.create({
 /* Request interceptor for automatic token attachment */
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken'); /* Get auth token from storage */
+    const token = localStorage.getItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN); /* Get auth token from storage */
     if (token) {
       config.headers.Authorization = `Bearer ${token}`; /* Attach token to request headers */
     }
@@ -46,8 +48,8 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       /* Clear auth data and trigger logout on 401 */
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('loggedIn');
+      localStorage.removeItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(AUTH_STORAGE_KEYS.LOGGED_IN);
       window.dispatchEvent(new Event('authStateChanged'));
     }
     return Promise.reject(error); /* Forward error to caller */
@@ -60,7 +62,7 @@ export const planService = {
   /* Retrieve all subscription plans from the API */
   async getAllSubscriptionPlans(): Promise<AxiosResponse<PlansListAPIResponse>> {
     try {
-      const response = await apiClient.get(''); /* GET /subscription-plans */
+      const response = await apiClient.get(PLAN_API_ROUTES.LIST); /* GET /subscription-plans */
       return response;
     } catch (error) {
       console.error('[PlanService] Failed to fetch subscription plans:', error);
@@ -70,7 +72,7 @@ export const planService = {
   /* Create a new subscription plan with provided data */
   async createSubscriptionPlan(planData: CreateSubscriptionPlanAPIPayloadRequest): Promise<AxiosResponse<CreatePlanAPIResponse>> {
     try {
-      const response = await apiClient.post('', planData); /* POST /subscription-plans */
+      const response = await apiClient.post(PLAN_API_ROUTES.CREATE, planData); /* POST /subscription-plans */
       return response;
     } catch (error) {
       console.error('[PlanService] Failed to create subscription plan:', error);
@@ -81,7 +83,7 @@ export const planService = {
   /* Get detailed information for a specific subscription plan */
   async getSubscriptionPlanDetails(planId: number): Promise<AxiosResponse<GetPlanDetailsAPIResponse>> {
     try {
-      const response = await apiClient.get(`/${planId}`); /* GET /subscription-plans/:id */
+      const response = await apiClient.get(PLAN_API_ROUTES.DETAILS.replace(':id', planId.toString())); /* GET /subscription-plans/:id */
       return response;
     } catch (error) {
       console.error('[PlanService] Failed to fetch subscription plan details:', error);
@@ -92,7 +94,7 @@ export const planService = {
   /* Update an existing subscription plan with new data */
   async updateSubscriptionPlan(planId: number, planData: CreateSubscriptionPlanAPIPayloadRequest): Promise<AxiosResponse<CreatePlanAPIResponse>> {
     try {
-      const response = await apiClient.put(`/${planId}`, planData); /* PUT /subscription-plans/:id */
+      const response = await apiClient.put(PLAN_API_ROUTES.UPDATE.replace(':id', planId.toString()), planData); /* PUT /subscription-plans/:id */
       return response;
     } catch (error) {
       console.error('[PlanService] Failed to update subscription plan:', error);
@@ -103,7 +105,7 @@ export const planService = {
   /* Remove a subscription plan permanently */
   async deleteSubscriptionPlan(planId: number): Promise<AxiosResponse<{ success: boolean; message: string }>> {
     try {
-      const response = await apiClient.delete(`/${planId}`); /* DELETE /subscription-plans/:id */
+      const response = await apiClient.delete(PLAN_API_ROUTES.DELETE.replace(':id', planId.toString())); /* DELETE /subscription-plans/:id */
       return response;
     } catch (error) {
       console.error('[PlanService] Failed to delete subscription plan:', error);
@@ -114,7 +116,7 @@ export const planService = {
   /* Retrieve all available plan features */
   async getAllFeatures(): Promise<AxiosResponse<FeaturesListAPIResponse>> {
     try {
-      const response = await apiClient.get('/features'); /* GET /subscription-plans/features */
+      const response = await apiClient.get(PLAN_API_ROUTES.FEATURES); /* GET /subscription-plans/features */
       return response;
     } catch (error) {
       console.error('[PlanService] Failed to fetch features:', error);
@@ -125,7 +127,7 @@ export const planService = {
   /* Retrieve all available plan add-ons */
   async getAllAddOns(): Promise<AxiosResponse<AddOnsListAPIResponse>> {
     try {
-      const response = await apiClient.get('/add-ons'); /* GET /subscription-plans/add-ons */
+      const response = await apiClient.get(PLAN_API_ROUTES.ADD_ONS); /* GET /subscription-plans/add-ons */
       return response;
     } catch (error) {
       console.error('[PlanService] Failed to fetch add-ons:', error);
@@ -136,7 +138,7 @@ export const planService = {
   /* Retrieve all available service level agreements */
   async getAllSLAs(): Promise<AxiosResponse<SlaListAPIResponse>> {
     try {
-      const response = await apiClient.get('/sla'); /* GET /subscription-plans/sla */
+      const response = await apiClient.get(PLAN_API_ROUTES.SLA); /* GET /subscription-plans/sla */
       return response;
     } catch (error) {
       console.error('[PlanService] Failed to fetch SLAs:', error);
@@ -147,7 +149,7 @@ export const planService = {
   /* Create a new plan feature with provided data */
   async createFeature(featureData: CreatePlanFeaturePayloadRequest): Promise<AxiosResponse<CreateFeatureAPIResponse>> {
     try {
-      const response = await apiClient.post('/features', featureData); /* POST /subscription-plans/features */
+      const response = await apiClient.post(PLAN_API_ROUTES.FEATURES, featureData); /* POST /subscription-plans/features */
       return response;
     } catch (error) {
       console.error('[PlanService] Failed to create feature:', error);
@@ -158,7 +160,7 @@ export const planService = {
   /* Create a new plan add-on with provided data */
   async createAddOn(addOnData: CreatePlanAddOnPayloadRequest): Promise<AxiosResponse<CreateAddonAPIResponse>> {
     try {
-      const response = await apiClient.post('/add-ons', addOnData); /* POST /subscription-plans/add-ons */
+      const response = await apiClient.post(PLAN_API_ROUTES.ADD_ONS, addOnData); /* POST /subscription-plans/add-ons */
       return response;
     } catch (error) {
       console.error('[PlanService] Failed to create add-on:', error);
@@ -169,7 +171,7 @@ export const planService = {
   /* Create a new service level agreement with provided data */
   async createSLA(slaData: CreatePlanSLAPayloadRequest): Promise<AxiosResponse<CreateSlaAPIResponse>> {
     try {
-      const response = await apiClient.post('/sla', slaData); /* POST /subscription-plans/sla */
+      const response = await apiClient.post(PLAN_API_ROUTES.SLA, slaData); /* POST /subscription-plans/sla */
       return response;
     } catch (error) {
       console.error('[PlanService] Failed to create SLA:', error);

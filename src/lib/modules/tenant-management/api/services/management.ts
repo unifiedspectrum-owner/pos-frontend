@@ -1,8 +1,8 @@
 /* Tenant module imports */
 import { TenantListApiResponse } from "@tenant-management/types/account/list"
 import { TenantDetailsApiResponse } from "@tenant-management/types/account/details"
-import { AccountStatusApiRequest } from "@tenant-management/types/account"
 import { tenantApiClient } from "@tenant-management/api/clients"
+import { TENANT_API_ROUTES } from "@tenant-management/constants/routes"
 
 /* Service object containing tenant CRUD operations API methods */
 export const tenantManagementService = {
@@ -10,7 +10,7 @@ export const tenantManagementService = {
   /* Get all tenants with pagination */
   async listAllTenants(page: number = 1, limit: number = 10): Promise<TenantListApiResponse> {
     try {
-      const response = await tenantApiClient.get<TenantListApiResponse>('/list', {
+      const response = await tenantApiClient.get<TenantListApiResponse>(TENANT_API_ROUTES.LIST, {
         params: {
           page,
           limit
@@ -24,9 +24,9 @@ export const tenantManagementService = {
   },
 
   /* Get detailed information for a specific tenant */
-  async getTenantDetails(data: AccountStatusApiRequest): Promise<TenantDetailsApiResponse> {
+  async getTenantDetails(tenantId: string): Promise<TenantDetailsApiResponse> {
     try {
-      const response = await tenantApiClient.post<TenantDetailsApiResponse>('/details', data)
+      const response = await tenantApiClient.get<TenantDetailsApiResponse>(TENANT_API_ROUTES.DETAILS.replace(':id', tenantId))
       return response.data
     } catch (error) {
       console.error('[TenantManagementService] Failed to get tenant details:', error)

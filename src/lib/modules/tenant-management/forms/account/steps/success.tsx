@@ -15,6 +15,7 @@ import { Plan } from '@plan-management/types/plans'
 /* Tenant module imports */
 import { getBillingCycleLabel } from '@tenant-management/utils'
 import { PlanBillingCycle, SelectedAddon } from '@tenant-management/types'
+import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 
 /* Success step component props interface */
 interface SuccessStepProps {
@@ -76,7 +77,7 @@ const SuccessStep: React.FC<SuccessStepProps> = ({ onComplete }) => {
 
   /* Load plan summary on component mount */
   useEffect(() => {
-    const selectedPlan = localStorage.getItem('selected_plan')
+    const selectedPlan = localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.SELECTED_PLAN_DATA)
     if (selectedPlan) {
       try {
         const parsed = JSON.parse(selectedPlan) as StoredPlanData

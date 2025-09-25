@@ -5,11 +5,15 @@ export const PLAN_MODULE_NAME = 'plan-management';
 
 /* Plan API endpoints */
 export const PLAN_API_ROUTES = {
-  LIST: '/list',
+  BASE_URL: '/plans',
+  LIST: '',
   DETAILS: '/:id',
   CREATE: '',
   UPDATE: '/:id',
   DELETE: '/:id',
+  FEATURES: '/features',
+  ADD_ONS: '/add-ons',
+  SLA: '/sla',
 } as const;
 
 /* Plan management page routes */

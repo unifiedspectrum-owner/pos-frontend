@@ -26,6 +26,7 @@
       "@tenant-management/*": ["src/lib/modules/tenant-management/*"],
       "@user-management/*": ["src/lib/modules/user-management/*"],
       "@role-management/*": ["src/lib/modules/role-management/*"],
+      "@auth-management/*": ["src/lib/modules/auth-management/*"],
     },
     "types": [
         "./cloudflare-env.d.ts",

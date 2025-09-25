@@ -105,7 +105,7 @@ const BasicInfoStep: React.FC<TenantInfoStepProps> = ({ isCompleted }) => {
       if (data.country && country?.name) {
         console.log(`Setting country Name: ${data.country} for country name: ${data.country}`)
         setSelectedCountryName(country.name);
-        localStorage.setItem('pending_state_restore', data.state_province)
+        localStorage.setItem(TENANT_ACCOUNT_CREATION_LS_KEYS.PENDING_STATE_RESTORE, data.state_province)
         
         /* Restore phone field with correct dial code */
         if (data.primary_phone && country.phone_code) {
@@ -132,14 +132,14 @@ const BasicInfoStep: React.FC<TenantInfoStepProps> = ({ isCompleted }) => {
 
   /* Restore state selection after states data loads */
   useEffect(() => {
-    const pendingStateName = localStorage.getItem('pending_state_restore')
+    const pendingStateName = localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.PENDING_STATE_RESTORE)
     if (pendingStateName && states.length > 0 && selectedCountryName) {
       console.log(`Attempting to restore state: "${pendingStateName}" from ${states.length} available states`)
       const state = states.find(s => s.name === pendingStateName)
       if (state) {
         console.log(`Found matching state, setting state ID: ${state.id}`)
         setValue('state_province', state.id.toString())
-        localStorage.removeItem('pending_state_restore')
+        localStorage.removeItem(TENANT_ACCOUNT_CREATION_LS_KEYS.PENDING_STATE_RESTORE)
       }
     }
   }, [states, selectedCountryName, setValue])

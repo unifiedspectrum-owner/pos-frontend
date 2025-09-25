@@ -14,7 +14,8 @@ const MODULES = {
 
 /* Dashboard page routes */
 export const DASHBOARD_PAGE_ROUTES = {
-  HOME: `${ADMIN_BASE}/${MODULES.DASHBOARD}`,
+  HOME: `${ADMIN_BASE}/${MODULES.USER_MANAGEMENT}`,
+  //HOME: `${ADMIN_BASE}/${MODULES.DASHBOARD}`,
   OVERVIEW: `${ADMIN_BASE}/${MODULES.DASHBOARD}/overview`,
 } as const;
 

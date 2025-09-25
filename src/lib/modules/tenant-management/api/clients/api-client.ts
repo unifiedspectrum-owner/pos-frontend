@@ -4,9 +4,13 @@ import axios from "axios"
 /* Shared module imports */
 import { BACKEND_BASE_URL } from "@shared/config"
 
+/* Auth management module imports */
+import { AUTH_STORAGE_KEYS } from "@auth-management/constants"
+import { TENANT_API_ROUTES } from "@tenant-management/constants"
+
 /* HTTP client configured for tenant management API endpoints */
 const tenantApiClient = axios.create({
-  baseURL: `${BACKEND_BASE_URL}/tenants`,
+  baseURL: `${BACKEND_BASE_URL}${TENANT_API_ROUTES.BASE_URL}`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -15,7 +19,7 @@ const tenantApiClient = axios.create({
 /* Attach auth token to requests */
 tenantApiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken')
+    const token = localStorage.getItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -33,8 +37,8 @@ tenantApiClient.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('loggedIn')
+      localStorage.removeItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN)
+      localStorage.removeItem(AUTH_STORAGE_KEYS.LOGGED_IN)
       window.dispatchEvent(new Event('authStateChanged'))
     }
     return Promise.reject(error)

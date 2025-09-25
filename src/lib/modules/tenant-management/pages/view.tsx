@@ -242,7 +242,7 @@ const TenantDetailsPage: React.FC<TenantDetailsPageProps> = ({ tenantId }) => {
         setIsLoading(true)
         setError(null)
         
-        const response = await tenantManagementService.getTenantDetails({ tenant_id: tenantId })
+        const response = await tenantManagementService.getTenantDetails(tenantId)
         
         if (response.success && response.data) {
           setTenantDetails(response.data.tenant_details)
