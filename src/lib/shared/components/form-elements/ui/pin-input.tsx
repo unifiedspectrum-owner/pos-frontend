@@ -2,6 +2,7 @@
 import React from 'react';
 import { Field } from '@/components/ui/field';
 import { PinInput } from '@chakra-ui/react';
+import { GRAY_COLOR } from '@/lib/shared/config';
 
 /* Props interface for pin input field component */
 interface PinInputFieldProps {
@@ -9,7 +10,7 @@ interface PinInputFieldProps {
   placeholder?: string; /* Placeholder text */
   isInValid: boolean; /* Whether field has validation errors */
   required: boolean; /* Whether field is required */
-  errorMessage: string; /* Error message to display */
+  errorMessage?: string; /* Error message to display */
   disabled?: boolean; /* Whether field is disabled */
   readOnly?: boolean; /* Whether field is read-only */
   name?: string; /* Field name attribute */
@@ -17,6 +18,7 @@ interface PinInputFieldProps {
   value?: string[]; /* Current value as array of strings */
   onChange?: (value: string[]) => void; /* Change handler */
   onBlur?: () => void; /* Blur handler */
+  boxGap?: string
 }
 
 const PinInputField: React.FC<PinInputFieldProps> = ({
@@ -30,11 +32,27 @@ const PinInputField: React.FC<PinInputFieldProps> = ({
   name,
   length = 6,
   value = [],
+  boxGap = '20px',
   onChange,
 }) => {
 
   return (
-    <Field label={label} invalid={isInValid} errorText={errorMessage} required={required}>
+    <Field 
+      label={label} 
+      invalid={isInValid} 
+      errorText={errorMessage} 
+      required={required}
+      css={{
+        '& label': {
+          userSelect: 'text',
+          cursor: 'text',
+          pointerEvents: 'auto'
+        },
+        '& label:hover': {
+          cursor: 'text'
+        }
+      }}
+    >
       <PinInput.Root
         size={'xl'}
         name={name}
@@ -48,9 +66,9 @@ const PinInputField: React.FC<PinInputFieldProps> = ({
         otp
       >
         <PinInput.HiddenInput />
-        <PinInput.Control gap={'20px'}>
+        <PinInput.Control gap={boxGap}>
           {Array.from({ length }, (_, index) => (
-            <PinInput.Input w={'100%'} key={index} index={index} />
+            <PinInput.Input w={'100%'} key={index} index={index} borderWidth={1} borderColor={GRAY_COLOR} />
           ))}
         </PinInput.Control>
       </PinInput.Root>

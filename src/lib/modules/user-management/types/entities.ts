@@ -11,6 +11,7 @@ export interface UserAccountDetails {
   email: string;
   phone: string;
   profile_image_url: string | null;
+  is_2fa_enabled: boolean;
   user_status: string;
   email_verified: boolean;
   phone_verified: boolean;

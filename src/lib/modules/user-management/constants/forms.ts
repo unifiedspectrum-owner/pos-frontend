@@ -25,6 +25,7 @@ export const USER_FORM_DEFAULT_VALUES: CreateUserFormData = {
   role_id: '',
   module_assignments: [],
   is_active: true,
+  is_2fa_enabled: false
 }
 
 /* User creation tab constants */
@@ -79,11 +80,11 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 3,
-    type: "SELECT",
-    label: "User Role",
-    schema_key: "role_id",
-    placeholder: "Select a role",
-    left_icon: FaUserShield,
+    type: "INPUT",
+    label: "Email Address",
+    schema_key: "email",
+    placeholder: "Enter email address",
+    left_icon: FaEnvelope,
     is_required: true,
     is_active: true,
     display_order: 3,
@@ -93,29 +94,25 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 4,
-    type: "TOGGLE",
-    label: "Account Status",
-    schema_key: "is_active",
-    placeholder: "Enable or disable user account",
-    left_icon: FaToggleOn,
-    is_required: false,
+    type: "PHONE_NUMBER",
+    label: "Phone Number",
+    schema_key: "phone",
+    placeholder: "Enter phone number",
+    left_icon: FiPhone,
+    is_required: true,
     is_active: true,
     display_order: 4,
-    toggle_text: {
-      true: "Active",
-      false: "Inactive"
-    },
     grid: {
       col_span: 3
     }
   },
   {
     id: 5,
-    type: "INPUT",
-    label: "Email Address",
-    schema_key: "email",
-    placeholder: "Enter email address",
-    left_icon: FaEnvelope,
+    type: "SELECT",
+    label: "User Role",
+    schema_key: "role_id",
+    placeholder: "Select a role",
+    left_icon: FaUserShield,
     is_required: true,
     is_active: true,
     display_order: 5,
@@ -125,30 +122,52 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 6,
-    type: "PHONE_NUMBER",
-    label: "Phone Number",
-    schema_key: "phone",
-    placeholder: "Enter phone number",
-    left_icon: FiPhone,
-    is_required: true,
+    type: "TOGGLE",
+    label: "Account Status",
+    schema_key: "is_active",
+    placeholder: "Enable or disable user account",
+    left_icon: FaToggleOn,
+    is_required: false,
     is_active: true,
     display_order: 6,
+    toggle_text: {
+      true: "Active",
+      false: "Inactive"
+    },
     grid: {
       col_span: 3
     }
   },
   {
-    id: 10,
-    type: "FILE",
-    label: "Name",
-    schema_key: "f_name",
-    placeholder: "Enter first name",
-    left_icon: FaUser,
-    is_required: true,
+    id: 7,
+    type: "TOGGLE",
+    label: "Two Factor Authentication",
+    schema_key: "is_2fa_enabled",
+    placeholder: "Enable or disable two factor authentication",
+    left_icon: FaToggleOn,
+    is_required: false,
     is_active: true,
-    display_order: 10,
+    display_order: 7,
+    toggle_text: {
+      true: "Enable",
+      false: "Disable"
+    },
+    grid: {
+      col_span: 3
+    }
+  },
+  {
+    id: 8,
+    type: "FILE",
+    label: "Profile Picture",
+    schema_key: "profile_picture",
+    placeholder: "Upload profile picture",
+    left_icon: FaUser,
+    is_required: false,
+    is_active: false,
+    display_order: 8,
     grid: {
       col_span: 6
     }
-  },
+  }
 ]

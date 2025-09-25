@@ -84,6 +84,7 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
         userDetails.role_details?.id.toString(),
         userDetails.role_details?.id.toString() // original role ID (same as current for initial load)
       )
+      console.log("Module Ass", moduleAssignments)
 
       /* Prepare form data */
       const formData: CreateUserFormData = {
@@ -93,6 +94,7 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
         phone: parsedPhone,
         role_id: userDetails.role_details?.id.toString() || '',
         is_active: Boolean(userDetails.is_active),
+        is_2fa_enabled: Boolean(userDetails.is_2fa_enabled),
         module_assignments: moduleAssignments,
       }
 

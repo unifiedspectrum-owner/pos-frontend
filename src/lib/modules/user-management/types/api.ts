@@ -87,6 +87,7 @@ export interface UserCreationApiRequest {
   role_id: number;
   module_assignments?: ModuleAssignment[];
   is_active: boolean;
+  is_2fa_enabled: boolean;
 }
 
 /* Request payload for updating existing user account */
@@ -98,6 +99,7 @@ export interface UserUpdationApiRequest {
   role_id?: number;
   module_assignments?: ModuleAssignment[];
   is_active?: boolean;
+  is_2fa_enabled?: boolean;
 }
 
 /* API response for user creation operation */

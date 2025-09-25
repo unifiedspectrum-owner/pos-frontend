@@ -152,7 +152,8 @@ export const buildCreateUserPayload = (
     phone: formatPhoneForAPI(data.phone),
     role_id: Number(data.role_id),
     module_assignments: customModuleAssignments,
-    is_active: Boolean(data.is_active)
+    is_active: Boolean(data.is_active),
+    is_2fa_enabled: Boolean(data.is_2fa_enabled)
   }
 }
 
@@ -199,6 +200,10 @@ export const buildUpdateUserPayload = (
 
   if (changedFields.is_active !== undefined) {
     payload.is_active = changedFields.is_active
+  }
+
+  if (changedFields.is_2fa_enabled !== undefined) {
+    payload.is_2fa_enabled = changedFields.is_2fa_enabled
   }
 
   return payload

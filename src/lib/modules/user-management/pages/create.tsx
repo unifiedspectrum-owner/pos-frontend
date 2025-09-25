@@ -40,7 +40,7 @@ const CreateUserPage: React.FC = () => {
       const success = await createUser(payload) /* Submit user creation request */
 
       if (success) {
-        router.push(USER_PAGE_ROUTES.HOME) /* Navigate to user list on success */
+        // router.push(USER_PAGE_ROUTES.HOME) /* Navigate to user list on success */
       }
     } catch (error) {
       console.error('Error creating user:', error)
