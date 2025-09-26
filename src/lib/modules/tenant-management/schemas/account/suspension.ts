@@ -1,9 +1,12 @@
-/* Zod validation library import */
+/* Libraries imports */
 import z from "zod";
+
+/* Shared module imports */
+import { DATE_FORMAT_REGEX } from '@shared/constants';
 
 /* Date string validation schema for YYYY-MM-DD format */
 const dateStringSchema = z.string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format");
+  .regex(DATE_FORMAT_REGEX, "Date must be in YYYY-MM-DD format");
 
 /* Schema for holding tenant account */
 export const holdTenantAccountSchema = z.object({

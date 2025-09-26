@@ -40,7 +40,7 @@ export const useTenantOperations = (): UseTenantOperationsReturn => {
       console.log('[useTenantOperations] Deleting tenant:', tenantId)
 
       /* Call tenant deletion API */
-      const response = await tenantActionsService.deleteTenant({tenant_id : tenantId})
+      const response = await tenantActionsService.deleteTenant(tenantId)
 
       /* Check if deletion was successful */
       if (response.success) {

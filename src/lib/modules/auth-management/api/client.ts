@@ -43,6 +43,7 @@ authApiClient.interceptors.response.use(
       /* Clear tokens if refresh fails */
       localStorage.removeItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN)
       localStorage.removeItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN)
+      localStorage.removeItem(AUTH_STORAGE_KEYS.USER)
       localStorage.removeItem(AUTH_STORAGE_KEYS.LOGGED_IN)
       window.dispatchEvent(new Event('authStateChanged'))
     }

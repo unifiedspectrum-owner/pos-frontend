@@ -1,22 +1,22 @@
 "use client"
 
 /* Libraries imports */
-import React from 'react'
+import React, { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { VStack, Heading, Text, Link, Box, SimpleGrid, GridItem, Flex } from '@chakra-ui/react'
 import { useRouter } from '@/i18n/navigation'
-import { FaShieldAlt, FaArrowLeft } from 'react-icons/fa'
+import { FaShieldAlt, FaArrowLeft, FaKey } from 'react-icons/fa'
 
 /* Shared module imports */
 import { PRIMARY_COLOR } from '@shared/config'
-import { PinInputField, PrimaryButton } from '@shared/components/form-elements'
+import { PinInputField, PrimaryButton, TextInputField, SecondaryButton } from '@shared/components/form-elements'
 import { ADMIN_PAGE_ROUTES } from '@shared/constants'
 
 /* Auth management module imports */
-import { Verify2FAApiRequest } from '@auth-management/types'
+import { Verify2FAApiRequest, TwoFAType } from '@auth-management/types'
 import { useAuthOperations } from '@auth-management/hooks'
-import { AUTH_PAGE_ROUTES, VERIFY_2FA_FORM_QUESTIONS, AUTH_STORAGE_KEYS } from '@auth-management/constants'
+import { AUTH_PAGE_ROUTES, VERIFY_2FA_FORM_QUESTIONS, AUTH_STORAGE_KEYS, TWO_FA_TYPES } from '@auth-management/constants'
 import { TwoFactorValidationFormData, twoFactorValidationSchema } from '@auth-management/schemas'
 
 /* Component props interface */
@@ -29,6 +29,9 @@ interface Verify2FAFormProps {
 const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
   const router = useRouter()
 
+  /* Component state */
+  const [twoFAType, setTwoFAType] = useState<TwoFAType>(TWO_FA_TYPES.TOTP)
+
   /* Auth operations hook */
   const { verify2FA, isVerifying2FA } = useAuthOperations()
 
@@ -37,7 +40,9 @@ const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
     resolver: zodResolver(twoFactorValidationSchema),
     defaultValues: {
       user_id: userId,
-      code: ['', '', '', '', '', '']
+      type: twoFAType,
+      totp_code: ['', '', '', '', '', ''],
+      b_code: ''
     },
     mode: 'onSubmit'
   })
@@ -46,7 +51,8 @@ const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
   const onSubmit = async (data: TwoFactorValidationFormData) => {
     const payload: Verify2FAApiRequest = {
       user_id: data.user_id.toString(),
-      code: data.code.join('')
+      type: data.type,
+      code: data.type === TWO_FA_TYPES.TOTP ? (data.totp_code?.join('') || '') : (data.b_code || '')
     }
 
     const success = await verify2FA(payload)
@@ -65,14 +71,23 @@ const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
 
   /* Handle PIN input change */
   const handlePinChange = (value: string[]) => {
-    setValue('code', value)
+    setValue('totp_code', value)
+    setValue('type', twoFAType)
     if (value.length === 6 && value.every(digit => digit !== '')) {
       /* Auto-submit when 6 digits are entered */
       handleSubmit(onSubmit)()
     }
   }
-  console.log(errors)
 
+  /* Handle 2FA type toggle */
+  const handleToggle2FAType = () => {
+    const newType: TwoFAType = twoFAType === TWO_FA_TYPES.TOTP ? TWO_FA_TYPES.BACKUP : TWO_FA_TYPES.TOTP
+    setTwoFAType(newType)
+    setValue('type', newType)
+    setValue('totp_code', ['', '', '', '', '', ''])
+    setValue('b_code', '')
+  }
+  console.log(errors, control._formValues)
 
   return (
     <Box
@@ -89,13 +104,16 @@ const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
         {/* Form header */}
         <VStack gap={2} textAlign="center">
           <Heading size="lg" color={PRIMARY_COLOR}>
-            Two-Factor Authentication
+            {twoFAType === TWO_FA_TYPES.TOTP ? 'Two-Factor Authentication' : 'Backup Code Verification'}
           </Heading>
           <Text color="gray.600" fontSize="sm">
-            Enter the 6-digit code from your authenticator app
+            {twoFAType === TWO_FA_TYPES.TOTP
+              ? 'Enter the 6-digit code from your authenticator app'
+              : 'Enter your backup recovery code to access your account'
+            }
           </Text>
           {userEmail && (
-            <Text fontWeight={'bolder'}  color="gray.500" fontSize="xs">
+            <Text fontWeight={'bolder'} color="gray.500" fontSize="xs">
               Account: {userEmail}
             </Text>
           )}
@@ -126,7 +144,7 @@ const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
                   }
 
                   /* Render field based on type */
-                  if(field.type == "PIN" && schemaKey == "code") {
+                  if(field.type == "PIN" && twoFAType === TWO_FA_TYPES.TOTP && schemaKey == "totp_code") {
                     return (
                       <GridItem key={field.id} colSpan={field.grid.col_span}>
                         <Controller
@@ -136,11 +154,36 @@ const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
                             return(
                               <PinInputField
                                 {...commonProps}
-                                length={6}
-                                errorMessage={fieldError?.message}
+                                errorMessage={errors.totp_code?.message}
                                 value={controllerField.value}
                                 onChange={handlePinChange}
+                                onBlur={controllerField.onBlur}
                                 boxGap={'10px'}
+                                autoFocus={true}
+                              />
+                            )
+                          }}
+                        />
+                      </GridItem>
+                    )
+                  }
+
+                  if(field.type == "INPUT" && twoFAType === TWO_FA_TYPES.BACKUP && schemaKey == "b_code") {
+                    return (
+                      <GridItem key={field.id} colSpan={field.grid.col_span}>
+                        <Controller
+                          name={schemaKey}
+                          control={control}
+                          render={({ field: controllerField }) => {
+                            return(
+                              <TextInputField
+                                {...commonProps}
+                                placeholder={field.placeholder}
+                                errorMessage={errors.b_code?.message}
+                                value={controllerField.value?.toString() || ''}
+                                onChange={controllerField.onChange}
+                                onBlur={controllerField.onBlur}
+                                autoFocus={true}
                               />
                             )
                           }}
@@ -152,14 +195,25 @@ const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
                 })}
             </SimpleGrid>
 
-            {/* Submit button */}
-            <PrimaryButton
-              type="submit"
-              leftIcon={FaShieldAlt}
-              loading={isVerifying2FA}
-            >
-              {isVerifying2FA? "Verifying..." :"Verify Code"}
-            </PrimaryButton>
+            <Flex flexDir={'column'} gap={3}>
+              {/* Submit button */}
+              <PrimaryButton
+                type="submit"
+                leftIcon={FaShieldAlt}
+                loading={isVerifying2FA}
+              >
+                {isVerifying2FA ? "Verifying..." : twoFAType === TWO_FA_TYPES.BACKUP ? "Verify Backup Code" : "Verify Code"}
+              </PrimaryButton>
+
+              {/* Toggle backup code button */}
+              <SecondaryButton
+                size="sm"
+                onClick={handleToggle2FAType}
+                leftIcon={FaKey}
+              >
+                {twoFAType === TWO_FA_TYPES.BACKUP ? 'Use Authenticator Code' : 'Try Another Way'}
+              </SecondaryButton>
+            </Flex>
 
             {/* Back to Login Link */}
             <Box textAlign="center">
@@ -181,7 +235,10 @@ const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
 
             {/* Help text */}
             <Text textAlign="center" fontSize="xs" color="gray.500">
-              Having trouble? Make sure your authenticator app is set up correctly.
+              {twoFAType === TWO_FA_TYPES.TOTP
+                ? 'Having trouble? Make sure your authenticator app is set up correctly.'
+                : 'Enter the backup code you saved when setting up two-factor authentication.'
+              }
             </Text>
           </Flex>
         </form>

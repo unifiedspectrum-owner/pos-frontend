@@ -8,6 +8,7 @@ import { lighten } from 'polished';
 
 /* Shared module imports */
 import { GRAY_COLOR } from '@shared/config';
+import { DATE_FORMAT_REGEX } from '@shared/constants';
 
 /* Props interface for date input field component */
 interface DateFieldProps {
@@ -102,10 +103,9 @@ const DateField: React.FC<DateFieldProps> = ({
   /* Validate date format */
   const isValidDateFormat = (dateString: string) => {
     if (!dateString) return true; /* Empty is valid if not required */
-    
+
     /* Check basic YYYY-MM-DD format */
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(dateString)) return false;
+    if (!DATE_FORMAT_REGEX.test(dateString)) return false;
     
     /* Check if date is valid */
     const date = new Date(dateString);

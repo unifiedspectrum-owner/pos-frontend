@@ -8,3 +8,6 @@ export * from './forms'
 
 /* localStorage and sessionStorage key constants */
 export * from './storage'
+
+/* Regular expression constants */
+export * from './regex'

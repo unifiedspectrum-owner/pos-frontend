@@ -1,4 +1,8 @@
+/* Libraries imports */
 import { z } from 'zod'
+
+/* Shared module imports */
+import { NAME_REGEX } from '@shared/constants'
 
 /* Plan management validation schemas for creation, editing, and resource management */
 
@@ -7,7 +11,7 @@ export const createPlanSchema = z.object({
   name: z.string()
     .min(1, 'Name is required')
     .trim()
-    .regex(/^[a-zA-Z\s]+$/, 'Only letters and spaces are allowed'),
+    .regex(NAME_REGEX, 'Only letters, spaces, apostrophes, and hyphens are allowed'),
   description: z.string()
     .min(3, 'Description must be at least 3 characters'),
   is_active: z.boolean(),

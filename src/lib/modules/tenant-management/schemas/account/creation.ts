@@ -1,8 +1,11 @@
 /* Tenant account creation validation schemas */
 
-/* External library imports */
-import { PhoneNumberSchema } from '@shared/schema/validation';
+/* Libraries imports */
 import { z } from 'zod/v4';
+
+/* Shared module imports */
+import { PhoneNumberSchema } from '@shared/schema/validation';
+import { OTP_REGEX } from '@shared/constants';
 
 /* Schema for creating new tenant account with complete business information */
 export const createTenantAccountSchema = z.object({
@@ -13,12 +16,12 @@ export const createTenantAccountSchema = z.object({
   email_otp: z
     .string()
     .length(6, { message: "Email OTP must be 6 digits long" })
-    .regex(/^\d{6}$/, 'Email OTP must contain only numbers')
+    .regex(OTP_REGEX, 'Email OTP must contain only numbers')
     .optional(),
   phone_otp: z
     .string()
     .length(6, { message: "Phone OTP must be 6 digits long" })
-    .regex(/^\d{6}$/, 'Phone OTP must contain only numbers')
+    .regex(OTP_REGEX, 'Phone OTP must contain only numbers')
     .optional(),
   address_line1: z.string().min(1, 'Address line 1 is required').max(200),
   address_line2: z.string().max(200).nullable(),

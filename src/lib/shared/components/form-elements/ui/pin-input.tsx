@@ -18,7 +18,8 @@ interface PinInputFieldProps {
   value?: string[]; /* Current value as array of strings */
   onChange?: (value: string[]) => void; /* Change handler */
   onBlur?: () => void; /* Blur handler */
-  boxGap?: string
+  boxGap?: string;
+  autoFocus?: boolean; /* Whether to auto-focus the first input */
 }
 
 const PinInputField: React.FC<PinInputFieldProps> = ({
@@ -33,6 +34,7 @@ const PinInputField: React.FC<PinInputFieldProps> = ({
   length = 6,
   value = [],
   boxGap = '20px',
+  autoFocus = false,
   onChange,
 }) => {
 
@@ -60,6 +62,7 @@ const PinInputField: React.FC<PinInputFieldProps> = ({
         disabled={disabled}
         readOnly={readOnly}
         value={value}
+        autoFocus={autoFocus}
         onValueChange={(details) => {
           onChange?.(details.value);
         }}

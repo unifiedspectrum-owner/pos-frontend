@@ -10,8 +10,9 @@ import { FaKey } from 'react-icons/fa'
 
 /* Shared module imports */
 import { PRIMARY_COLOR } from '@shared/config'
-import { TextInputField, PrimaryButton } from '@shared/components/form-elements'
+import { PasswordInputField, PrimaryButton } from '@shared/components/form-elements'
 import { LoaderWrapper } from '@shared/components/common'
+
 
 /* Auth management module imports */
 import { ResetPasswordApiRequest, TokenValidationState } from '@auth-management/types'
@@ -24,10 +25,12 @@ interface ResetPasswordFormProps {
   token: string | null;
   tokenValidationState: TokenValidationState;
   isValidatingToken: boolean;
+  tokenValidationErrorCode?: string | null;
+  tokenValidationErrorMsg?: string | null;
 }
 
 /* Reset Password form component */
-const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, tokenValidationState, isValidatingToken }) => {
+const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, tokenValidationState, isValidatingToken, tokenValidationErrorCode, tokenValidationErrorMsg }) => {
   const router = useRouter()
 
   /* Auth operations hook */
@@ -72,7 +75,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, tokenValid
       borderColor="gray.200"
     >
       <LoaderWrapper
-        isLoading={isValidatingToken}
+        isLoading={isValidatingToken || tokenValidationState === TOKEN_VALIDATION_STATE.PENDING}
         loadingText="Validating reset link..."
         minHeight="200px"
       >
@@ -80,11 +83,13 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, tokenValid
           {/* Dynamic header based on token validity */}
           <VStack gap={2} textAlign="center">
             <Heading size="lg" color={tokenValidationState === TOKEN_VALIDATION_STATE.INVALID ? "red.500" : PRIMARY_COLOR}>
-              {tokenValidationState === TOKEN_VALIDATION_STATE.INVALID ? "Invalid Reset Link" : "Reset Password"}
+              {tokenValidationState === TOKEN_VALIDATION_STATE.INVALID
+                ? (tokenValidationErrorMsg || "Invalid Reset Link")
+                : "Reset Password"}
             </Heading>
             <Text color="gray.600" fontSize="sm">
               {tokenValidationState === TOKEN_VALIDATION_STATE.INVALID
-                ? "This reset link is invalid or has expired. Please request a new one."
+                ? (tokenValidationErrorCode || "This reset link is invalid or has expired. Please request a new one.")
                 : "Enter your new password below"
               }
             </Text>
@@ -128,15 +133,16 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, tokenValid
                               name={schemaKey}
                               control={control}
                               render={({ field: controllerField }) => (
-                                <TextInputField
+                                <PasswordInputField
                                   {...commonProps}
-                                  type="password"
                                   value={controllerField.value?.toString() || ''}
                                   onChange={(e) => {
                                     clearErrors(schemaKey)
                                     controllerField.onChange(e.target.value)
                                   }}
                                   onBlur={controllerField.onBlur}
+                                  showStrengthMeter={schemaKey === 'new_password'}
+                                  showRequirements={schemaKey === 'new_password'}
                                 />
                               )}
                             />

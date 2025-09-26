@@ -1,20 +1,23 @@
 /* Form validation schemas for user management */
 
+/* Libraries imports */
+import z from "zod/v4";
+
 /* Shared module imports */
 import { PhoneNumberSchema } from "@shared/schema/validation";
-import z from "zod/v4";
+import { NAME_REGEX } from "@shared/constants";
 
 /* User creation form validation schema */
 export const createUserSchema = z.object({
   f_name: z.string()
     .min(1, 'First name is required')
     .max(100, 'First name cannot exceed 100 characters')
-    .regex(/^[a-zA-Z\s'-]+$/, 'First name contains invalid characters'),
+    .regex(NAME_REGEX, 'First name contains invalid characters'),
 
   l_name: z.string()
     .min(1, 'Last name is required')
     .max(100, 'Last name cannot exceed 100 characters')
-    .regex(/^[a-zA-Z\s'-]+$/, 'Last name contains invalid characters'),
+    .regex(NAME_REGEX, 'Last name contains invalid characters'),
 
   email: z.string()
     .email('Invalid email format')

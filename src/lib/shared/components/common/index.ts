@@ -2,6 +2,7 @@
 export { default as Breadcrumbs } from './bread-crumbs'; /* Breadcrumb navigation */
 export { default as Sidebar } from './sidebar'; /* Main navigation sidebar */
 export { default as HeaderSection } from './header'; /* Page header section */
+export { default as NavigationHeader } from './navigation-header'; /* Top navigation header */
 
 /* Dialog and modal components */
 export { default as ConfirmationDialog } from './confirmation-dialog'; /* Confirmation modal dialog */

@@ -1,5 +1,6 @@
 /* Form input components */
 export { default as TextInputField } from './text-field'; /* Text input field */
+export { default as PasswordInputField } from './password-input-field'; /* Password input field with strength indicator */
 export { default as TextAreaField } from './textarea'; /* Multi-line text area */
 export { default as DateField } from './date-field'; /* Date input field */
 export { default as SelectField } from './select-field'; /* Dropdown selection field */

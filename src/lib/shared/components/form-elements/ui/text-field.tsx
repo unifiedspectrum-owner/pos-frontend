@@ -28,7 +28,8 @@ interface TextInputFieldProps {
   debounceMs?: number; /* Debounce delay in milliseconds */
   type?: 'text' | 'password'; /* Input type - defaults to 'text' */
   rightIcon?: React.ReactNode
-  leftIcon?: React.ReactNode
+  leftIcon?: React.ReactNode;
+  autoFocus?: boolean;
 }
 
 const TextInputField: React.FC<TextInputFieldProps> = ({
@@ -45,6 +46,7 @@ const TextInputField: React.FC<TextInputFieldProps> = ({
   name,
   inputProps,
   isDebounced = true,
+  autoFocus = false,
   debounceMs = 300,
   type = 'text',
   rightIcon,
@@ -177,6 +179,7 @@ const TextInputField: React.FC<TextInputFieldProps> = ({
       <Input
         h={'48px'}
         type={inputType}
+        autoFocus={autoFocus}
         borderColor={isInValid ? 'red.500' : lighten(0.3, GRAY_COLOR)}
         borderRadius={'md'}
         placeholder={placeholder}

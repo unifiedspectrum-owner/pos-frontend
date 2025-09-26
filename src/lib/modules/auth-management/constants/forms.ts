@@ -1,8 +1,17 @@
 /* Form configuration constants for authentication */
 
 /* Libraries imports */
-import { FaLock, FaEnvelope, FaShieldAlt } from 'react-icons/fa'
+import { FaLock, FaEnvelope, FaShieldAlt, FaKey } from 'react-icons/fa'
 import { MdToggleOn } from 'react-icons/md'
+
+/* Auth management module imports */
+import { TwoFAType } from '@auth-management/types'
+
+/* 2FA Type Constants */
+export const TWO_FA_TYPES = {
+  TOTP: 'totp',
+  BACKUP: 'backup'
+} satisfies Record<string, TwoFAType>;
 
 /* Auth management module imports */
 import { TokenValidationState } from '@auth-management/types'
@@ -132,12 +141,26 @@ export const VERIFY_2FA_FORM_QUESTIONS: FormFieldStructure[] = [
     id: 1,
     type: "PIN",
     label: "Enter 6-digit code",
-    schema_key: "code",
+    schema_key: "totp_code",
     placeholder: "Enter the 6-digit code from your authenticator app",
     left_icon: FaShieldAlt,
     is_required: true,
     is_active: true,
     display_order: 1,
+    grid: {
+      col_span: 2
+    }
+  },
+  {
+    id: 2,
+    type: "INPUT",
+    label: "Enter backup code",
+    schema_key: "b_code",
+    placeholder: "Enter your backup recovery code",
+    left_icon: FaKey,
+    is_required: true,
+    is_active: true,
+    display_order: 2,
     grid: {
       col_span: 2
     }

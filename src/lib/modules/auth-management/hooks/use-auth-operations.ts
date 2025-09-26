@@ -40,7 +40,13 @@ interface UseAuthOperationsReturn {
   /* Token validation operations */
   validateResetToken: (token: string) => Promise<boolean>
   isValidatingToken: boolean
-  tokenValidationError: string | null
+  tokenValidationErrorCode: string | null
+  tokenValidationErrorMsg: string | null
+
+  /* Logout operations */
+  logoutUser: () => Promise<boolean>
+  isLoggingOut: boolean
+  logoutError: string | null
 }
 
 /* Custom hook for authentication operations */
@@ -57,7 +63,10 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
   const [isResetPasswordLoading, setIsResetPasswordLoading] = useState<boolean>(false)
   const [resetPasswordError, setResetPasswordError] = useState<string | null>(null)
   const [isValidatingToken, setIsValidatingToken] = useState<boolean>(false)
-  const [tokenValidationError, setTokenValidationError] = useState<string | null>(null)
+  const [tokenValidationErrorCode, setTokenValidationErrorCode] = useState<string | null>(null)
+  const [tokenValidationErrorMsg, setTokenValidationErrorMsg] = useState<string | null>(null)
+  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false)
+  const [logoutError, setLogoutError] = useState<string | null>(null)
 
   /* Login user operation */
   const loginUser = useCallback(async (loginData: LoginApiRequest): Promise<boolean> => {
@@ -102,7 +111,7 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
         if (response.data.accessToken && response.data.refreshToken) {
           localStorage.setItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN, response.data.accessToken)
           localStorage.setItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN, response.data.refreshToken)
-          localStorage.setItem(AUTH_STORAGE_KEYS.USER_EMAIL, response.data.user.email)
+          localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(response.data.user))
           localStorage.setItem(AUTH_STORAGE_KEYS.LOGGED_IN, 'true')
 
           /* Dispatch auth state change event */
@@ -173,7 +182,7 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
         if (response.data.is_2fa_authenticated && response.data.accessToken && response.data.refreshToken) {
           localStorage.setItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN, response.data.accessToken)
           localStorage.setItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN, response.data.refreshToken)
-          localStorage.setItem(AUTH_STORAGE_KEYS.USER_EMAIL, response.data.user.email)
+          localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(response.data.user))
           localStorage.setItem(AUTH_STORAGE_KEYS.LOGGED_IN, 'true')
 
           /* Clear pending 2FA data */
@@ -353,7 +362,8 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
   const validateResetToken = useCallback(async (token: string): Promise<boolean> => {
     try {
       setIsValidatingToken(true)
-      setTokenValidationError(null)
+      setTokenValidationErrorCode(null)
+      setTokenValidationErrorMsg(null)
 
       console.log('[useAuthOperations] Validating reset token')
 
@@ -373,26 +383,114 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
           message: errorMsg
         })
 
-        setTokenValidationError(errorMsg)
+        setTokenValidationErrorCode(errorMsg)
+        setTokenValidationErrorMsg(errorMsg)
         return false
       }
 
     } catch (error: unknown) {
-      const errorMsg = 'Failed to validate token'
       console.error('[useAuthOperations] Token validation error:', error)
-
-      const err = error as AxiosError
+      
+      const err = error as AxiosError;
+      const errData = err?.response?.data as any;
+      const errorCode = errData?.error || 'INVALID TOKEN'
+      const errorMsg = errData?.message || 'Failed to validate token'
       handleApiError(err, {
         title: 'Token Validation Failed',
       })
 
-      setTokenValidationError(errorMsg)
+      setTokenValidationErrorCode(errorCode)
+      setTokenValidationErrorMsg(errorMsg)
       return false
 
     } finally {
       setIsValidatingToken(false)
     }
   }, [])
+
+  /* Logout user operation */
+  const logoutUser = useCallback(async (): Promise<boolean> => {
+    try {
+      setIsLoggingOut(true)
+      setLogoutError(null)
+
+      console.log('[useAuthOperations] Attempting user logout')
+
+      /* Call logout API */
+      const response = await authManagementService.logoutUser()
+
+      /* Check if logout was successful */
+      if (response.success) {
+        /* Clear all authentication data */
+        localStorage.removeItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN)
+        localStorage.removeItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN)
+        localStorage.removeItem(AUTH_STORAGE_KEYS.USER)
+        localStorage.removeItem(AUTH_STORAGE_KEYS.LOGGED_IN)
+
+        /* Clear any pending 2FA data */
+        localStorage.removeItem(AUTH_STORAGE_KEYS.PENDING_2FA_USER_ID)
+        localStorage.removeItem(AUTH_STORAGE_KEYS.PENDING_2FA_EMAIL)
+
+        /* Dispatch auth state change event */
+        window.dispatchEvent(new Event('authStateChanged'))
+
+        /* Success notification */
+        createToastNotification({
+          type: 'success',
+          title: 'Logout Successful',
+          description: 'You have been successfully logged out.'
+        })
+
+        /* Redirect to login page */
+        router.push(AUTH_PAGE_ROUTES.LOGIN)
+
+        console.log('[useAuthOperations] Successfully logged out user')
+        return true
+      } else {
+        /* Handle API success=false case */
+        const errorMsg = response.error || response.message || 'Logout failed'
+        console.error('[useAuthOperations] Logout failed:', errorMsg)
+
+        createToastNotification({
+          type: 'error',
+          title: 'Logout Failed',
+          description: errorMsg
+        })
+
+        setLogoutError(errorMsg)
+        return false
+      }
+
+    } catch (error: unknown) {
+      const errorMsg = 'Failed to logout. Please try again.'
+      console.error('[useAuthOperations] Logout error:', error)
+
+      /* Even if API call fails, still clear local data for security */
+      localStorage.removeItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN)
+      localStorage.removeItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN)
+      localStorage.removeItem(AUTH_STORAGE_KEYS.USER)
+      localStorage.removeItem(AUTH_STORAGE_KEYS.LOGGED_IN)
+      localStorage.removeItem(AUTH_STORAGE_KEYS.PENDING_2FA_USER_ID)
+      localStorage.removeItem(AUTH_STORAGE_KEYS.PENDING_2FA_EMAIL)
+
+      /* Dispatch auth state change event */
+      window.dispatchEvent(new Event('authStateChanged'))
+
+      const err = error as AxiosError
+      handleApiError(err, {
+        title: 'Logout Failed'
+      })
+
+      /* Redirect to login page anyway */
+      router.push(AUTH_PAGE_ROUTES.LOGIN)
+
+      setLogoutError(errorMsg)
+      return true /* Return true since we cleared local data anyway */
+
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }, [router])
 
   return {
     /* Login operations */
@@ -418,6 +516,12 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
     /* Token validation operations */
     validateResetToken,
     isValidatingToken,
-    tokenValidationError
+    tokenValidationErrorCode,
+    tokenValidationErrorMsg,
+
+    /* Logout operations */
+    logoutUser,
+    isLoggingOut,
+    logoutError
   }
 }

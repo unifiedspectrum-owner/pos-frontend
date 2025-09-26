@@ -128,16 +128,15 @@ class TokenRefreshService {
 
     try {
       const refreshToken = localStorage.getItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN)
-      const userEmail = localStorage.getItem(AUTH_STORAGE_KEYS.USER_EMAIL)
 
-      if (!refreshToken || !userEmail) {
+      if (!refreshToken) {
         throw new Error('No refresh token or user email available')
       }
 
       /* Call refresh token API */
       const response = await axios.post<TokenRefreshResponse>(
         `${BACKEND_BASE_URL}/auth${AUTH_API_ROUTES.REFRESH}`,
-        { email: userEmail },
+        { refresh_token: refreshToken },
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN)}`,
@@ -166,7 +165,6 @@ class TokenRefreshService {
       localStorage.removeItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN)
       localStorage.removeItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN)
       localStorage.removeItem(AUTH_STORAGE_KEYS.LOGGED_IN)
-      localStorage.removeItem(AUTH_STORAGE_KEYS.USER_EMAIL)
 
       /* Dispatch auth state change event */
       window.dispatchEvent(new Event('authStateChanged'))

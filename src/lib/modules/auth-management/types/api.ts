@@ -2,6 +2,7 @@
 
 /* Shared module imports */
 import { ValidationError } from '@shared/types'
+import { TwoFAType } from '@auth-management/types';
 
 /* API Request Interfaces */
 
@@ -14,6 +15,7 @@ export interface LoginApiRequest {
 
 export interface Verify2FAApiRequest {
   user_id: string;
+  type: TwoFAType;
   code: string;
 }
 

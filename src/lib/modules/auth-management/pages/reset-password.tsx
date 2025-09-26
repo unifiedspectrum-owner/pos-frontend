@@ -18,7 +18,7 @@ const ResetPasswordPage: React.FC = () => {
   const [tokenValidationState, setTokenValidationState] = useState<TokenValidationState>(TOKEN_VALIDATION_STATE.PENDING)
 
   /* Auth operations hook */
-  const { validateResetToken, isValidatingToken } = useAuthOperations()
+  const { validateResetToken, isValidatingToken, tokenValidationErrorCode, tokenValidationErrorMsg } = useAuthOperations()
 
   /* Validate token on component mount */
   useEffect(() => {
@@ -32,7 +32,7 @@ const ResetPasswordPage: React.FC = () => {
     }
 
     validateToken()
-  }, [token, validateResetToken])
+  }, [token, validateResetToken]);
 
   return (
     <AuthLayout>
@@ -40,6 +40,8 @@ const ResetPasswordPage: React.FC = () => {
         token={token}
         tokenValidationState={tokenValidationState}
         isValidatingToken={isValidatingToken}
+        tokenValidationErrorCode={tokenValidationErrorCode}
+        tokenValidationErrorMsg={tokenValidationErrorMsg}
       />
     </AuthLayout>
   )

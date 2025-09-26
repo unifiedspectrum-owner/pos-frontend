@@ -5,7 +5,7 @@ export const AUTH_STORAGE_KEYS = {
   ACCESS_TOKEN: 'accessToken',
   REFRESH_TOKEN: 'refreshToken',
   LOGGED_IN: 'loggedIn',
-  USER_EMAIL: 'userEmail',
+  USER: 'user',
   PENDING_2FA_USER_ID: 'pending_2fa_user_id',
   PENDING_2FA_EMAIL: 'pending_2fa_email'
 } as const
