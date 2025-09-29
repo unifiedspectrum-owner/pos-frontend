@@ -29,7 +29,7 @@ export const createUserSchema = z.object({
   role_id: z.string().min(1, 'Role selection is required'),
 
   /* User account status management */
-  is_2fa_enabled: z.boolean(),
+  is_2fa_enabled: z.boolean().optional(),
 
   module_assignments: z.array(z.object({
     module_id: z.string().min(1, 'Module ID is required'),

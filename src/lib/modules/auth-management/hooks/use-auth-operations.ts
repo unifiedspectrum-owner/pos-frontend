@@ -12,7 +12,7 @@ import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 
 /* Auth module imports */
 import { authManagementService } from '@auth-management/api'
-import { LoginApiRequest, LoginApiResponse, ForgotPasswordApiRequest, ForgotPasswordApiResponse, ResetPasswordApiRequest, ResetPasswordApiResponse, ValidateResetTokenApiResponse, Verify2FAApiRequest } from '@auth-management/types'
+import { LoginApiRequest, LoginApiResponse, ForgotPasswordApiRequest, ForgotPasswordApiResponse, ResetPasswordApiRequest, ResetPasswordApiResponse, ValidateResetTokenApiResponse } from '@auth-management/types'
 import { AUTH_STORAGE_KEYS, AUTH_PAGE_ROUTES } from '@auth-management/constants'
 
 /* Hook interface */
@@ -21,11 +21,6 @@ interface UseAuthOperationsReturn {
   loginUser: (loginData: LoginApiRequest) => Promise<boolean>
   isLoggingIn: boolean
   loginError: string | null
-
-  /* 2FA verification operations */
-  verify2FA: (verify2FAData: Verify2FAApiRequest) => Promise<boolean>
-  isVerifying2FA: boolean
-  verify2FAError: string | null
 
   /* Forgot password operations */
   forgotPassword: (forgotPasswordData: ForgotPasswordApiRequest) => Promise<boolean>
@@ -56,8 +51,6 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
   /* Hook state */
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false)
   const [loginError, setLoginError] = useState<string | null>(null)
-  const [isVerifying2FA, setIsVerifying2FA] = useState<boolean>(false)
-  const [verify2FAError, setVerify2FAError] = useState<string | null>(null)
   const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState<boolean>(false)
   const [forgotPasswordError, setForgotPasswordError] = useState<string | null>(null)
   const [isResetPasswordLoading, setIsResetPasswordLoading] = useState<boolean>(false)
@@ -164,81 +157,6 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
       setIsLoggingIn(false)
     }
   }, [router])
-
-  /* 2FA verification operation */
-  const verify2FA = useCallback(async (verify2FAData: Verify2FAApiRequest): Promise<boolean> => {
-    try {
-      setIsVerifying2FA(true)
-      setVerify2FAError(null)
-
-      console.log('[useAuthOperations] Attempting 2FA verification for user:', { user_id: verify2FAData.user_id })
-
-      /* Call 2FA verification API */
-      const response: LoginApiResponse = await authManagementService.verify2fa(verify2FAData)
-
-      /* Check if verification was successful */
-      if (response.success && response.data) {
-        /* Complete login with tokens */
-        if (response.data.is_2fa_authenticated && response.data.accessToken && response.data.refreshToken) {
-          localStorage.setItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN, response.data.accessToken)
-          localStorage.setItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN, response.data.refreshToken)
-          localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(response.data.user))
-          localStorage.setItem(AUTH_STORAGE_KEYS.LOGGED_IN, 'true')
-
-          /* Clear pending 2FA data */
-          localStorage.removeItem(AUTH_STORAGE_KEYS.PENDING_2FA_USER_ID)
-          localStorage.removeItem(AUTH_STORAGE_KEYS.PENDING_2FA_EMAIL)
-
-          /* Dispatch auth state change event */
-          window.dispatchEvent(new Event('authStateChanged'))
-
-          /* Success notification */
-          createToastNotification({
-            type: 'success',
-            title: '2FA Verification Successful',
-            description: `Welcome, ${response.data.user.name}! You are now logged in.`
-          })
-
-          console.log('[useAuthOperations] Successfully verified 2FA and logged in user')
-          return true
-        }
-
-        /* Handle incomplete verification response */
-        const errorMsg = '2FA verification incomplete - missing authentication tokens'
-        console.error('[useAuthOperations] 2FA verification incomplete:', errorMsg)
-        setVerify2FAError(errorMsg)
-        return false
-      } else {
-        /* Handle API success=false case */
-        const errorMsg = response.error || response.message || '2FA verification failed'
-        console.error('[useAuthOperations] 2FA verification failed:', errorMsg)
-
-        createToastNotification({
-          type: 'error',
-          title: '2FA Verification Failed',
-          description: errorMsg
-        })
-
-        setVerify2FAError(errorMsg)
-        return false
-      }
-
-    } catch (error: unknown) {
-      const errorMsg = 'Failed to verify 2FA code. Please try again.'
-      console.error('[useAuthOperations] 2FA verification error:', error)
-
-      const err = error as AxiosError
-      handleApiError(err, {
-        title: '2FA Verification Failed'
-      })
-
-      setVerify2FAError(errorMsg)
-      return false
-
-    } finally {
-      setIsVerifying2FA(false)
-    }
-  }, [])
 
   /* Forgot password operation */
   const forgotPassword = useCallback(async (forgotPasswordData: ForgotPasswordApiRequest): Promise<boolean> => {
@@ -497,11 +415,6 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
     loginUser,
     isLoggingIn,
     loginError,
-
-    /* 2FA verification operations */
-    verify2FA,
-    isVerifying2FA,
-    verify2FAError,
 
     /* Forgot password operations */
     forgotPassword,

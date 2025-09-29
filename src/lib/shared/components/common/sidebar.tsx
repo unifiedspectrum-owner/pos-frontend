@@ -1,8 +1,9 @@
 "use client"
 
 /* Libraries imports */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { Box, Flex, VStack, Button, Text } from '@chakra-ui/react';
 import { FaChartLine } from 'react-icons/fa';
 import { FiLayers, FiList, FiPlus, FiGrid, FiUsers, FiShield } from 'react-icons/fi';
@@ -145,13 +146,72 @@ const menuItems: SidebarMenuItems[] = [
 
 /* Main admin sidebar component */
 export const Sidebar = () => {
+  /* Next.js router for current path detection and navigation */
+  const pathname = usePathname();
+  const router = useRouter();
+
   /* Component state */
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
-  const [activeItem, setActiveItem] = useState<number>(2);
+  const [manuallyCollapsed, setManuallyCollapsed] = useState<boolean>(false);
   const [filteredMenuItems, setFilteredMenuItems] = useState<SidebarMenuItems[]>([]);
 
   /* Permission context */
   const { permissions, hasModuleAccess, hasSpecificPermission, loading } = usePermissions();
+
+  /* Get active section and item based on current path */
+  const { activeSection, activeItem } = useMemo(() => {
+    if (filteredMenuItems.length === 0) {
+      return { activeSection: null, activeItem: null };
+    }
+
+    /* Remove locale prefix from pathname for comparison */
+    const cleanPathname = pathname.replace(/^\/[a-z]{2}(?:-[A-Z]{2})?/, '') || '/';
+
+    let bestMatch = { activeSection: null as number | null, activeItem: null as number | null };
+    let bestMatchScore = 0;
+
+    for (const item of filteredMenuItems) {
+      for (const subItem of item.sub_menu_items) {
+        let matchScore = 0;
+
+        /* Exact match gets highest score */
+        if (cleanPathname === subItem.path) {
+          matchScore = 100;
+        }
+        /* Check if current path starts with menu item path */
+        else if (cleanPathname.startsWith(subItem.path) && subItem.path !== '/admin') {
+          matchScore = 50;
+        }
+        /* Check if paths share the same module (e.g., plan-management) */
+        else {
+          const modulePattern = subItem.path.match(/\/admin\/([^\/]+)/);
+          if (modulePattern) {
+            const moduleName = modulePattern[1];
+            if (cleanPathname.includes(`/${moduleName}`)) {
+              matchScore = 25;
+            }
+          }
+        }
+
+        if (matchScore > bestMatchScore) {
+          bestMatchScore = matchScore;
+          bestMatch = {
+            activeSection: item.id,
+            activeItem: subItem.id
+          };
+        }
+      }
+    }
+
+    return bestMatch;
+  }, [filteredMenuItems, pathname]);
+
+  /* Auto-expand section if current page is active - only if no section is currently expanded and not manually collapsed */
+  useEffect(() => {
+    if (activeSection && expandedSection === null && !manuallyCollapsed) {
+      setExpandedSection(activeSection);
+    }
+  }, [activeSection, expandedSection, manuallyCollapsed]);
 
   /* Filter menu items by user permissions */
   useEffect(() => {
@@ -190,18 +250,27 @@ export const Sidebar = () => {
     }
   }, [permissions, loading, hasModuleAccess, hasSpecificPermission]);
 
-  /* Toggle expanded section */
+  /* Toggle expanded section and navigate to module home */
   const handleIconClick = (itemID?: number) => {
     if (!itemID) {
       setExpandedSection(null);
+      setManuallyCollapsed(true);
     } else {
-      setExpandedSection(expandedSection === itemID ? null : itemID);
-    }
-  };
+      /* Find the clicked menu item */
+      const clickedItem = filteredMenuItems.find(item => item.id === itemID);
 
-  /* Set active menu item */
-  const handleSubItemClick = (subItemID: number) => {
-    setActiveItem(subItemID);
+      /* Navigate to the module's home page */
+      if (clickedItem) {
+        router.push(clickedItem.path);
+      }
+
+      /* Toggle expansion */
+      const newExpandedSection = expandedSection === itemID ? null : itemID;
+      setExpandedSection(newExpandedSection);
+
+      /* Reset manually collapsed flag when expanding, set it when collapsing */
+      setManuallyCollapsed(newExpandedSection === null);
+    }
   };
 
   return (
@@ -231,7 +300,7 @@ export const Sidebar = () => {
                   key={item.id}
                   title={item.label}
                   onClick={() => handleIconClick(item.id)}
-                  bg={expandedSection === item.id ? SECONDARY_COLOR : ''}
+                  bg={expandedSection === item.id || activeSection === item.id ? SECONDARY_COLOR : ''}
                   _hover={{ bg: SECONDARY_COLOR }}
                   w="full" p={3} borderRadius="lg" transition="all 0.2s"
                   display="flex" alignItems="center" justifyContent="center"
@@ -268,7 +337,15 @@ export const Sidebar = () => {
                 <Button
                   background={PRIMARY_COLOR}
                   _hover={{background: SECONDARY_COLOR}}
-                  onClick={() => handleIconClick()}
+                  onClick={() => {
+                    console.log('[Sidebar] Close button clicked, current expandedSection:', expandedSection)
+                    setExpandedSection(null)
+                    setManuallyCollapsed(true)
+                    console.log('[Sidebar] Set expandedSection to null and manuallyCollapsed to true')
+                  }}
+                  size="sm"
+                  variant="ghost"
+                  color={WHITE_COLOR}
                 >
                   <MdClose width={10} height={10}/>
                 </Button>
@@ -281,24 +358,22 @@ export const Sidebar = () => {
                     ?.sub_menu_items.map((subItem) => {
                       const Icon = subItem.icon;
                       return (
-                        <Button
-                          key={subItem.id}
-                          onClick={() => handleSubItemClick(subItem.id)}
-                          bg={activeItem === subItem.id ? SECONDARY_COLOR : 'transparent'}
-                          color={activeItem === subItem.id ? WHITE_COLOR : 'whiteAlpha.800'}
-                          fontWeight={activeItem === subItem.id ? 'medium' : 'normal'}
-                          _hover={{
-                            bg: SECONDARY_COLOR,
-                            color: WHITE_COLOR,
-                          }}
-                          justifyContent="flex-start" size="sm" px={4} py={3} borderRadius="lg"
-                          fontSize="sm" transition="all 0.2s" variant="ghost" w="full"
-                        >
-                          <Icon width={10} height={10}/>
-                          <Link key={subItem.id} href={subItem.path}>
+                        <Link key={subItem.id} href={subItem.path} style={{ width: '100%' }}>
+                          <Button
+                            bg={activeItem === subItem.id ? SECONDARY_COLOR : 'transparent'}
+                            color={activeItem === subItem.id ? WHITE_COLOR : 'whiteAlpha.800'}
+                            fontWeight={activeItem === subItem.id ? 'medium' : 'normal'}
+                            _hover={{
+                              bg: SECONDARY_COLOR,
+                              color: WHITE_COLOR,
+                            }}
+                            justifyContent="flex-start" size="sm" px={4} py={3} borderRadius="lg"
+                            fontSize="sm" transition="all 0.2s" variant="ghost" w="full"
+                          >
+                            <Icon width={10} height={10}/>
                             {subItem.label}
-                          </Link>
-                        </Button>
+                          </Button>
+                        </Link>
                       );
                   })
                 }

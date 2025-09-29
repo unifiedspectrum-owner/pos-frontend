@@ -1,10 +1,10 @@
 /* Backend API base URL */
-export const BACKEND_BASE_URL = 'http://127.0.0.1:8787'; /* Local development server */
-// export const BACKEND_BASE_URL = 'https://pos-backend.jrbofficial31.workers.dev'; /* Production server */
+// export const BACKEND_BASE_URL = 'http://127.0.0.1:8787'; /* Local development server */
+export const BACKEND_BASE_URL = ' https://pos-backend.subscription-907.workers.dev'; /* Production server */
 
 /* Loading states configuration */
 export const LOADING_DELAY = 2000; /* Artificial loading delay in milliseconds */
-export const LOADING_DELAY_ENABLED = true; /* Enable/disable loading delay for testing */
+export const LOADING_DELAY_ENABLED = false; /* Enable/disable loading delay for testing */
 
 /* Cache configuration */
 export const COUNTRIES_CACHE_DURATION = 1000 * 60 * 60 * 24; /* Countries cache duration: 24 hours */

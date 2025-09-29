@@ -9,7 +9,7 @@ import { PRIMARY_COLOR } from '@shared/config';
 
 /* Props interface for primary button component */
 interface PrimaryButtonProps {
-  children: React.ReactNode; /* Button content */
+  children?: React.ReactNode; /* Button content */
   onClick?: () => void; /* Click event handler */
   disabled?: boolean; /* Whether button is disabled */
   loading?: boolean; /* Whether button shows loading state */
@@ -22,6 +22,9 @@ interface PrimaryButtonProps {
   width?: string; /* Custom width for the button */
   height?: string; /* Custom height for the button */
   borderRadius?: string | number; /* Custom border radius for the button */
+  buttonText?: string;
+  loadingText?: string;
+  isLoading?: boolean;
 }
 
 /* Primary action button component with hover and loading states */
@@ -38,6 +41,9 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   width,
   height,
   borderRadius,
+  buttonText,
+  loadingText,
+  isLoading = false,
   buttonProps
 }) => {
   return (
@@ -50,7 +56,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       size={size}
       onClick={onClick}
       disabled={disabled}
-      loading={loading}
+      loading={loading || isLoading}
       bg={bg ? bg : PRIMARY_COLOR} /* Use custom background color or fallback to theme primary */
       color="white"
       _hover={{ 
@@ -79,6 +85,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       <HStack gap={2}>
         {leftIcon && <Icon as={leftIcon} fontSize={'md'}/>} {/* Conditionally render left icon */}
         {children}
+        {isLoading ? loadingText : buttonText}
         {rightIcon && <Icon as={rightIcon} />} {/* Conditionally render right icon */}
       </HStack>
     </Button>

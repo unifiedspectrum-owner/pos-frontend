@@ -15,7 +15,7 @@ import { ADMIN_PAGE_ROUTES } from '@shared/constants'
 
 /* Auth management module imports */
 import { Verify2FAApiRequest, TwoFAType } from '@auth-management/types'
-import { useAuthOperations } from '@auth-management/hooks'
+import { useTwoFactorOperations } from '@auth-management/hooks'
 import { AUTH_PAGE_ROUTES, VERIFY_2FA_FORM_QUESTIONS, AUTH_STORAGE_KEYS, TWO_FA_TYPES } from '@auth-management/constants'
 import { TwoFactorValidationFormData, twoFactorValidationSchema } from '@auth-management/schemas'
 
@@ -33,7 +33,7 @@ const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
   const [twoFAType, setTwoFAType] = useState<TwoFAType>(TWO_FA_TYPES.TOTP)
 
   /* Auth operations hook */
-  const { verify2FA, isVerifying2FA } = useAuthOperations()
+  const { verify2FA, isVerifying2FA } = useTwoFactorOperations()
 
   /* Form management */
   const { control, handleSubmit, formState: { errors }, setValue } = useForm<TwoFactorValidationFormData>({

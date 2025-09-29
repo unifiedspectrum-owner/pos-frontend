@@ -1,4 +1,4 @@
-export const CREATE_PLAN_FORM_DEFAULT_VALUES = {
+export const PLAN_FORM_DEFAULT_VALUES = {
   /* Basic Plan Information */
   name: "",
   description: "",

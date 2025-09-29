@@ -1,7 +1,7 @@
 'use client';
 
 /* Libraries imports */
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState, useRef } from 'react';
 
 /* Shared module imports */
 import { usePermissions } from '@shared/contexts';
@@ -22,15 +22,25 @@ interface ClientRouteGuardProps {
 export const ClientRouteGuard = ({ children, pathname }: ClientRouteGuardProps) => {
   const { loading, error, hasModuleAccess, hasSpecificPermission } = usePermissions();
   const [isChecking, setIsChecking] = useState(true);
+  const hasInitialLoadRef = useRef(false);
   const [accessDenied, setAccessDenied] = useState(false);
   const [deniedModule, setDeniedModule] = useState<string>('');
   const [deniedPermission, setDeniedPermission] = useState<string>('');
 
   useEffect(() => {
     const checkPermissions = async () => {
+      console.log('[ClientRouteGuard] checkPermissions called:', { loading, pathname, hasInitialLoad: hasInitialLoadRef.current });
+
       /* Don't check permissions while still loading */
       if (loading) {
+        console.log('[ClientRouteGuard] Still loading, returning early');
         return;
+      }
+
+      /* For subsequent navigations after initial load, skip the checking state */
+      if (hasInitialLoadRef.current) {
+        console.log('[ClientRouteGuard] Has initial load, setting isChecking to false');
+        setIsChecking(false);
       }
 
       /* Get route permission requirements */
@@ -40,6 +50,7 @@ export const ClientRouteGuard = ({ children, pathname }: ClientRouteGuardProps) 
       if (!routePermission) {
         setIsChecking(false);
         setAccessDenied(false);
+        hasInitialLoadRef.current = true;
         return;
       }
 
@@ -50,6 +61,7 @@ export const ClientRouteGuard = ({ children, pathname }: ClientRouteGuardProps) 
         setDeniedPermission('');
         setAccessDenied(true);
         setIsChecking(false);
+        hasInitialLoadRef.current = true;
         return;
       }
 
@@ -60,6 +72,7 @@ export const ClientRouteGuard = ({ children, pathname }: ClientRouteGuardProps) 
         setDeniedPermission(routePermission.permission);
         setAccessDenied(true);
         setIsChecking(false);
+        hasInitialLoadRef.current = true;
         return;
       }
 
@@ -67,13 +80,15 @@ export const ClientRouteGuard = ({ children, pathname }: ClientRouteGuardProps) 
       console.log(`[ClientRouteGuard] Access granted for ${routePermission.module}:${routePermission.permission}`);
       setAccessDenied(false);
       setIsChecking(false);
+      hasInitialLoadRef.current = true;
     };
 
     checkPermissions();
   }, [loading, pathname, hasModuleAccess, hasSpecificPermission]);
 
-  /* Show loading state while fetching permissions or checking access */
-  if (loading || isChecking) {
+  /* Show loading state only on initial load - not during navigation */
+  if (loading && isChecking && !hasInitialLoadRef.current) {
+    console.log('[ClientRouteGuard] Showing FullPageLoader:', { loading, isChecking, hasInitialLoad: hasInitialLoadRef.current, pathname });
     return <FullPageLoader />;
   }
 

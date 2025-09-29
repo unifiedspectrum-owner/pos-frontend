@@ -177,6 +177,7 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
       submitText="Update User"
       loadingText="Updating User..."
       userPermissionsFromAPI={userPermissionsFromAPI}
+      showTwoFactorField={Boolean(userDetails?.is_2fa_enabled)}
     />
   )
 }

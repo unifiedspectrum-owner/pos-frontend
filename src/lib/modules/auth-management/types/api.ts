@@ -85,6 +85,26 @@ export interface RefreshTokenApiResponse {
   timestamp: string;
 }
 
+/* Enable 2FA response */
+export interface Enable2FAApiResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    qr_code_url: string;
+    backup_codes: string;
+  };
+  error?: string;
+  timestamp: string;
+}
+
+/* Diable 2FA response */
+export interface Disable2FAApiResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+  timestamp: string;
+}
+
 /* Reset Password Api request response */
 export interface ResetPasswordApiResponse {
   success: boolean;

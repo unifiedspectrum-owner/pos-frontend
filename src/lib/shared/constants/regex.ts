@@ -4,6 +4,9 @@
 export const DIAL_CODE_REGEX = /^\+\d{1,4}$/;
 export const PHONE_NUMBER_REGEX = /^\d{4,15}$/;
 
+/* Default dial code constant */
+export const DEFAULT_DIAL_CODE = '+91';
+
 /* Date format validation regex (YYYY-MM-DD) */
 export const DATE_FORMAT_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 

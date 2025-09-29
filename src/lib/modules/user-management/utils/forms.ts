@@ -153,7 +153,6 @@ export const buildCreateUserPayload = (
     role_id: Number(data.role_id),
     module_assignments: customModuleAssignments,
     is_active: Boolean(data.is_active),
-    is_2fa_enabled: Boolean(data.is_2fa_enabled)
   }
 }
 

@@ -20,7 +20,7 @@ import { clearStorageData, hasStorageData, loadDataFromStorage, saveFormDataToSt
 import { planService } from '@plan-management/api'
 import { useTabValidation, useFormSubmission, useTabNavigation } from '@plan-management/hooks'
 import { AUTO_SAVE_DEBOUNCE_MS, DEFAULT_PLAN_TAB, PLAN_FORM_TITLES, STORAGE_KEYS, ERROR_MESSAGES, PLAN_FORM_MODES } from '@plan-management/config'
-import { CREATE_PLAN_FORM_DEFAULT_VALUES } from '@plan-management/constants'
+import { PLAN_FORM_DEFAULT_VALUES } from '@plan-management/constants'
 
 /* Component props interface */
 interface PlanFormContainerProps {
@@ -53,7 +53,7 @@ const PlanFormContainer: React.FC<PlanFormContainerProps> = ({ mode, planId, tit
   const methods = useForm<CreatePlanFormData>({
     resolver: zodResolver(createPlanSchema),
     mode: 'onChange',
-    defaultValues: CREATE_PLAN_FORM_DEFAULT_VALUES
+    defaultValues: PLAN_FORM_DEFAULT_VALUES
   })
   const { setValue, reset, getValues, watch } = methods
 
@@ -104,11 +104,8 @@ const PlanFormContainer: React.FC<PlanFormContainerProps> = ({ mode, planId, tit
   }, [planId, mode, reset])
 
   /* Memoized default values for performance optimization */
-  const DEFAULT_FORM_VALUES = useMemo(() => createPlanSchema.parse({}), [])
   const DEFAULT_FORM_SERIALIZED = useMemo(() => 
-    JSON.stringify(DEFAULT_FORM_VALUES, Object.keys(DEFAULT_FORM_VALUES).sort()), 
-    [DEFAULT_FORM_VALUES]
-  )
+    JSON.stringify(PLAN_FORM_DEFAULT_VALUES, Object.keys(PLAN_FORM_DEFAULT_VALUES).sort()),[])
 
   /* Perform auto-save with change detection */
   const performAutoSave = useCallback(() => {

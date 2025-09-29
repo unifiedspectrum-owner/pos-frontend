@@ -9,7 +9,7 @@ import { GRAY_COLOR } from '@shared/config';
 
 /* Props interface for secondary button component */
 interface SecondaryButtonProps {
-  children: React.ReactNode; /* Button content */
+  children?: React.ReactNode; /* Button content */
   onClick?: () => void; /* Click event handler */
   disabled?: boolean; /* Whether button is disabled */
   loading?: boolean; /* Whether button shows loading state */
@@ -17,6 +17,9 @@ interface SecondaryButtonProps {
   size?: 'sm' | 'md' | 'lg'; /* Button size variant */
   leftIcon?: IconType; /* Icon to display on left */
   rightIcon?: IconType; /* Icon to display on right */
+  buttonText?: string;
+  loadingText?: string;
+  isLoading?: boolean;
   buttonProps?: ButtonProps; /* Additional Chakra button props */
 }
 
@@ -30,6 +33,9 @@ const SecondaryButton: React.FC<SecondaryButtonProps> = ({
   size = 'md', /* Default medium size */
   leftIcon,
   rightIcon,
+  buttonText,
+  loadingText,
+  isLoading = false,
   buttonProps
 }) => {
   return (
@@ -42,7 +48,7 @@ const SecondaryButton: React.FC<SecondaryButtonProps> = ({
       variant="outline"
       onClick={onClick}
       disabled={disabled}
-      loading={loading}
+      loading={loading || isLoading}
       borderColor={GRAY_COLOR}
       color={lighten(0.2, GRAY_COLOR)}
       _hover={{ 
@@ -66,6 +72,7 @@ const SecondaryButton: React.FC<SecondaryButtonProps> = ({
       <HStack gap={2}>
         {leftIcon && <Icon as={leftIcon} />} {/* Conditionally render left icon */}
         {children}
+        {isLoading ? loadingText : buttonText}
         {rightIcon && <Icon as={rightIcon} />} {/* Conditionally render right icon */}
       </HStack>
     </Button>

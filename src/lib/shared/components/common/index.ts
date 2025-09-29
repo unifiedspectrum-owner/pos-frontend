@@ -6,6 +6,7 @@ export { default as NavigationHeader } from './navigation-header'; /* Top naviga
 
 /* Dialog and modal components */
 export { default as ConfirmationDialog } from './confirmation-dialog'; /* Confirmation modal dialog */
+export { default as DynamicDialog } from './dynamic-dialog'; /* Reusable dialog with dynamic content */
 
 /* Error handling components */
 export { default as ErrorBoundary } from './error-boundary'; /* React error boundary wrapper */

@@ -1,12 +1,5 @@
 /* Libraries imports */
-import axios, { AxiosResponse } from "axios";
-
-/* Shared module imports */
-import { BACKEND_BASE_URL } from "@shared/config";
-import { tokenRefreshService } from '@shared/services'
-
-/* Auth management module imports */
-import { AUTH_STORAGE_KEYS } from "@auth-management/constants";
+import { AxiosResponse } from "axios";
 
 /* Plan management module imports */
 import {
@@ -25,40 +18,11 @@ import {
   SlaListAPIResponse
 } from "@plan-management/types/plans";
 import { PLAN_API_ROUTES } from "@plan-management/constants/routes";
-
-/* HTTP client for subscription plan API endpoints */
-const planApiClient = axios.create({
-  baseURL: `${BACKEND_BASE_URL}${PLAN_API_ROUTES.BASE_URL}`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 30000
-});
-
-/* Add request interceptor for token attachment */
-planApiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN)
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-      console.log(`[PlanApiClient] Token attached for ${config.url}`)
-    } else {
-      console.log(`[PlanApiClient] No token available for ${config.url}`)
-    }
-    return config
-  },
-  (error) => {
-    console.error('[PlanApiClient] Request interceptor error:', error)
-    return Promise.reject(error)
-  }
-)
-
-/* Add response interceptor for automatic token refresh */
-tokenRefreshService.createResponseInterceptor(planApiClient)
+import { planApiClient } from "@plan-management/api";
 
 /* Service object containing all plan-related API methods */
 export const planService = {
-  
+
   /* Retrieve all subscription plans from the API */
   async getAllSubscriptionPlans(): Promise<AxiosResponse<PlansListAPIResponse>> {
     try {

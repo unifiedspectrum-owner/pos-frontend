@@ -1,7 +1,7 @@
 /* Authentication API service methods */
 
 /* Auth management module imports */
-import { LoginApiRequest, LoginApiResponse, LogoutApiResponse, RefreshTokenApiRequest, RefreshTokenApiResponse, ForgotPasswordApiRequest, ForgotPasswordApiResponse, ResetPasswordApiRequest, ResetPasswordApiResponse, ValidateResetTokenApiResponse, Verify2FAApiRequest } from "@auth-management/types"
+import { LoginApiRequest, LoginApiResponse, LogoutApiResponse, RefreshTokenApiRequest, RefreshTokenApiResponse, ForgotPasswordApiRequest, ForgotPasswordApiResponse, ResetPasswordApiRequest, ResetPasswordApiResponse, ValidateResetTokenApiResponse, Verify2FAApiRequest, Enable2FAApiResponse, Disable2FAApiResponse } from "@auth-management/types"
 import { authApiClient } from "@auth-management/api"
 import { AUTH_API_ROUTES } from "@auth-management/constants"
 
@@ -37,6 +37,28 @@ export const authManagementService = {
       return response.data
     } catch (error) {
       console.error('[AuthManagementService] Failed to refresh token:', error)
+      throw error
+    }
+  },
+
+  /* Enable 2FA authentication */
+  async enable2FA(): Promise<Enable2FAApiResponse> {
+    try {
+      const response = await authApiClient.post<Enable2FAApiResponse>(AUTH_API_ROUTES.ENABLE_2FA)
+      return response.data
+    } catch (error) {
+      console.error('[AuthManagementService] Failed to enable 2FA:', error)
+      throw error
+    }
+  },
+
+  /* Disable 2FA authentication */
+  async disable2FA(): Promise<Disable2FAApiResponse> {
+    try {
+      const response = await authApiClient.post<Disable2FAApiResponse>(AUTH_API_ROUTES.DISABLE_2FA)
+      return response.data
+    } catch (error) {
+      console.error('[AuthManagementService] Failed to disable 2FA:', error)
       throw error
     }
   },

@@ -11,3 +11,6 @@ export { default as ResetPasswordPage } from './reset-password'
 
 /* 2FA verification page component */
 export { default as Verify2FAPage } from './verify-2fa'
+
+/* Profile update page component */
+export { default as UpdateProfilePage } from './update-profile'

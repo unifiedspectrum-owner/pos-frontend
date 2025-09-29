@@ -11,3 +11,6 @@ export * from './storage'
 
 /* Regular expression constants */
 export * from './regex'
+
+/* Two-factor authentication constants */
+export * from './two-factor'

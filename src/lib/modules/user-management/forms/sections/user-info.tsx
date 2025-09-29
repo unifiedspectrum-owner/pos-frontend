@@ -17,17 +17,28 @@ import { getPhoneFieldErrorMessage } from '@/lib/shared/utils/formatting'
 interface UserInfoSectionProps {
   roleSelectOptions: Array<{ label: string; value: string }>
   rolesLoading: boolean
+  showTwoFactorField?: boolean
 }
 
 /* Dynamic user information form with role selection */
-const UserInfoSection: React.FC<UserInfoSectionProps> = ({ roleSelectOptions, rolesLoading }) => {
+const UserInfoSection: React.FC<UserInfoSectionProps> = ({ roleSelectOptions, rolesLoading, showTwoFactorField = false }) => {
   const { control, formState: { errors } } = useFormContext<CreateUserFormData | UpdateUserFormData>() /* Form validation context */
   const { dialCodeOptions } = useCountries() /* Country dial codes for phone field */
 
   return (
     <SimpleGrid w={'100%'} columns={[1,6]} gap={6}>
       {USER_CREATION_FORM_QUESTIONS
-        .filter((field) => field.is_active) /* Only render active fields */
+        .filter((field) => {
+          /* Only render active fields */
+          if (!field.is_active) return false
+
+          /* Show 2FA field only if explicitly enabled */
+          if (field.schema_key === 'is_2fa_enabled') {
+            return showTwoFactorField
+          }
+
+          return true
+        })
         .sort((a, b) => Number(a.display_order) - Number(b.display_order)) /* Sort by display order */
         .map((field) => {
           const schemaKey = field.schema_key as keyof (CreateUserFormData | UpdateUserFormData)

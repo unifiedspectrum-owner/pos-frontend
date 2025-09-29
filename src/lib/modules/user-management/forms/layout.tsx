@@ -32,6 +32,7 @@ interface UserFormLayoutProps {
   submitText?: string
   loadingText?: string
   userPermissionsFromAPI?: ModuleAssignment[]
+  showTwoFactorField?: boolean
 }
 
 /* Main layout component for user forms */
@@ -47,6 +48,7 @@ const UserFormLayout: React.FC<UserFormLayoutProps> = ({
   submitText = "Create User",
   loadingText = "Creating User...",
   userPermissionsFromAPI = [],
+  showTwoFactorField = false,
 }) => {
   /* Modules data management hook with caching */
   const { modules, isLoading: modulesLoading, error: modulesError, fetchModules } = useModules()
@@ -106,6 +108,7 @@ const UserFormLayout: React.FC<UserFormLayoutProps> = ({
               <UserInfoSection
                 roleSelectOptions={roleSelectOptions}
                 rolesLoading={rolesLoading}
+                showTwoFactorField={showTwoFactorField}
               />
             </Flex>
 

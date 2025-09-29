@@ -100,9 +100,28 @@ export const twoFactorValidationSchema = z.object({
   }
 });
 
+/* User profile update form validation schema */
+export const updateProfileSchema = z.object({
+  f_name: z.string()
+    .min(1, 'First name is required')
+    .max(100, 'First name cannot exceed 100 characters'),
+
+  l_name: z.string()
+    .min(1, 'Last name is required')
+    .max(100, 'Last name cannot exceed 100 characters'),
+
+  email: z.string()
+    .email('Invalid email format')
+    .max(255, 'Email cannot exceed 255 characters')
+    .toLowerCase(),
+
+  phone: z.tuple([z.string(), z.string()]).optional(),
+})
+
 /* TypeScript types from schemas */
 export type LoginFormData = z.infer<typeof loginSchema>
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
 export type EmailVerificationFormData = z.infer<typeof emailVerificationSchema>
 export type TwoFactorValidationFormData = z.infer<typeof twoFactorValidationSchema>
+export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>
