@@ -11,13 +11,18 @@ import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 
 /* Auth module imports */
 import { authManagementService } from '@auth-management/api'
-import { Enable2FAApiResponse, Disable2FAApiResponse, Verify2FAApiRequest, LoginApiResponse } from '@auth-management/types'
+import { Generate2FAApiResponse, Enable2FAApiRequest, Enable2FAApiResponse, Disable2FAApiResponse, Verify2FAApiRequest, LoginApiResponse } from '@auth-management/types'
 import { AUTH_STORAGE_KEYS } from '@auth-management/constants'
 
 /* Hook interface */
 interface UseTwoFactorOperationsReturn {
+  /* Generate 2FA operations */
+  generate2FA: () => Promise<{ qrCodeData: string; backupCodes: string[] } | null>
+  isGenerating2FA: boolean
+  generate2FAError: string | null
+
   /* Enable 2FA operations */
-  enable2FA: () => Promise<{ qrCodeData: string; backupCodes: string[] } | null>
+  enable2FA: (enableData: Enable2FAApiRequest) => Promise<boolean>
   isEnabling2FA: boolean
   enable2FAError: string | null
 
@@ -35,6 +40,8 @@ interface UseTwoFactorOperationsReturn {
 /* Custom hook for 2FA setup operations */
 export const useTwoFactorOperations = (): UseTwoFactorOperationsReturn => {
   /* Hook state */
+  const [isGenerating2FA, setIsGenerating2FA] = useState<boolean>(false)
+  const [generate2FAError, setGenerate2FAError] = useState<string | null>(null)
   const [isEnabling2FA, setIsEnabling2FA] = useState<boolean>(false)
   const [enable2FAError, setEnable2FAError] = useState<string | null>(null)
   const [isDisabling2FA, setIsDisabling2FA] = useState<boolean>(false)
@@ -42,23 +49,23 @@ export const useTwoFactorOperations = (): UseTwoFactorOperationsReturn => {
   const [isVerifying2FA, setIsVerifying2FA] = useState<boolean>(false)
   const [verify2FAError, setVerify2FAError] = useState<string | null>(null)
 
-  /* Enable 2FA operation */
-  const enable2FA = useCallback(async (): Promise<{ qrCodeData: string; backupCodes: string[] } | null> => {
+  /* Generate 2FA operation */
+  const generate2FA = useCallback(async (): Promise<{ qrCodeData: string; backupCodes: string[] } | null> => {
     try {
-      setIsEnabling2FA(true)
-      setEnable2FAError(null)
+      setIsGenerating2FA(true)
+      setGenerate2FAError(null)
 
       /* Artificial delay for testing loading states */
       if (LOADING_DELAY_ENABLED) {
         await new Promise(resolve => setTimeout(resolve, LOADING_DELAY))
       }
 
-      console.log('[useTwoFactorSetup] Enabling 2FA for user')
+      console.log('[useTwoFactorOperations] Generating 2FA QR code and backup codes')
 
-      /* Call enable 2FA API */
-      const response: Enable2FAApiResponse = await authManagementService.enable2FA()
+      /* Call generate 2FA API */
+      const response: Generate2FAApiResponse = await authManagementService.generate2FA()
 
-      /* Check if enabling was successful */
+      /* Check if generation was successful */
       if (response.success && response.data) {
         /* Parse backup codes from JSON string to array */
         const backupCodes = response.data.backup_codes
@@ -68,44 +75,96 @@ export const useTwoFactorOperations = (): UseTwoFactorOperationsReturn => {
         /* QR code is already in data URL format (data:image/svg+xml;base64,<data>) */
         const qrCodeData = response.data.qr_code_url || ''
 
-        /* Success notification */
-        createToastNotification({
-          type: 'success',
-          title: '2FA Enabled Successfully',
-          description: 'Two-factor authentication has been enabled for your account. Please save your backup codes securely.'
-        })
-
-        console.log('[useTwoFactorSetup] Successfully enabled 2FA')
+        console.log('[useTwoFactorOperations] Successfully generated 2FA data')
         return {
           qrCodeData,
           backupCodes
         }
       } else {
         /* Handle API success=false case */
-        const errorMsg = response.error || response.message || 'Failed to enable 2FA'
-        console.error('[useTwoFactorSetup] Enable 2FA failed:', errorMsg)
+        const errorMsg = response.error || response.message || 'Failed to generate 2FA data'
+        console.error('[useTwoFactorOperations] Generate 2FA failed:', errorMsg)
 
         createToastNotification({
           type: 'error',
-          title: '2FA Setup Failed',
+          title: '2FA Generation Failed',
           description: errorMsg
         })
 
-        setEnable2FAError(errorMsg)
+        setGenerate2FAError(errorMsg)
         return null
       }
 
     } catch (error: unknown) {
-      const errorMsg = 'Failed to enable 2FA. Please try again.'
-      console.error('[useTwoFactorSetup] Enable 2FA error:', error)
+      const errorMsg = 'Failed to generate 2FA data. Please try again.'
+      console.error('[useTwoFactorOperations] Generate 2FA error:', error)
 
       const err = error as AxiosError
       handleApiError(err, {
-        title: '2FA Setup Failed'
+        title: '2FA Generation Failed'
+      })
+
+      setGenerate2FAError(errorMsg)
+      return null
+
+    } finally {
+      setIsGenerating2FA(false)
+    }
+  }, [])
+
+  /* Enable 2FA operation */
+  const enable2FA = useCallback(async (enableData: Enable2FAApiRequest): Promise<boolean> => {
+    try {
+      setIsEnabling2FA(true)
+      setEnable2FAError(null)
+
+      /* Artificial delay for testing loading states */
+      if (LOADING_DELAY_ENABLED) {
+        await new Promise(resolve => setTimeout(resolve, LOADING_DELAY))
+      }
+
+      console.log('[useTwoFactorOperations] Enabling 2FA for user')
+
+      /* Call enable 2FA API */
+      const response: Enable2FAApiResponse = await authManagementService.enable2FA(enableData)
+
+      /* Check if enabling was successful */
+      if (response.success) {
+        /* Success notification */
+        createToastNotification({
+          type: 'success',
+          title: '2FA Enabled Successfully',
+          description: 'Two-factor authentication has been enabled for your account.'
+        })
+
+        console.log('[useTwoFactorOperations] Successfully enabled 2FA')
+        return true
+      } else {
+        /* Handle API success=false case */
+        const errorMsg = response.error || response.message || 'Failed to enable 2FA'
+        console.error('[useTwoFactorOperations] Enable 2FA failed:', errorMsg)
+
+        createToastNotification({
+          type: 'error',
+          title: '2FA Enable Failed',
+          description: errorMsg
+        })
+
+        setEnable2FAError(errorMsg)
+        return false
+      }
+
+    } catch (error: unknown) {
+      const errorMsg = 'Failed to enable 2FA. Please try again.'
+      console.error('[useTwoFactorOperations] Enable 2FA error:', error)
+
+      const err = error as AxiosError
+      handleApiError(err, {
+        title: '2FA Enable Failed'
       })
 
       setEnable2FAError(errorMsg)
-      return null
+      return false
 
     } finally {
       setIsEnabling2FA(false)
@@ -247,6 +306,11 @@ export const useTwoFactorOperations = (): UseTwoFactorOperationsReturn => {
   }, [])
 
   return {
+    /* Generate 2FA operations */
+    generate2FA,
+    isGenerating2FA,
+    generate2FAError,
+
     /* Enable 2FA operations */
     enable2FA,
     isEnabling2FA,

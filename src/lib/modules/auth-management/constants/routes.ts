@@ -7,6 +7,7 @@ export const AUTH_MODULE_NAME = 'auth-management';
 export const AUTH_API_ROUTES = {
   LOGIN: '/login',
   VERIFY_2FA: '/2fa/verify',
+  GENERATE_2FA: '/2fa/generate',
   ENABLE_2FA: '/2fa/enable',
   DISABLE_2FA: '/2fa/disable',
   LOGOUT: '/logout',

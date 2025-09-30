@@ -9,6 +9,7 @@ export interface UserDetailsCache {
   email: string;
   name: string;
   role: string;
+  is_2fa_required?: boolean;
 }
 
 /* 2FA Types */

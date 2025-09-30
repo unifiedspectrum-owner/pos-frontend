@@ -6,22 +6,22 @@ export const PLAN_FORM_DEFAULT_VALUES = {
   is_custom: false,
 
   /* Device and User Limits */
-  included_devices_count: "0",
-  max_users_per_branch: "1",
-  included_branches_count: "1",
-  additional_device_cost: "0",
+  included_devices_count: "",
+  max_users_per_branch: "",
+  included_branches_count: "",
+  additional_device_cost: "",
 
   /* Pricing Configuration */
-  monthly_price: "0",
-  annual_discount_percentage: "0",
+  monthly_price: "",
+  annual_discount_percentage: "",
   // biennial_discount_percentage: null,
   // triennial_discount_percentage: null,
 
   /* Payment Gateway Fees */
-  monthly_fee_our_gateway: "0",
-  monthly_fee_byo_processor: "0",
-  card_processing_fee_percentage: "0",
-  card_processing_fee_fixed: "0",
+  monthly_fee_our_gateway: "",
+  monthly_fee_byo_processor: "",
+  card_processing_fee_percentage: "",
+  card_processing_fee_fixed: "",
 
   /* Feature Selection */
   feature_ids: [],

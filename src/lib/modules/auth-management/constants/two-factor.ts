@@ -7,6 +7,42 @@ interface TwoFactorInstructions {
   showButton?: boolean
 }
 
+/* Two-factor authentication setup step type */
+export type TwoFactorSetupStep = 'qr' | 'verify' | 'success'
+
+/* Two-factor authentication setup step constants */
+export const TWO_FACTOR_SETUP_STEPS = {
+  QR_CODE: 'qr' as const,
+  VERIFY_OTP: 'verify' as const,
+  SUCCESS: 'success' as const
+} satisfies Record<string, TwoFactorSetupStep>
+
+/* Two-factor authentication setup step configuration */
+export interface TwoFactorStepConfig {
+  step: TwoFactorSetupStep
+  title: string
+  description: string
+}
+
+/* Two-factor authentication step configurations */
+export const TWO_FACTOR_STEP_CONFIGS: Record<TwoFactorSetupStep, TwoFactorStepConfig> = {
+  [TWO_FACTOR_SETUP_STEPS.QR_CODE]: {
+    step: TWO_FACTOR_SETUP_STEPS.QR_CODE,
+    title: 'Two-Factor Authentication Setup - Step 1',
+    description: 'Scan QR code and save backup codes'
+  },
+  [TWO_FACTOR_SETUP_STEPS.VERIFY_OTP]: {
+    step: TWO_FACTOR_SETUP_STEPS.VERIFY_OTP,
+    title: 'Two-Factor Authentication Setup - Step 2',
+    description: 'Verify authenticator code'
+  },
+  [TWO_FACTOR_SETUP_STEPS.SUCCESS]: {
+    step: TWO_FACTOR_SETUP_STEPS.SUCCESS,
+    title: 'Two-Factor Authentication Enabled',
+    description: '2FA has been successfully enabled on your account'
+  }
+} as const
+
 /* Instructions for when 2FA is disabled */
 export const TWO_FACTOR_SETUP_INSTRUCTIONS: TwoFactorInstructions[] = [
   {

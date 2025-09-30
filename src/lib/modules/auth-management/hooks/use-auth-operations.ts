@@ -21,6 +21,7 @@ interface UseAuthOperationsReturn {
   loginUser: (loginData: LoginApiRequest) => Promise<boolean>
   isLoggingIn: boolean
   loginError: string | null
+  shouldShow2FAReminder: boolean
 
   /* Forgot password operations */
   forgotPassword: (forgotPasswordData: ForgotPasswordApiRequest) => Promise<boolean>
@@ -51,6 +52,7 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
   /* Hook state */
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false)
   const [loginError, setLoginError] = useState<string | null>(null)
+  const [shouldShow2FAReminder, setShouldShow2FAReminder] = useState<boolean>(false)
   const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState<boolean>(false)
   const [forgotPasswordError, setForgotPasswordError] = useState<string | null>(null)
   const [isResetPasswordLoading, setIsResetPasswordLoading] = useState<boolean>(false)
@@ -102,10 +104,14 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
 
         /* Complete login if no 2FA required or already authenticated */
         if (response.data.accessToken && response.data.refreshToken) {
+          console.log('[useAuthOperations] User data from API:', response.data.user)
+
           localStorage.setItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN, response.data.accessToken)
           localStorage.setItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN, response.data.refreshToken)
           localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(response.data.user))
           localStorage.setItem(AUTH_STORAGE_KEYS.LOGGED_IN, 'true')
+
+          console.log('[useAuthOperations] Stored user data:', JSON.parse(localStorage.getItem(AUTH_STORAGE_KEYS.USER) || '{}'))
 
           /* Dispatch auth state change event */
           window.dispatchEvent(new Event('authStateChanged'))
@@ -116,6 +122,11 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
             title: 'Login Successful',
             description: `Welcome back, ${response.data.user.name}!`
           })
+
+          /* Check if user needs 2FA reminder */
+          if (Boolean(response.data.user.is_2fa_required)) {
+            setShouldShow2FAReminder(true)
+          }
 
           console.log('[useAuthOperations] Successfully logged in user')
           return true
@@ -415,6 +426,7 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
     loginUser,
     isLoggingIn,
     loginError,
+    shouldShow2FAReminder,
 
     /* Forgot password operations */
     forgotPassword,

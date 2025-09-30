@@ -25,6 +25,7 @@ export const USER_FORM_DEFAULT_VALUES: CreateUserFormData = {
   role_id: '',
   module_assignments: [],
   is_active: true,
+  is_2fa_required: false,
   is_2fa_enabled: false
 }
 
@@ -158,6 +159,24 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 8,
+    type: "TOGGLE",
+    label: "Is 2FA Required",
+    schema_key: "is_2fa_required",
+    placeholder: "Require users to use two factor authentication",
+    left_icon: FaToggleOn,
+    is_required: false,
+    is_active: true,
+    display_order: 7,
+    toggle_text: {
+      true: "Required",
+      false: "Optional"
+    },
+    grid: {
+      col_span: 3
+    }
+  },
+  {
+    id: 9,
     type: "FILE",
     label: "Profile Picture",
     schema_key: "profile_picture",
@@ -165,7 +184,7 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
     left_icon: FaUser,
     is_required: false,
     is_active: false,
-    display_order: 8,
+    display_order: 9,
     grid: {
       col_span: 6
     }

@@ -15,7 +15,7 @@ export const TWO_FA_TYPES = {
 
 /* Auth management module imports */
 import { TokenValidationState } from '@auth-management/types'
-import { ForgotPasswordFormData, LoginFormData, ResetPasswordFormData } from '@auth-management/schemas'
+import { ForgotPasswordFormData, LoginFormData, ResetPasswordFormData, Enable2FAFormData } from '@auth-management/schemas'
 
 /* Shared module imports */
 import { FormFieldStructure } from '@shared/types'
@@ -37,6 +37,11 @@ export const RESET_PASSWORD_FORM_DEFAULT_VALUES: ResetPasswordFormData = {
   token: '',
   new_password: '',
   confirm_password: ''
+}
+
+/* Default form values for enable 2FA */
+export const ENABLE_2FA_FORM_DEFAULT_VALUES: Enable2FAFormData = {
+  code: ['', '', '', '', '', '']
 }
 
 /* Login form field configurations */
@@ -161,6 +166,24 @@ export const VERIFY_2FA_FORM_QUESTIONS: FormFieldStructure[] = [
     is_required: true,
     is_active: true,
     display_order: 2,
+    grid: {
+      col_span: 2
+    }
+  }
+]
+
+/* Enable 2FA form field configurations */
+export const ENABLE_2FA_FORM_QUESTIONS: FormFieldStructure[] = [
+  {
+    id: 1,
+    type: "PIN",
+    label: "Verification Code",
+    schema_key: "code",
+    placeholder: "Enter the 6-digit code from your authenticator app",
+    left_icon: FaShieldAlt,
+    is_required: true,
+    is_active: true,
+    display_order: 1,
     grid: {
       col_span: 2
     }

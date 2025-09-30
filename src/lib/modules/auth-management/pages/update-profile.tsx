@@ -153,7 +153,7 @@ const UpdateProfilePage: React.FC = () => {
 
     /* Show cancellation notification */
     createToastNotification({
-      type: 'info',
+      type: 'warning',
       title: 'Changes Cancelled',
       description: 'Your changes have been discarded.'
     })
@@ -195,6 +195,7 @@ const UpdateProfilePage: React.FC = () => {
           <TwoFactorForm
             isEnabled={Boolean(userDetails?.is_2fa_enabled)}
             onRefresh={loadUserProfile}
+            userId={currentUserId || undefined}
           />
         </Flex>
       </Flex>

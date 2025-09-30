@@ -9,7 +9,7 @@ interface DynamicDialogProps {
   onClose: () => void /* Close dialog handler */
   title: string /* Dialog title */
   titleIcon?: ReactNode /* Optional icon for title */
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' /* Dialog size */
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' /* Dialog size */
   maxWidth?: string /* Custom max width */
   children: ReactNode /* Dynamic body content */
   showCloseButton?: boolean /* Show close button in header */

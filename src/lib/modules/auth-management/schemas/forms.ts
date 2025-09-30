@@ -116,7 +116,26 @@ export const updateProfileSchema = z.object({
     .toLowerCase(),
 
   phone: z.tuple([z.string(), z.string()]).optional(),
-})
+});
+
+/* Enable 2FA request validation schema */
+export const enable2FASchema = z.object({
+ code: z.array(z.string()).optional(),
+}).superRefine((data, ctx) => {
+  if (!data.code || data.code.length !== 6) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'Code must be 6 digits long',
+      path: ['totp_code']
+    });
+  } else if (data.code.some((c) => c.trim() === '')) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'All 6 digits are required',
+      path: ['totp_code']
+    });
+  }
+});
 
 /* TypeScript types from schemas */
 export type LoginFormData = z.infer<typeof loginSchema>
@@ -125,3 +144,4 @@ export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
 export type EmailVerificationFormData = z.infer<typeof emailVerificationSchema>
 export type TwoFactorValidationFormData = z.infer<typeof twoFactorValidationSchema>
 export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>
+export type Enable2FAFormData = z.infer<typeof enable2FASchema>

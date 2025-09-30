@@ -152,7 +152,7 @@ export const Sidebar = () => {
 
   /* Component state */
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
-  const [manuallyCollapsed, setManuallyCollapsed] = useState<boolean>(false);
+  const [manuallyCollapsed, setManuallyCollapsed] = useState<boolean>(true);
   const [filteredMenuItems, setFilteredMenuItems] = useState<SidebarMenuItems[]>([]);
 
   /* Permission context */
@@ -338,10 +338,8 @@ export const Sidebar = () => {
                   background={PRIMARY_COLOR}
                   _hover={{background: SECONDARY_COLOR}}
                   onClick={() => {
-                    console.log('[Sidebar] Close button clicked, current expandedSection:', expandedSection)
                     setExpandedSection(null)
                     setManuallyCollapsed(true)
-                    console.log('[Sidebar] Set expandedSection to null and manuallyCollapsed to true')
                   }}
                   size="sm"
                   variant="ghost"

@@ -54,6 +54,7 @@ export interface LoginApiResponse {
       email: string;
       name: string;
       role: string;
+      is_2fa_required?: boolean;
     };
   };
   validation_errors?: ValidationError[];
@@ -85,13 +86,29 @@ export interface RefreshTokenApiResponse {
   timestamp: string;
 }
 
-/* Enable 2FA response */
-export interface Enable2FAApiResponse {
+/* Generate 2FA response */
+export interface Generate2FAApiResponse {
   success: boolean;
   message: string;
   data?: {
     qr_code_url: string;
     backup_codes: string;
+  };
+  error?: string;
+  timestamp: string;
+}
+
+/* Enable 2FA API Request */
+export interface Enable2FAApiRequest {
+  code: string
+}
+/* Enable 2FA response */
+export interface Enable2FAApiResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    user_id: string;
+    enabled_at: string;
   };
   error?: string;
   timestamp: string;

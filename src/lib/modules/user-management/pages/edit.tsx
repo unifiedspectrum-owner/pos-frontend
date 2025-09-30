@@ -95,6 +95,7 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
         role_id: userDetails.role_details?.id.toString() || '',
         is_active: Boolean(userDetails.is_active),
         is_2fa_enabled: Boolean(userDetails.is_2fa_enabled),
+        is_2fa_required: Boolean(userDetails.is_2fa_required),
         module_assignments: moduleAssignments,
       }
 

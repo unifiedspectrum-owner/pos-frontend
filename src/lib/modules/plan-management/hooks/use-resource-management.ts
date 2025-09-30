@@ -103,10 +103,11 @@ export function useResourceManagement<T extends { id: number; name: string; disp
 
   /* Load resources when shouldLoad is true and data hasn't been loaded yet */
   useEffect(() => {
-    if (shouldLoad && !hasLoaded) {
-      fetchResources();
+    if (shouldLoad && !hasLoaded && !loading) {
+      const loadData = fetchResources();
+      loadData();
     }
-  }, [shouldLoad, hasLoaded, fetchResources]);
+  }, [shouldLoad, hasLoaded, loading, fetchResources]);
 
   /* Search functionality */
   const filteredResources = resources.filter((resource: any) => {

@@ -1,6 +1,6 @@
 /* Backend API base URL */
-// export const BACKEND_BASE_URL = 'http://127.0.0.1:8787'; /* Local development server */
-export const BACKEND_BASE_URL = ' https://pos-backend.subscription-907.workers.dev'; /* Production server */
+export const BACKEND_BASE_URL = 'http://127.0.0.1:8787'; /* Local development server */
+// export const BACKEND_BASE_URL = ' https://pos-backend.subscription-907.workers.dev'; /* Production server */
 
 /* Loading states configuration */
 export const LOADING_DELAY = 2000; /* Artificial loading delay in milliseconds */

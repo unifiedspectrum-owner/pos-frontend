@@ -87,6 +87,7 @@ export interface UserCreationApiRequest {
   role_id: number;
   module_assignments?: ModuleAssignment[];
   is_active: boolean;
+  is_2fa_required: boolean;
   is_2fa_enabled?: boolean;
 }
 
@@ -99,6 +100,7 @@ export interface UserUpdationApiRequest {
   role_id?: number;
   module_assignments?: ModuleAssignment[];
   is_active?: boolean;
+  is_2fa_required?: boolean;
   is_2fa_enabled?: boolean;
 }
 
