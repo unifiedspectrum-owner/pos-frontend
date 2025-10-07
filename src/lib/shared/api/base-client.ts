@@ -11,6 +11,7 @@ import { AUTH_STORAGE_KEYS, AUTH_API_ROUTES } from '@auth-management/constants'
 interface ApiClientConfig {
   basePath: string
   requiresAuth?: boolean
+  isPublic?: boolean
   timeout?: number
   customHeaders?: Record<string, string>
   authRoutes?: string[]
@@ -29,13 +30,14 @@ export class BaseApiClient {
   constructor(config: ApiClientConfig) {
     this.config = {
       requiresAuth: true,
+      isPublic: false,
       timeout: 30000,
       ...config
     }
 
     /* Create axios instance with configuration */
     this.client = axios.create({
-      baseURL: `${BACKEND_BASE_URL}${this.config.basePath}`,
+      baseURL: `${BACKEND_BASE_URL}/api/v1${this.config.isPublic ? `/public${this.config.basePath}` : this.config.basePath}`,
       headers: {
         'Content-Type': 'application/json',
         ...this.config.customHeaders

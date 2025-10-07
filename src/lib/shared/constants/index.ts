@@ -3,6 +3,9 @@
 /* Admin route constants */
 export * from './admin-routes';
 
+/* API route constants */
+export * from './api-routes';
+
 /* Storage key constants */
 export * from './storage-keys';
 

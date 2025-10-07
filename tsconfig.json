@@ -18,15 +18,15 @@
         "name": "next"
       }
     ],
-    "baseUrl": ".", 
     "paths": {
-      "@/*": ["src/*"],
-      "@shared/*": ["src/lib/shared/*"],
-      "@plan-management/*": ["src/lib/modules/plan-management/*"],
-      "@tenant-management/*": ["src/lib/modules/tenant-management/*"],
-      "@user-management/*": ["src/lib/modules/user-management/*"],
-      "@role-management/*": ["src/lib/modules/role-management/*"],
-      "@auth-management/*": ["src/lib/modules/auth-management/*"],
+      "@/*": ["./src/*"],
+      "@shared/*": ["./src/lib/shared/*"],
+      "@plan-management/*": ["./src/lib/modules/plan-management/*"],
+      "@tenant-management/*": ["./src/lib/modules/tenant-management/*"],
+      "@user-management/*": ["./src/lib/modules/user-management/*"],
+      "@role-management/*": ["./src/lib/modules/role-management/*"],
+      "@auth-management/*": ["./src/lib/modules/auth-management/*"],
+      "@support-ticket-management/*": ["./src/lib/modules/support-ticket-management/*"],
     },
     "types": [
         "./cloudflare-env.d.ts",

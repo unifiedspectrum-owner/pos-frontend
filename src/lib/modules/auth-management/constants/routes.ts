@@ -12,9 +12,9 @@ export const AUTH_API_ROUTES = {
   DISABLE_2FA: '/2fa/disable',
   LOGOUT: '/logout',
   REFRESH: '/refresh',
-  FORGOT_PASSWORD: '/password/forgot',
-  RESET_PASSWORD: '/password/reset',
-  VALIDATE_TOKEN: '/password/token/validate'
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
+  VALIDATE_TOKEN: '/validate-reset-token'
 } as const;
 
 /* Authentication page routes */
@@ -25,4 +25,5 @@ export const AUTH_PAGE_ROUTES = {
   FORGOT_PASSWORD: '/auth/forgot-password',
   RESET_PASSWORD: '/auth/reset-password',
   VERIFY_2FA: '/auth/verify-2fa',
+  SETUP_2FA: '/auth/setup-2fa',
 } as const;

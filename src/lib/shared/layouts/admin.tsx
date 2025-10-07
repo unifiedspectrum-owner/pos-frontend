@@ -11,7 +11,6 @@ import {NavigationHeader} from '@shared/components/common';
 /* Auth module imports */
 import { TwoFAReminderDialog } from '@auth-management/components';
 import { AUTH_STORAGE_KEYS } from '@auth-management/constants';
-import { UserDetailsCache } from '@auth-management/types';
 
 /* Props for admin layout component */
 interface AdminLayoutProps {
@@ -27,12 +26,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   useEffect(() => {
     const checkTwoFactorReminder = () => {
       try {
-        const userData = localStorage.getItem(AUTH_STORAGE_KEYS.USER);
-        if (userData) {
-          const user: UserDetailsCache = JSON.parse(userData);
-          console.log('[AdminLayout] User 2FA status:', { is_2fa_required: user.is_2fa_required });
+        const is2faSetupRequired = localStorage.getItem(AUTH_STORAGE_KEYS.PENDING_2FA_SETUP_REQUIRED);
+        if (is2faSetupRequired) {
+          console.log('[AdminLayout] User 2FA status:', is2faSetupRequired);
           /* Show reminder if 2FA is required */
-          if (user.is_2fa_required) {
+          if (is2faSetupRequired == "true") {
             console.log('[AdminLayout] Showing 2FA reminder dialog');
             setShow2FAReminder(true);
           }

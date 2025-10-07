@@ -1,66 +1,92 @@
 /* Libraries imports */
 import React from 'react'
-import { Box, Text, Heading, List, VStack, HStack, Flex, Icon } from '@chakra-ui/react'
+import { Box, Text, Heading, VStack, HStack, Flex } from '@chakra-ui/react'
 import { MdCheckCircle, MdCheck } from 'react-icons/md'
 
 /* Shared module imports */
 import { PrimaryButton } from '@shared/components'
+import { IconType } from 'react-icons'
 
 /* Component props interface */
 interface SuccessStepProps {
   onComplete: () => void
+  buttonText?: string
+  buttonIcon?: IconType
 }
 
 /* Success step component */
-const SuccessStep: React.FC<SuccessStepProps> = ({ onComplete }) => {
+const SuccessStep: React.FC<SuccessStepProps> = ({
+  onComplete,
+  buttonText = "Complete",
+  buttonIcon = MdCheck
+}) => {
   return (
-    <VStack align="stretch" gap={6}>
+    <VStack align="stretch" gap={4}>
       {/* Success Icon */}
-      <Flex justify="center" align="center" flexDir="column" gap={4} py={6}>
-        <Icon as={MdCheckCircle} color="green.500" boxSize={16} />
+      <Flex justify="center" align="center" flexDir="column" gap={2} py={3}>
+        <Box color="green.500" fontSize="56px" lineHeight="1">
+          <MdCheckCircle />
+        </Box>
         <Heading size="md" color="green.600">
           2FA Enabled Successfully!
         </Heading>
       </Flex>
 
       {/* Success Information */}
-      <VStack align="stretch" gap={2} p={4} bg="green.50" borderRadius="md" borderLeft="4px solid" borderLeftColor="green.500">
-        <Text fontSize="sm" fontWeight="600" color="green.700">
+      <Box p={3} bg="green.50" borderRadius="md" borderWidth="1px" borderColor="green.200">
+        <Text fontSize="sm" fontWeight="semibold" color="green.700" mb={1}>
           Your Account is Now Protected
         </Text>
-        <Text fontSize="sm" color="gray.700" lineHeight="1.6">
+        <Text fontSize="sm" color="gray.700" lineHeight="1.5">
           Two-factor authentication has been successfully enabled for your account.
           From now on, you'll need to enter a code from your authenticator app when logging in.
         </Text>
-      </VStack>
+      </Box>
+
+      {/* What Happens Next */}
+      <Box>
+        <Heading size="sm" mb={3} color="gray.700">
+          What Happens Next
+        </Heading>
+        <VStack align="start" gap={3} ml={2}>
+          <Text fontSize="sm" color="gray.600">
+            • When you log in, you'll enter your email and password as usual
+          </Text>
+          <Text fontSize="sm" color="gray.600">
+            • You'll then be prompted to enter a 6-digit code from your app
+          </Text>
+          <Text fontSize="sm" color="gray.600">
+            • If you lose access to your app, use a backup code to log in
+          </Text>
+        </VStack>
+      </Box>
 
       {/* Important Reminders */}
       <Box>
         <Heading size="sm" mb={3} color="gray.700">
           Important Reminders
         </Heading>
-        <List.Root gap={2} ml={4}>
-          <List.Item>
-            <Text fontSize="sm" color="gray.700">
-              Keep your authenticator app accessible on your device
-            </Text>
-          </List.Item>
-          <List.Item>
-            <Text fontSize="sm" color="gray.700">
-              Store your backup codes in a secure location
-            </Text>
-          </List.Item>
-          <List.Item>
-            <Text fontSize="sm" color="gray.700">
-              Each backup code can only be used once
-            </Text>
-          </List.Item>
-          <List.Item>
-            <Text fontSize="sm" color="gray.700">
-              You can disable 2FA anytime from your profile settings
-            </Text>
-          </List.Item>
-        </List.Root>
+        <VStack align="start" gap={3} ml={2}>
+          <Text fontSize="sm" color="gray.600">
+            • Keep your authenticator app accessible on your device
+          </Text>
+          <Text fontSize="sm" color="gray.600">
+            • Store your backup codes in a secure location
+          </Text>
+          <Text fontSize="sm" color="gray.600">
+            • Each backup code can only be used once
+          </Text>
+          <Text fontSize="sm" color="gray.600">
+            • If you get a new phone, transfer your app or re-scan the QR code
+          </Text>
+        </VStack>
+      </Box>
+
+      {/* Security Tip */}
+      <Box p={3} bg="blue.50" borderRadius="md" borderWidth="1px" borderColor="blue.200">
+        <Text fontSize="sm" color="blue.800">
+          <Text as={'b'}>Tip:</Text> Keep backup codes accessible for when you don't have your phone.
+        </Text>
       </Box>
 
       {/* Complete Button */}
@@ -69,10 +95,10 @@ const SuccessStep: React.FC<SuccessStepProps> = ({ onComplete }) => {
           <PrimaryButton
             onClick={onComplete}
             size="sm"
-            buttonText="Complete"
-            bg="green.500"
-            leftIcon={MdCheck}
+            buttonText={buttonText}
+            leftIcon={buttonIcon}
             buttonProps={{
+              bg: "green.500",
               _hover: { bg: "green.600" },
               _active: { bg: "green.700" }
             }}

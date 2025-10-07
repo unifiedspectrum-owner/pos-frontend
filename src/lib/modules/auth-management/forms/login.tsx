@@ -46,8 +46,8 @@ const LoginForm: React.FC = () => {
 
   return (
     <Box
-      maxW="400px"
-      w="100%"
+      w="400px"
+      h="450px"
       p={8}
       bg="white"
       borderRadius="lg"

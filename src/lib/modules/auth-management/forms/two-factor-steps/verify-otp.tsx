@@ -93,6 +93,55 @@ const VerifyOTPStep: React.FC<VerifyOTPStepProps> = ({
             })}
         </SimpleGrid>
 
+        {/* Additional Information */}
+        <Box>
+          <Heading size="sm" mb={2} color="gray.700">
+            How to find your code:
+          </Heading>
+          <VStack align="start" gap={2} ml={2}>
+            <Text fontSize="sm" color="gray.600">
+              1. Open your authenticator app (Google Authenticator, Authy, etc.)
+            </Text>
+            <Text fontSize="sm" color="gray.600">
+              2. Find the entry you just added by scanning the QR code
+            </Text>
+            <Text fontSize="sm" color="gray.600">
+              3. The app displays a 6-digit code that refreshes every 30 seconds
+            </Text>
+            <Text fontSize="sm" color="gray.600">
+              4. Enter the current code in the field above
+            </Text>
+          </VStack>
+        </Box>
+
+        {/* Troubleshooting section */}
+        <Box>
+          <Heading size="sm" mb={2} color="gray.700">
+            Troubleshooting:
+          </Heading>
+          <VStack align="start" gap={2} ml={2}>
+            <Text fontSize="sm" color="gray.600">
+              • If the code doesn't work, ensure your device's time is set to automatic
+            </Text>
+            <Text fontSize="sm" color="gray.600">
+              • Wait for the code to refresh and try the new code
+            </Text>
+            <Text fontSize="sm" color="gray.600">
+              • Make sure you're entering the code for the correct account
+            </Text>
+            <Text fontSize="sm" color="gray.600">
+              • If issues persist, go back and scan the QR code again
+            </Text>
+          </VStack>
+        </Box>
+
+        {/* Info box */}
+        <Box p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
+          <Text fontSize="sm" color="blue.800">
+            <Text as={'b'}>Tip:</Text> The code changes every 30 seconds. If a code doesn't work, wait for the next one and try again.
+          </Text>
+        </Box>
+
         {/* Action Buttons */}
         <Box pt={3} mt={2} borderTop="1px solid" borderColor="gray.200">
           <HStack gap={3} w="full" justify="flex-end">

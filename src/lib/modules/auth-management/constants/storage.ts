@@ -7,7 +7,8 @@ export const AUTH_STORAGE_KEYS = {
   LOGGED_IN: 'loggedIn',
   USER: 'user',
   PENDING_2FA_USER_ID: 'pending_2fa_user_id',
-  PENDING_2FA_EMAIL: 'pending_2fa_email'
+  PENDING_2FA_EMAIL: 'pending_2fa_email',
+  PENDING_2FA_SETUP_REQUIRED: 'pending_2fa_setup_required'
 } as const
 
 /* Auth storage key type */

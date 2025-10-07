@@ -17,3 +17,6 @@ export { default as UpdateProfileForm } from './update-profile'
 
 /* Two-factor authentication setup component */
 export { default as TwoFactorForm } from './two-factor-auth'
+
+/* Mandatory 2FA setup form component */
+export { default as Setup2FAForm } from './setup-2fa'

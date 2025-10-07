@@ -4,7 +4,7 @@
 import React, { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { VStack, Heading, Text, Link, Box, SimpleGrid, GridItem, Flex } from '@chakra-ui/react'
+import { VStack, Heading, Text, Box, SimpleGrid, GridItem, Flex } from '@chakra-ui/react'
 import { useRouter } from '@/i18n/navigation'
 import { FaShieldAlt, FaArrowLeft, FaKey } from 'react-icons/fa'
 
@@ -91,8 +91,8 @@ const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
 
   return (
     <Box
-      maxW="400px"
-      w="100%"
+      w="400px"
+      h="430px"
       p={8}
       bg="white"
       borderRadius="lg"
@@ -195,51 +195,31 @@ const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
                 })}
             </SimpleGrid>
 
-            <Flex flexDir={'column'} gap={3}>
-              {/* Submit button */}
-              <PrimaryButton
-                type="submit"
-                leftIcon={FaShieldAlt}
-                loading={isVerifying2FA}
-              >
-                {isVerifying2FA ? "Verifying..." : twoFAType === TWO_FA_TYPES.BACKUP ? "Verify Backup Code" : "Verify Code"}
-              </PrimaryButton>
-
+            <Flex flexDir={'column'} gap={4}>
               {/* Toggle backup code button */}
               <SecondaryButton
                 size="sm"
                 onClick={handleToggle2FAType}
                 leftIcon={FaKey}
-              >
-                {twoFAType === TWO_FA_TYPES.BACKUP ? 'Use Authenticator Code' : 'Try Another Way'}
-              </SecondaryButton>
-            </Flex>
+                buttonText={twoFAType === TWO_FA_TYPES.BACKUP ? 'Use Authenticator Code' : 'Try Another Way'}
+              />
 
-            {/* Back to Login Link */}
-            <Box textAlign="center">
-              <Link
-                color={`${PRIMARY_COLOR}.500`}
+              {/* Submit button */}
+              <PrimaryButton
+                type="submit"
+                leftIcon={FaShieldAlt}
+                loading={isVerifying2FA}
+                buttonText={isVerifying2FA ? "Verifying..." : twoFAType === TWO_FA_TYPES.BACKUP ? "Verify Backup Code" : "Verify Code"}
+              />
+
+              {/* Back to Login Button */}
+              <SecondaryButton
                 onClick={handleBackToLogin}
-                cursor="pointer"
-                fontSize="sm"
-                _hover={{ textDecoration: 'underline' }}
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                gap={2}
-              >
-                <FaArrowLeft size="12px" />
-                Back to Login
-              </Link>
-            </Box>
-
-            {/* Help text */}
-            <Text textAlign="center" fontSize="xs" color="gray.500">
-              {twoFAType === TWO_FA_TYPES.TOTP
-                ? 'Having trouble? Make sure your authenticator app is set up correctly.'
-                : 'Enter the backup code you saved when setting up two-factor authentication.'
-              }
-            </Text>
+                size="sm"
+                leftIcon={FaArrowLeft}
+                buttonText="Back to Login"
+              />
+            </Flex>
           </Flex>
         </form>
       </VStack>

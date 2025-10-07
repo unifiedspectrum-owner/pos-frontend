@@ -14,3 +14,6 @@ export { default as Verify2FAPage } from './verify-2fa'
 
 /* Profile update page component */
 export { default as UpdateProfilePage } from './update-profile'
+
+/* Mandatory 2FA setup page component */
+export { default as Setup2FAPage } from './setup-2fa'

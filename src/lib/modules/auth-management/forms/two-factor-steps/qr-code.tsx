@@ -46,7 +46,7 @@ const QRCodeStep: React.FC<QRCodeStepProps> = ({
           {qrCodeData ? (
             <QrCode
               value={qrCodeData}
-              size={'lg'}
+              size={'xl'}
               style={{ display: 'block', margin: '0 auto' }}
             />
           ) : (
@@ -103,8 +103,8 @@ const QRCodeStep: React.FC<QRCodeStepProps> = ({
       </Box>
 
       {/* Next Button */}
-      <Box pt={3} mt={2} borderTop="1px solid" borderColor="gray.200">
-        <HStack gap={3} w="full" justify="flex-end">
+      <Box pt={3} mt={2} borderTop="1px solid" borderColor="gray.200" alignItems={'center'}>
+        <HStack gap={3} w="full" justify="flex-end" alignItems={'center'}>
           <SecondaryButton
             onClick={onCancel}
             size="sm"

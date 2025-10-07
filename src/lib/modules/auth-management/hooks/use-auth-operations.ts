@@ -81,7 +81,30 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
 
       /* Check if login was successful */
       if (response.success && response.data) {
-        /* Check if 2FA is required */
+        /* Check if user needs to set up 2FA (required but not enabled) */
+        if (response.data.user.is_2fa_required && !response.data.requires_2fa) {
+          console.log('[useAuthOperations] 2FA setup required before accessing admin')
+
+          /* Store tokens temporarily for 2FA setup flow */
+          localStorage.setItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN, response.data.accessToken || '')
+          localStorage.setItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN, response.data.refreshToken || '')
+          localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(response.data.user))
+          localStorage.setItem(AUTH_STORAGE_KEYS.PENDING_2FA_SETUP_REQUIRED, 'true')
+
+          /* Show info notification */
+          createToastNotification({
+            type: 'warning',
+            title: '2FA Setup Required',
+            description: 'Please set up two-factor authentication to continue.'
+          })
+
+          /* Redirect to 2FA setup page */
+          router.push(AUTH_PAGE_ROUTES.SETUP_2FA)
+
+          return false // Don't complete login yet
+        }
+
+        /* Check if 2FA is required (already enabled, needs verification) */
         if (response.data.requires_2fa && !response.data.is_2fa_authenticated) {
           console.log('[useAuthOperations] 2FA verification required')
 
