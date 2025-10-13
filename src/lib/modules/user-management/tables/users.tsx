@@ -18,7 +18,7 @@ import { usePermissions } from '@shared/contexts'
 import { PaginationInfo } from '@shared/types'
 import { GRAY_COLOR, PRIMARY_COLOR, ERROR_RED_COLOR } from '@shared/config'
 import { PERMISSION_ACTIONS } from '@shared/constants/rbac'
-import { getStatusBadgeColor } from '@shared/utils'
+import { STATUS_BADGE_CONFIG } from '@shared/constants'
 
 /* User module imports */
 import { UserAccountDetails } from '@user-management/types'
@@ -211,7 +211,7 @@ const UserTable: React.FC<UserTableProps> = ({
           ) : (
             /* Data rows */
             filteredUsers.map((user, index) => {
-              const statusColors = getStatusBadgeColor(user.user_status)
+              const statusColors = STATUS_BADGE_CONFIG[user.user_status]
 
               return (
                 <HStack

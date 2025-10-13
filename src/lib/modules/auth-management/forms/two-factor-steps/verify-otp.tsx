@@ -6,6 +6,7 @@ import { MdArrowBack, MdVerified } from 'react-icons/md'
 
 /* Shared module imports */
 import { PrimaryButton, SecondaryButton, PinInputField } from '@shared/components'
+import { FORM_FIELD_TYPES } from '@shared/constants'
 
 /* Auth module imports */
 import { ENABLE_2FA_FORM_QUESTIONS } from '@auth-management/constants'
@@ -67,7 +68,7 @@ const VerifyOTPStep: React.FC<VerifyOTPStepProps> = ({
               }
 
               /* Render field based on type */
-              if (field.type === 'PIN') {
+              if (field.type === FORM_FIELD_TYPES.PIN) {
                 return (
                   <GridItem key={field.id} colSpan={field.grid.col_span}>
                     <Controller

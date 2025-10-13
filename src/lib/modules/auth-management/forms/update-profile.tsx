@@ -10,7 +10,7 @@ import { TextInputField, PhoneNumberField, PrimaryButton, SecondaryButton } from
 import { useCountries } from '@shared/hooks'
 import { GRAY_COLOR } from '@shared/config'
 import { getPhoneFieldErrorMessage } from '@shared/utils/formatting'
-import { DEFAULT_DIAL_CODE } from '@shared/constants'
+import { DEFAULT_DIAL_CODE, FORM_FIELD_TYPES } from '@shared/constants'
 
 /* Auth module imports */
 import { UpdateProfileFormData } from '@auth-management/schemas'
@@ -58,7 +58,7 @@ const UpdateProfileForm: React.FC<UpdateProfileFormProps> = ({
 
             /* Render field based on type */
             switch (field.type) {
-              case 'INPUT':
+              case FORM_FIELD_TYPES.INPUT:
                 return (
                   <GridItem key={field.id} colSpan={field.grid.col_span}>
                     <Controller
@@ -76,7 +76,7 @@ const UpdateProfileForm: React.FC<UpdateProfileFormProps> = ({
                   </GridItem>
                 )
 
-              case 'PHONE_NUMBER':
+              case FORM_FIELD_TYPES.PHONE_NUMBER:
                 return (
                   <GridItem key={field.id} colSpan={field.grid.col_span}>
                     <Controller

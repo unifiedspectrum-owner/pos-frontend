@@ -19,13 +19,13 @@ import { usePermissions } from '@shared/contexts'
 import { PaginationInfo } from '@shared/types'
 import { GRAY_COLOR, PRIMARY_COLOR, ERROR_RED_COLOR } from '@shared/config'
 import { PERMISSION_ACTIONS } from '@shared/constants/rbac'
-import { getStatusBadgeColor } from '@shared/utils'
 
 /* Role module imports */
 import { Role } from '@role-management/types'
 import { ROLE_PAGE_ROUTES, ROLE_STATUS_FILTER_OPTIONS, ROLE_STATUS, ROLE_STATUS_LABELS, ROLE_MODULE_NAME } from '@role-management/constants'
 import { RoleTableSkeleton } from '@role-management/components'
 import { useRoleOperations } from '@role-management/hooks'
+import { STATUS_BADGE_CONFIG } from '@/lib/shared/constants'
 
 /* Component interfaces */
 interface RoleTableProps {
@@ -198,7 +198,7 @@ const RoleTable: React.FC<RoleTableProps> = ({
             .sort((a, b) => Number(a.display_order) - Number(b.display_order))
             .map((role, index) => {
               const roleStatus = role.is_active ? ROLE_STATUS.ACTIVE : ROLE_STATUS.INACTIVE
-              const statusColors = getStatusBadgeColor(roleStatus)
+              const statusColors = STATUS_BADGE_CONFIG[roleStatus]
 
               return (
                 <HStack

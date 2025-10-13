@@ -7,6 +7,7 @@ export const TENANT_MODULE_NAME = 'tenant-management';
 export const TENANT_API_ROUTES = {
   BASE_URL: '/tenants',
   LIST: '/list',
+  LIST_WITH_BASIC_DETAILS: '/list/basic',
   DETAILS: '/details/:id',
   ACCOUNT: {
     CREATE: '/account/create',

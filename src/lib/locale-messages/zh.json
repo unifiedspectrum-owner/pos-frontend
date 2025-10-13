@@ -237,5 +237,24 @@
         }
       }
     }
+  },
+  "SupportTicketManagement": {
+    "title": "支持工单管理",
+    "buttons": {
+      "refresh": "刷新",
+      "add": "创建工单"
+    },
+    "errors": {
+      "loadingTickets": "加载支持工单时出错",
+      "fetchFailed": "获取支持工单失败"
+    },
+    "messages": {
+      "dataRefreshed": "工单数据刷新成功",
+      "dataFetched": "工单数据获取成功"
+    },
+    "breadcrumbs": {
+      "admin": "管理员",
+      "supportTicketManagement": "支持工单管理"
+    }
   }
 }

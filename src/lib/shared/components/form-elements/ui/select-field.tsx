@@ -51,17 +51,26 @@ const SelectField: React.FC<SelectFieldProps> = ({
   padding,
   borderRadius
 }) => {
-  /* Create collection from options with unique identifiers */
+  /* Create collection from options with placeholder as first option */
+  const placeholderOption = placeholder ? [{
+    label: placeholder,
+    value: '',
+    id: 'select-option-placeholder'
+  }] : []
+
   const collection = createListCollection({
-    items: options.map((option, index) => ({
-      label: option.label,
-      value: option.value,
-      id: `select-option-${index}-${option.value}`, // Unique identifier
-    }))
+    items: [
+      ...placeholderOption,
+      ...options.map((option, index) => ({
+        label: option.label,
+        value: option.value,
+        id: `select-option-${index}-${option.value}`, // Unique identifier
+      }))
+    ]
   })
 
   /* Ensure value is in array format for Select.Root and filter out empty values */
-  const selectValue = Array.isArray(value) 
+  const selectValue = Array.isArray(value)
     ? value.filter(v => v !== '' && v !== null && v !== undefined)
     : value && value !== '' ? [value] : []
 

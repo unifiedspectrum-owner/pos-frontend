@@ -238,5 +238,24 @@
         }
       }
     }
+  },
+  "SupportTicketManagement": {
+    "title": "Gestión de Tickets de Soporte",
+    "buttons": {
+      "refresh": "Actualizar",
+      "add": "Crear Ticket"
+    },
+    "errors": {
+      "loadingTickets": "Error al Cargar Tickets de Soporte",
+      "fetchFailed": "Error al obtener tickets de soporte"
+    },
+    "messages": {
+      "dataRefreshed": "Datos de tickets actualizados exitosamente",
+      "dataFetched": "Datos de tickets obtenidos exitosamente"
+    },
+    "breadcrumbs": {
+      "admin": "Administrador",
+      "supportTicketManagement": "Gestión de Tickets de Soporte"
+    }
   }
 }

@@ -55,6 +55,7 @@ export class BaseApiClient {
     this.client.interceptors.request.use(
       (config) => {
         /* Add authentication token if required */
+        console.log("shouldAddAuth", this.shouldAddAuth(config))
         if (this.shouldAddAuth(config)) {
           const token = localStorage.getItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN)
           if (token) {
@@ -128,8 +129,10 @@ export class BaseApiClient {
 
   /* Determine if authentication should be added to request */
   private shouldAddAuth(config: AxiosRequestConfig): boolean {
-    if (!this.config.requiresAuth) return false
+    if (this.config.requiresAuth === undefined) return false
 
+    console.log("authRoutes", this.config.authRoutes)
+    console.log("config.url", config.url)
     /* For auth routes, only add token for specific endpoints */
     if (this.config.authRoutes && config.url) {
       return this.config.authRoutes.some(route => config.url?.includes(route))
@@ -162,7 +165,7 @@ export class BaseApiClient {
 
       /* Create auth client for refresh request */
       const authClient = axios.create({
-        baseURL: `${BACKEND_BASE_URL}/auth`,
+        baseURL: `${BACKEND_BASE_URL}/api/v1/auth`,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${refreshToken}`

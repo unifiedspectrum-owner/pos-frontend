@@ -3,6 +3,13 @@
 /* Role module imports */
 import { Role } from "@role-management/types";
 
+/* User account status type matching database schema */
+export type UserStatus =
+  | 'active'                  // User account is active and fully operational
+  | 'locked'                  // User account is locked (e.g., too many failed login attempts)        
+  | 'inactive'                // User account is temporarily disabled
+  | 'pending_verification';   // User account is awaiting email/phone verification
+
 /* User account data with profile and security information */
 export interface UserAccountDetails {
   id: number;
@@ -13,7 +20,7 @@ export interface UserAccountDetails {
   profile_image_url: string | null;
   is_2fa_required: boolean;
   is_2fa_enabled: boolean;
-  user_status: string;
+  user_status: UserStatus;
   email_verified: boolean;
   phone_verified: boolean;
   email_verified_at: string | null;

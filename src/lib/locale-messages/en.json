@@ -238,5 +238,24 @@
         }
       }
     }
+  },
+  "SupportTicketManagement": {
+    "title": "Support Ticket Management",
+    "buttons": {
+      "refresh": "Refresh",
+      "add": "Create Ticket"
+    },
+    "errors": {
+      "loadingTickets": "Error Loading Support Tickets",
+      "fetchFailed": "Failed to fetch support tickets"
+    },
+    "messages": {
+      "dataRefreshed": "Ticket data refreshed successfully",
+      "dataFetched": "Ticket data fetched successfully"
+    },
+    "breadcrumbs": {
+      "admin": "Admin",
+      "supportTicketManagement": "Support Ticket Management"
+    }
   }
 }

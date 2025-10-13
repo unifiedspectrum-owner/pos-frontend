@@ -34,7 +34,7 @@ interface PasswordInputFieldProps {
   showRequirements?: boolean; /* Whether to show individual requirements checklist */
 }
 
-const PasswordInputField: React.FC<PasswordInputFieldProps> = ({
+const PasswordInputField = React.forwardRef<HTMLInputElement, PasswordInputFieldProps>(({
   label,
   value,
   placeholder,
@@ -49,11 +49,11 @@ const PasswordInputField: React.FC<PasswordInputFieldProps> = ({
   inputProps,
   isDebounced = true,
   autoFocus = false,
-  debounceMs = 300,
+  debounceMs = 200,
   leftIcon,
   showStrengthMeter = false,
   showRequirements = false
-}) => {
+}, ref) => {
   /* Local state for immediate UI updates */
   const [localValue, setLocalValue] = useState(value);
 
@@ -171,6 +171,7 @@ const PasswordInputField: React.FC<PasswordInputFieldProps> = ({
       <VStack w={'100%'} align="stretch" gap={showStrengthMeter || showRequirements ? 3 : 0}>
         <InputGroup alignItems={'center'} startElementProps={{fontSize: 'lg'}} startElement={leftIcon ? leftIcon : undefined}>
           <PasswordInput
+            ref={ref}
             h={'48px'}
             autoFocus={autoFocus}
             borderColor={isInValid ? 'red.500' : lighten(0.3, GRAY_COLOR)}
@@ -234,6 +235,8 @@ const PasswordInputField: React.FC<PasswordInputFieldProps> = ({
       </VStack>
     </Field>
   );
-}
+})
+
+PasswordInputField.displayName = 'PasswordInputField'
 
 export default PasswordInputField

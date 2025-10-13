@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Box, Flex, VStack, Button, Text } from '@chakra-ui/react';
 import { FaChartLine } from 'react-icons/fa';
 import { FiLayers, FiList, FiPlus, FiGrid, FiUsers, FiShield } from 'react-icons/fi';
+import { GiTicket } from "react-icons/gi";
 import { MdClose } from 'react-icons/md';
 import { IconType } from 'react-icons';
 
@@ -138,6 +139,29 @@ const menuItems: SidebarMenuItems[] = [
         label: 'Create Role',
         icon: FiPlus,
         path: ADMIN_PAGE_ROUTES.ROLE_MANAGEMENT.CREATE,
+        requires_permission: 'CREATE'
+      },
+    ]
+  },
+  {
+    id: 6,
+    icon: GiTicket,
+    label: 'Support Ticket Management',
+    path: ADMIN_PAGE_ROUTES.SUPPORT_TICKET_MANAGEMENT_PAGE.HOME,
+    module_code: 'support-ticket-management',
+    sub_menu_items: [
+      {
+        id: 1,
+        label: 'Manage Tickets',
+        icon: FiList,
+        path: ADMIN_PAGE_ROUTES.SUPPORT_TICKET_MANAGEMENT_PAGE.HOME,
+        requires_permission: 'READ'
+      },
+      {
+        id: 2,
+        label: 'Create Ticket',
+        icon: FiPlus,
+        path: ADMIN_PAGE_ROUTES.SUPPORT_TICKET_MANAGEMENT_PAGE.CREATE,
         requires_permission: 'CREATE'
       },
     ]

@@ -19,9 +19,7 @@ export const createToastNotification = ({
   type = 'success',
   duration = 7000,
   closable = true
-}: ToastConfig) => {
-  /* Use queueMicrotask to avoid flushSync warnings during render */
-  queueMicrotask(() => {
+}: ToastConfig) => {  
     toaster.create({
       title,
       description,
@@ -29,5 +27,5 @@ export const createToastNotification = ({
       duration,
       closable
     })
-  })
+
 };

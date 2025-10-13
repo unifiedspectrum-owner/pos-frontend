@@ -10,6 +10,7 @@ const MODULES = {
   TENANT_MANAGEMENT: 'tenant-management',
   USER_MANAGEMENT: 'user-management',
   ROLE_MANAGEMENT: 'role-management',
+  SUPPORT_TICKET_MANAGEMENT: 'support-ticket-management',
 } as const;
 
 /* Dashboard page routes */
@@ -50,6 +51,15 @@ export const ROLE_MANAGEMENT_PAGE_ROUTES = {
   VIEW: `${ADMIN_BASE}/${MODULES.ROLE_MANAGEMENT}/view/:id`,
 } as const;
 
+/* Role Management page routes */
+export const SUPPORT_TICKET_MANAGEMENT_PAGE_ROUTES = {
+  HOME: `${ADMIN_BASE}/${MODULES.SUPPORT_TICKET_MANAGEMENT}`,
+  CREATE: `${ADMIN_BASE}/${MODULES.SUPPORT_TICKET_MANAGEMENT}/create`,
+  EDIT: `${ADMIN_BASE}/${MODULES.SUPPORT_TICKET_MANAGEMENT}/edit/:id`,
+  VIEW: `${ADMIN_BASE}/${MODULES.SUPPORT_TICKET_MANAGEMENT}/view/:id`,
+} as const;
+
+
 /* All admin page routes combined */
 export const ADMIN_PAGE_ROUTES = {
   DASHBOARD: DASHBOARD_PAGE_ROUTES,
@@ -57,6 +67,7 @@ export const ADMIN_PAGE_ROUTES = {
   TENANT_MANAGEMENT: TENANT_MANAGEMENT_PAGE_ROUTES,
   USER_MANAGEMENT: USER_MANAGEMENT_PAGE_ROUTES,
   ROLE_MANAGEMENT: ROLE_MANAGEMENT_PAGE_ROUTES,
+  SUPPORT_TICKET_MANAGEMENT_PAGE: SUPPORT_TICKET_MANAGEMENT_PAGE_ROUTES,
   /* User account and app routes */
   PROFILE: `${ADMIN_BASE}/profile`,
   SETTINGS: `${ADMIN_BASE}/settings`,

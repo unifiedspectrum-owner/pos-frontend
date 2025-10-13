@@ -11,6 +11,7 @@ import { FaPaperPlane } from 'react-icons/fa'
 /* Shared module imports */
 import { PRIMARY_COLOR } from '@shared/config'
 import { TextInputField, PrimaryButton } from '@shared/components/form-elements'
+import { FORM_FIELD_TYPES } from '@shared/constants'
 
 /* Auth management module imports */
 import { ForgotPasswordApiRequest } from '@auth-management/types'
@@ -93,7 +94,7 @@ const ForgotPasswordForm: React.FC = () => {
 
                   /* Render field based on type */
                   switch(field.type) {
-                    case 'INPUT':
+                    case FORM_FIELD_TYPES.INPUT:
                       return (
                         <GridItem key={field.id} colSpan={field.grid.col_span}>
                           <Controller

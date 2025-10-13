@@ -10,7 +10,9 @@ import { FaSignInAlt } from 'react-icons/fa'
 
 /* Shared module imports */
 import { PRIMARY_COLOR } from '@shared/config'
-import { TextInputField, CheckboxField, PrimaryButton } from '@shared/components/form-elements'
+import { TextInputField, CheckboxField, PrimaryButton, PasswordInputField } from '@shared/components/form-elements'
+import { useFieldNavigation } from '@shared/hooks'
+import { FORM_FIELD_TYPES } from '@shared/constants'
 
 /* Auth management module imports */
 import { LoginApiRequest } from '@auth-management/types'
@@ -26,7 +28,7 @@ const LoginForm: React.FC = () => {
   const { loginUser, isLoggingIn } = useAuthOperations()
 
   /* Form management */
-  const { control, handleSubmit, formState: { errors }, clearErrors } = useForm<LoginFormData>({
+  const { control, handleSubmit, formState: { errors }, clearErrors, trigger } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: LOGIN_FORM_DEFAULT_VALUES
   })
@@ -43,6 +45,13 @@ const LoginForm: React.FC = () => {
   const handleForgotPassword = () => {
     router.push(AUTH_PAGE_ROUTES.FORGOT_PASSWORD)
   }
+
+  /* Field navigation hook for Enter key handling */
+  const { getFieldProps } = useFieldNavigation<LoginFormData>({
+    trigger,
+    onSubmit: handleSubmit(onSubmit),
+    fields: ['email', 'password']
+  })
 
   return (
     <Box
@@ -92,7 +101,7 @@ const LoginForm: React.FC = () => {
 
                   /* Render field based on type */
                   switch(field.type) {
-                    case 'INPUT':
+                    case FORM_FIELD_TYPES.INPUT:
                       return (
                         <GridItem key={field.id} colSpan={field.grid.col_span}>
                           <Controller
@@ -101,6 +110,7 @@ const LoginForm: React.FC = () => {
                             render={({ field: controllerField }) => (
                               <TextInputField
                                 {...commonProps}
+                                {...getFieldProps(schemaKey)}
                                 value={controllerField.value?.toString() || ''}
                                 onChange={(e) => {
                                   clearErrors(schemaKey)
@@ -113,16 +123,16 @@ const LoginForm: React.FC = () => {
                         </GridItem>
                       )
 
-                    case 'PASSWORD':
+                    case FORM_FIELD_TYPES.PASSWORD:
                       return (
                         <GridItem key={field.id} colSpan={field.grid.col_span}>
                           <Controller
                             name={schemaKey}
                             control={control}
                             render={({ field: controllerField }) => (
-                              <TextInputField
+                              <PasswordInputField
                                 {...commonProps}
-                                type={'password'}
+                                {...getFieldProps(schemaKey)}
                                 value={controllerField.value?.toString() || ''}
                                 onChange={(e) => {
                                   clearErrors(schemaKey)
@@ -135,7 +145,7 @@ const LoginForm: React.FC = () => {
                         </GridItem>
                       )
 
-                    case 'CHECKBOX':
+                    case FORM_FIELD_TYPES.CHECKBOX:
                       return (
                         <GridItem key={field.id} colSpan={field.grid.col_span}>
                           <Flex gap={2} w={'100%'}>
@@ -163,7 +173,7 @@ const LoginForm: React.FC = () => {
                                 onClick={handleForgotPassword}
                                 _hover={{ textDecoration: 'underline' }}
                               >
-                                  Forgot password?
+                                Forgot password?
                               </Link>
                             </Flex>
                           </Flex>

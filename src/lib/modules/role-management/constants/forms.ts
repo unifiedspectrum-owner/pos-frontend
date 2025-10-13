@@ -9,6 +9,7 @@ import { CreateRoleFormData } from '@role-management/schemas'
 
 /* Shared module imports */
 import { FormFieldStructure } from '@shared/types'
+import { FORM_FIELD_TYPES } from '@shared/constants'
 
 /* Form section labels */
 export const ROLE_FORM_SECTIONS = {
@@ -73,7 +74,7 @@ export const ROLE_FORM_TABS: RoleFormTabData[] = [
 export const ROLE_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   {
     id: 1,
-    type: "INPUT",
+    type: FORM_FIELD_TYPES.INPUT,
     label: "Name",
     schema_key: "name",
     placeholder: "Enter role name",
@@ -87,7 +88,7 @@ export const ROLE_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 2,
-    type: "TOGGLE",
+    type: FORM_FIELD_TYPES.TOGGLE,
     label: "Status",
     schema_key: "is_active",
     placeholder: "Toggle to activate or deactivate the role",
@@ -105,7 +106,7 @@ export const ROLE_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 3,
-    type: "TEXTAREA",
+    type: FORM_FIELD_TYPES.TEXTAREA,
     label: "Description",
     schema_key: "description",
     placeholder: "Enter role description",

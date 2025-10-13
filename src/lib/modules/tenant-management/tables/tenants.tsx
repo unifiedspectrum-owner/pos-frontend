@@ -17,8 +17,8 @@ import { ConfirmationDialog, EmptyStateContainer, Pagination, TextInputField, Ta
 import { usePermissions } from '@shared/contexts'
 import { PaginationInfo } from '@shared/types'
 import { GRAY_COLOR, PRIMARY_COLOR, ERROR_RED_COLOR, WARNING_ORANGE_COLOR } from '@shared/config'
+import { STATUS_BADGE_CONFIG } from '@shared/constants'
 import { PERMISSION_ACTIONS } from '@shared/constants/rbac'
-import { getStatusBadgeColor } from '@shared/utils/ui'
 
 /* Tenant module imports */
 import { TenantWithPlanDetails } from '@tenant-management/types/account/list'
@@ -283,9 +283,9 @@ const TenantTable: React.FC<TenantTableProps> = ({
           ) : (
             /* Data rows */
             filteredTenants.map((tenant, index) => {
-              const statusColors = getStatusBadgeColor(tenant.tenant_status)
+              const statusColors = STATUS_BADGE_CONFIG[tenant.tenant_status];
               const subscriptionColors = tenant.subscription_status 
-                ? getStatusBadgeColor(tenant.subscription_status)
+                ? STATUS_BADGE_CONFIG[tenant.subscription_status]
                 : { color: lighten(0.2, GRAY_COLOR), bg: lighten(0.4, GRAY_COLOR), borderColor: lighten(0.3, GRAY_COLOR) }
               
               return (

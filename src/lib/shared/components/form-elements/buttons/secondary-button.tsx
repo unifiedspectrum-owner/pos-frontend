@@ -33,7 +33,7 @@ const SecondaryButton: React.FC<SecondaryButtonProps> = ({
   size = 'md', /* Default medium size */
   leftIcon,
   rightIcon,
-  buttonText,
+  buttonText = 'Cancel',
   loadingText,
   isLoading = false,
   buttonProps

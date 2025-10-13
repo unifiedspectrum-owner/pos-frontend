@@ -3,10 +3,11 @@
 /* React and external library imports */
 import React, { useState, useEffect } from 'react';
 import { Flex, HStack, Text, Button, Menu, Portal, Skeleton, SkeletonCircle, IconButton, Badge } from '@chakra-ui/react';
-import { FiUser, FiSettings, FiLogOut, FiChevronDown, FiBell } from 'react-icons/fi';
+import { FiUser, FiSettings, FiLogOut, FiChevronDown, FiBell, FiClock, FiLogIn } from 'react-icons/fi';
 import { lighten } from 'polished';
 import { useRouter } from '@/i18n/navigation';
 import { Avatar } from '@/components/ui/avatar';
+import { Tooltip } from '@/components/ui/tooltip';
 
 /* Shared module imports */
 import { PRIMARY_COLOR, WHITE_COLOR, GRAY_COLOR } from '@shared/config';
@@ -15,6 +16,7 @@ import { ADMIN_PAGE_ROUTES } from '@shared/constants';
 import { UserDetailsCache } from '@/lib/modules/auth-management/types';
 import { ConfirmationDialog } from '@shared/components/common';
 import { useAuthOperations } from '@auth-management/hooks';
+import { useSessionTimer } from '@shared/hooks';
 
 /* Top navigation header for admin pages */
 const NavigationHeader: React.FC = () => {
@@ -34,6 +36,86 @@ const NavigationHeader: React.FC = () => {
   /* State for notifications */
   const [notificationCount, setNotificationCount] = useState<number>(0);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState<boolean>(true);
+
+  /* Initialize session timer */
+  const {
+    formattedTime, remainingTime, showWarningDialog,
+    isInactivityWarning, inactivityCountdown,
+    showExpiredDialog, expiredCountdown,
+    extendSession, resumeSession, dismissWarning, handleExpiredLogin
+  } = useSessionTimer(logoutUser);
+
+  /* Determine which dialog to show and its configuration */
+  const getDialogConfig = () => {
+    if (showExpiredDialog) {
+      return {
+        isOpen: true,
+        title: 'Session Expired',
+        message: `Your session has expired. Please log in again to continue. You will be automatically redirected to the login page in ${expiredCountdown} seconds.`,
+        confirmText: expiredCountdown > 0 ? `Go to Login (${expiredCountdown}s)` : 'Go to Login',
+        confirmVariant: 'danger' as const,
+        confirmIcon: FiLogIn,
+        onConfirm: handleExpiredLogin,
+        preventOutsideClick: true,
+        showCancelBtn: false
+      };
+    }
+
+    if (showWarningDialog) {
+      return {
+        isOpen: true,
+        title: isInactivityWarning ? 'Inactivity Detected' : 'Session Expiring Soon',
+        message: isInactivityWarning
+          ? `You have been inactive for a while. Your session will automatically log out in ${inactivityCountdown} seconds if no action is taken. Would you like to continue working or log out?`
+          : `Your session will expire in ${formattedTime}. Would you like to extend your session or log out now?`,
+        confirmText: inactivityCountdown ? `Log out (${inactivityCountdown})` : 'Log out',
+        cancelText: isInactivityWarning ? 'Continue Session' : 'Extend Session',
+        confirmVariant: 'danger' as const,
+        confirmIcon: FiLogOut,
+        onConfirm: async () => await logoutUser(),
+        onCancel: async () => {
+          if (isInactivityWarning) {
+            resumeSession();
+          } else {
+            await extendSession();
+          }
+        },
+        onOutsideClick: isInactivityWarning ? undefined : dismissWarning,
+        preventOutsideClick: isInactivityWarning,
+        isLoading: isLoggingOut,
+      };
+    }
+
+    if (showLogoutConfirmation) {
+      return {
+        isOpen: true,
+        title: 'Confirm Logout',
+        message: 'Are you sure you want to sign out? You will need to log in again to access your account.',
+        confirmText: 'Sign Out',
+        cancelText: 'Cancel',
+        confirmVariant: 'danger' as const,
+        confirmIcon: FiLogOut,
+        onConfirm: async () => {
+          await logoutUser();
+          setShowLogoutConfirmation(false);
+        },
+        onCancel: () => setShowLogoutConfirmation(false),
+        isLoading: isLoggingOut,
+      };
+    }
+
+    /* Default/unhandled scenario */
+    return {
+      isOpen: false,
+      title: 'Error',
+      message: 'An unknown error occurred. Please reload the page and try again.',
+      confirmText: 'Reload',
+      confirmVariant: 'danger' as const,
+      onConfirm: () => router.refresh(),
+    };
+  };
+
+  const dialogConfig = getDialogConfig();
 
   /* Get user data from localStorage */
   useEffect(() => {
@@ -93,18 +175,6 @@ const NavigationHeader: React.FC = () => {
     setShowLogoutConfirmation(true);
   };
 
-  /* Confirm and perform logout */
-  const confirmLogout = async () => {
-    /* Use auth operations hook for logout */
-    await logoutUser();
-    setShowLogoutConfirmation(false);
-  };
-
-  /* Cancel logout */
-  const cancelLogout = () => {
-    setShowLogoutConfirmation(false);
-  };
-
   return (
     <Flex
       as="header" w="100%" h="64px" bg={WHITE_COLOR}
@@ -124,6 +194,53 @@ const NavigationHeader: React.FC = () => {
 
       {/* Right section - Professional action bar */}
       <HStack gap={[2, 3]}>
+        {/* Session Timer */}
+        <Tooltip
+          openDelay={300}
+          closeDelay={100}
+          content={`Your session will expire in: ${formattedTime}`}
+          contentProps={{
+            bg: WHITE_COLOR,
+            color: GRAY_COLOR,
+            borderRadius: 'md',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            px: 3,
+            py: 2,
+            fontSize: 'sm',
+            fontWeight: '500'
+          }}
+        >
+          <Flex
+            align="center"
+            gap={2}
+            px={3}
+            py={2}
+            bg={remainingTime <= 60 ? lighten(0.95, PRIMARY_COLOR) : lighten(0.97, GRAY_COLOR)}
+            borderRadius="xl"
+            border="1px solid"
+            borderColor={remainingTime <= 60 ? lighten(0.7, PRIMARY_COLOR) : "gray.100"}
+            transition="all 0.3s ease"
+            display={{ base: 'none', md: 'flex' }}
+            cursor="default"
+            _hover={{
+              bg: lighten(0.95, GRAY_COLOR),
+              transform: 'translateY(-1px)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+            }}
+          >
+            <FiClock size={16} color={remainingTime <= 60 ? PRIMARY_COLOR : lighten(0.2, GRAY_COLOR)} />
+            <Text
+              fontSize="sm"
+              fontWeight="600"
+              color={remainingTime <= 60 ? PRIMARY_COLOR : GRAY_COLOR}
+              fontVariantNumeric="tabular-nums"
+              letterSpacing="-0.01em"
+            >
+              {formattedTime}
+            </Text>
+          </Flex>
+        </Tooltip>
+
         {/* Notifications with badge */}
         <Flex position="relative">
           <IconButton
@@ -258,18 +375,24 @@ const NavigationHeader: React.FC = () => {
         )}
       </HStack>
 
-      {/* Logout confirmation dialog */}
-      <ConfirmationDialog
-        isOpen={showLogoutConfirmation}
-        onCancel={cancelLogout}
-        onConfirm={confirmLogout}
-        title="Confirm Logout"
-        message="Are you sure you want to sign out? You will need to log in again to access your account."
-        confirmText="Sign Out"
-        cancelText="Cancel"
-        confirmVariant="danger"
-        isLoading={isLoggingOut}
-      />
+      {/* Single confirmation dialog for all scenarios */}
+      {dialogConfig.isOpen && (
+        <ConfirmationDialog
+          isOpen={dialogConfig.isOpen}
+          title={dialogConfig.title!}
+          message={dialogConfig.message!}
+          confirmText={dialogConfig.confirmText!}
+          cancelText={dialogConfig.cancelText!}
+          confirmVariant={dialogConfig.confirmVariant!}
+          confirmIcon={dialogConfig.confirmIcon}
+          onConfirm={dialogConfig.onConfirm!}
+          onCancel={dialogConfig.onCancel}
+          onOutsideClick={dialogConfig.onOutsideClick}
+          preventOutsideClick={dialogConfig.preventOutsideClick}
+          isLoading={dialogConfig.isLoading}
+          showCancelBtn={dialogConfig.showCancelBtn}
+        />
+      )}
     </Flex>
   );
 };

@@ -2,10 +2,15 @@
 
 /* Libraries imports */
 import { IconType } from 'react-icons'
-import { CreateUserFormData } from '../schemas'
 import { FaUser, FaEnvelope, FaUserShield, FaToggleOn } from 'react-icons/fa'
 import { FiPhone } from 'react-icons/fi'
+
+/* Shared module imports */
 import { FormFieldStructure } from '@shared/types'
+import { FORM_FIELD_TYPES } from '@shared/constants'
+
+/* User management module imports */
+import { CreateUserFormData } from '@user-management/schemas'
 
 /* User creation tab type */
 export type UserCreationTabType = 'basic_info'
@@ -53,7 +58,7 @@ export const USER_FORM_SECTIONS = {
 export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   {
     id: 1,
-    type: "INPUT",
+    type: FORM_FIELD_TYPES.INPUT,
     label: "First Name",
     schema_key: "f_name",
     placeholder: "Enter first name",
@@ -67,7 +72,7 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 2,
-    type: "INPUT",
+    type: FORM_FIELD_TYPES.INPUT,
     label: "Last Name",
     schema_key: "l_name",
     placeholder: "Enter last name",
@@ -81,7 +86,7 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 3,
-    type: "INPUT",
+    type: FORM_FIELD_TYPES.INPUT,
     label: "Email Address",
     schema_key: "email",
     placeholder: "Enter email address",
@@ -95,7 +100,7 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 4,
-    type: "PHONE_NUMBER",
+    type: FORM_FIELD_TYPES.PHONE_NUMBER,
     label: "Phone Number",
     schema_key: "phone",
     placeholder: "Enter phone number",
@@ -109,7 +114,7 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 5,
-    type: "SELECT",
+    type: FORM_FIELD_TYPES.SELECT,
     label: "User Role",
     schema_key: "role_id",
     placeholder: "Select a role",
@@ -123,7 +128,7 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 6,
-    type: "TOGGLE",
+    type: FORM_FIELD_TYPES.TOGGLE,
     label: "Account Status",
     schema_key: "is_active",
     placeholder: "Enable or disable user account",
@@ -141,7 +146,7 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 7,
-    type: "TOGGLE",
+    type: FORM_FIELD_TYPES.TOGGLE,
     label: "Two Factor Authentication",
     schema_key: "is_2fa_enabled",
     placeholder: "Enable or disable two factor authentication",
@@ -159,7 +164,7 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 8,
-    type: "TOGGLE",
+    type: FORM_FIELD_TYPES.TOGGLE,
     label: "Is 2FA Required",
     schema_key: "is_2fa_required",
     placeholder: "Require users to use two factor authentication",
@@ -177,7 +182,7 @@ export const USER_CREATION_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 9,
-    type: "FILE",
+    type: FORM_FIELD_TYPES.FILE,
     label: "Profile Picture",
     schema_key: "profile_picture",
     placeholder: "Upload profile picture",

@@ -5,6 +5,7 @@ import { Controller, useFormContext } from 'react-hook-form'
 
 /* Shared module imports */
 import { TextInputField, TextAreaField, SwitchField } from '@shared/components/form-elements'
+import { FORM_FIELD_TYPES } from '@shared/constants'
 
 /* Role module imports */
 import { CreateRoleFormData } from '@role-management/schemas'
@@ -39,7 +40,7 @@ const RoleInfoSection: React.FC = () => {
 
           /* Render appropriate field type based on configuration */
           switch(field.type) {
-            case 'INPUT': /* Text input fields (name, code, display_name) */
+            case FORM_FIELD_TYPES.INPUT: /* Text input fields (name, code, display_name) */
               return (
                 <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
                   <Controller
@@ -60,7 +61,7 @@ const RoleInfoSection: React.FC = () => {
                 </GridItem>
               )
 
-            case 'TEXTAREA': /* Description field */
+            case FORM_FIELD_TYPES.TEXTAREA: /* Description field */
               return (
                 <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
                   <Controller
@@ -84,7 +85,7 @@ const RoleInfoSection: React.FC = () => {
                 </GridItem>
               )
 
-            case 'TOGGLE': /* Switch/toggle fields for boolean values */
+            case FORM_FIELD_TYPES.TOGGLE: /* Switch/toggle fields for boolean values */
               return (
                 <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
                   <Controller

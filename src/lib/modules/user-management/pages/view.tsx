@@ -10,11 +10,12 @@ import { FaCalendarAlt, FaCheckCircle, FaTimesCircle, FaUserShield, FaIdBadge } 
 import { PRIMARY_COLOR, GRAY_COLOR } from '@shared/config'
 import { ErrorMessageContainer, Breadcrumbs, FullPageLoader } from '@shared/components/common'
 import { formatDate } from '@shared/utils'
-import { getStatusBadgeColor } from '@shared/utils/ui/badge-colors'
+import { STATUS_BADGE_CONFIG } from '@shared/constants'
 
 /* User module imports */
 import { useUserOperations } from '@user-management/hooks'
 import { USER_DETAILS_TABS, USER_DETAILS, UserDetailsTabType, USER_DETAILS_TAB } from '@user-management/constants'
+import { UserStatus } from '@user-management/types'
 
 /* Role module imports */
 import { useRoles, useModules } from '@role-management/hooks'
@@ -228,8 +229,8 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ userId }) => {
                               );
                             } else if (field.type === 'BADGE') {
                               /* Status badge with dynamic colors */
-                              const status = value as string;
-                              const badgeConfig = getStatusBadgeColor(status || '');
+                              const status = value as UserStatus;
+                              const badgeConfig = STATUS_BADGE_CONFIG[status];
 
                               return (
                                 <VStack align="start" gap={1} key={field.id}>

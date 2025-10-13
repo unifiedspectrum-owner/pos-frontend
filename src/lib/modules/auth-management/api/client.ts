@@ -10,7 +10,14 @@ import { AUTH_API_ROUTES } from '@auth-management/constants'
 const authApiClient = createApiClient({
   basePath: '/auth',
   requiresAuth: false,
-  authRoutes: [AUTH_API_ROUTES.LOGOUT, AUTH_API_ROUTES.REFRESH]
+  authRoutes: [
+    AUTH_API_ROUTES.LOGOUT, 
+    AUTH_API_ROUTES.REFRESH,
+    AUTH_API_ROUTES.GENERATE_2FA,
+    AUTH_API_ROUTES.ENABLE_2FA,
+    AUTH_API_ROUTES.DISABLE_2FA,
+    AUTH_API_ROUTES.VERIFY_2FA,
+  ]
 })
 
 export { authApiClient }

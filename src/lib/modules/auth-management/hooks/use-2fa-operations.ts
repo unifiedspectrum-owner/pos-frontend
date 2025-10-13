@@ -8,11 +8,12 @@ import { AxiosError } from 'axios'
 import { handleApiError } from '@shared/utils/api'
 import { createToastNotification } from '@shared/utils/ui/notifications'
 import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
+import { addMinutesToCurrentTime } from '@shared/utils/formatting'
 
 /* Auth module imports */
 import { authManagementService } from '@auth-management/api'
 import { Generate2FAApiResponse, Enable2FAApiRequest, Enable2FAApiResponse, Disable2FAApiResponse, Verify2FAApiRequest, LoginApiResponse } from '@auth-management/types'
-import { AUTH_STORAGE_KEYS } from '@auth-management/constants'
+import { AUTH_STORAGE_KEYS, SESSION_TIMEOUT } from '@auth-management/constants'
 
 /* Hook interface */
 interface UseTwoFactorOperationsReturn {
@@ -249,6 +250,10 @@ export const useTwoFactorOperations = (): UseTwoFactorOperationsReturn => {
           localStorage.setItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN, response.data.refreshToken)
           localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(response.data.user))
           localStorage.setItem(AUTH_STORAGE_KEYS.LOGGED_IN, 'true')
+
+          /* Set session expiry time */
+          const sessionExpiryTime = addMinutesToCurrentTime(SESSION_TIMEOUT)
+          localStorage.setItem(AUTH_STORAGE_KEYS.SESSION_EXPIRY_TIME, sessionExpiryTime.toString())
 
           /* Clear pending 2FA data */
           localStorage.removeItem(AUTH_STORAGE_KEYS.PENDING_2FA_USER_ID)

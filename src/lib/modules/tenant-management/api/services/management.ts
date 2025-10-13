@@ -1,5 +1,5 @@
 /* Tenant module imports */
-import { TenantListApiResponse } from "@tenant-management/types/account/list"
+import { TenantBasicListResponse, TenantListApiResponse } from "@tenant-management/types/account/list"
 import { TenantDetailsApiResponse } from "@tenant-management/types/account/details"
 import { tenantApiClient } from "@tenant-management/api/clients"
 import { TENANT_API_ROUTES } from "@tenant-management/constants/routes"
@@ -16,6 +16,17 @@ export const tenantManagementService = {
           limit
         }
       })
+      return response.data
+    } catch (error) {
+      console.error('[TenantManagementService] Failed to list tenants:', error)
+      throw error
+    }
+  },
+
+  /* Get all tenants with base details */
+  async listAllTenantsWithBaseDetails(): Promise<TenantBasicListResponse> {
+    try {
+      const response = await tenantApiClient.get<TenantBasicListResponse>(TENANT_API_ROUTES.LIST_WITH_BASIC_DETAILS)
       return response.data
     } catch (error) {
       console.error('[TenantManagementService] Failed to list tenants:', error)

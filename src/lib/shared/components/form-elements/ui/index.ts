@@ -12,3 +12,4 @@ export { default as PinInputField } from './pin-input'; /* Pin/code input field 
 export { default as PhoneNumberField } from './phone-number-field'; /* Phone number field with country code */
 export { TableFilterSelect } from './table-filter-select'; /* Table filter select dropdown */
 export { default as FileField } from './file-field'; /* File upload field */
+export { default as RichTextEditorField } from './rich-text-editor'; /* Rich text editor field using Quill */

@@ -6,12 +6,12 @@ import { Controller, useFormContext } from 'react-hook-form'
 /* Shared module imports */
 import { TextInputField, PhoneNumberField, SelectField, SwitchField, FileField } from '@shared/components'
 import { useCountries } from '@shared/hooks'
+import { getPhoneFieldErrorMessage } from '@shared/utils/formatting'
+import { FORM_FIELD_TYPES } from '@shared/constants'
 
 /* User module imports */
 import { CreateUserFormData, UpdateUserFormData } from '@user-management/schemas'
 import { USER_CREATION_FORM_QUESTIONS } from '@user-management/constants'
-
-import { getPhoneFieldErrorMessage } from '@/lib/shared/utils/formatting'
 
 /* Component props interface */
 interface UserInfoSectionProps {
@@ -60,7 +60,7 @@ const UserInfoSection: React.FC<UserInfoSectionProps> = ({ roleSelectOptions, ro
 
           /* Render appropriate field type based on configuration */
           switch(field.type) {
-            case 'INPUT': /* Text input fields (name, email) */
+            case FORM_FIELD_TYPES.INPUT: /* Text input fields (name, email) */
               return (
                 <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
                   <Controller
@@ -78,21 +78,21 @@ const UserInfoSection: React.FC<UserInfoSectionProps> = ({ roleSelectOptions, ro
                 </GridItem>
               )
 
-            case 'FILE':
+            case FORM_FIELD_TYPES.FILE:
               return(
                  <GridItem key={field.id} colSpan={{ base: 1, md: field.grid.col_span }}>
-                  <FileField 
-                    label={''} 
-                    value={''} 
-                    placeholder={''} 
-                    isInValid={false} 
-                    required={false} 
-                    name={''} 
+                  <FileField
+                    label={''}
+                    value={''}
+                    placeholder={''}
+                    isInValid={false}
+                    required={false}
+                    name={''}
                   />
                 </GridItem>
               );
 
-            case 'PHONE_NUMBER': /* Phone number with country code */
+            case FORM_FIELD_TYPES.PHONE_NUMBER: /* Phone number with country code */
               return (
                 <GridItem key={field.id} colSpan={{ base: 1, md: field.grid.col_span }}>
                   <Controller
@@ -114,7 +114,7 @@ const UserInfoSection: React.FC<UserInfoSectionProps> = ({ roleSelectOptions, ro
                 </GridItem>
               )
 
-            case 'SELECT': /* Role selection dropdown */
+            case FORM_FIELD_TYPES.SELECT: /* Role selection dropdown */
               return (
                 <GridItem key={field.id} colSpan={[1,field.grid.col_span]}>
                   <Controller
@@ -135,7 +135,7 @@ const UserInfoSection: React.FC<UserInfoSectionProps> = ({ roleSelectOptions, ro
                 </GridItem>
               )
 
-            case 'TOGGLE': /* Switch/toggle fields for boolean values */
+            case FORM_FIELD_TYPES.TOGGLE: /* Switch/toggle fields for boolean values */
               return (
                 <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
                   <Controller

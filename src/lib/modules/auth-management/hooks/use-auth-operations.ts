@@ -9,11 +9,12 @@ import { useRouter } from '@/i18n/navigation'
 import { handleApiError } from '@shared/utils/api'
 import { createToastNotification } from '@shared/utils/ui/notifications'
 import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
+import { addMinutesToCurrentTime } from '@shared/utils/formatting'
 
 /* Auth module imports */
 import { authManagementService } from '@auth-management/api'
-import { LoginApiRequest, LoginApiResponse, ForgotPasswordApiRequest, ForgotPasswordApiResponse, ResetPasswordApiRequest, ResetPasswordApiResponse, ValidateResetTokenApiResponse } from '@auth-management/types'
-import { AUTH_STORAGE_KEYS, AUTH_PAGE_ROUTES } from '@auth-management/constants'
+import { LoginApiRequest, LoginApiResponse, ForgotPasswordApiRequest, ForgotPasswordApiResponse, ResetPasswordApiRequest, ResetPasswordApiResponse, ValidateResetTokenApiResponse, RefreshTokenApiRequest, RefreshTokenApiResponse } from '@auth-management/types'
+import { AUTH_STORAGE_KEYS, AUTH_PAGE_ROUTES, SESSION_TIMEOUT } from '@auth-management/constants'
 
 /* Hook interface */
 interface UseAuthOperationsReturn {
@@ -39,6 +40,11 @@ interface UseAuthOperationsReturn {
   tokenValidationErrorCode: string | null
   tokenValidationErrorMsg: string | null
 
+  /* Refresh token operations */
+  refreshToken: () => Promise<boolean>
+  isRefreshingToken: boolean
+  refreshTokenError: string | null
+
   /* Logout operations */
   logoutUser: () => Promise<boolean>
   isLoggingOut: boolean
@@ -60,6 +66,8 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
   const [isValidatingToken, setIsValidatingToken] = useState<boolean>(false)
   const [tokenValidationErrorCode, setTokenValidationErrorCode] = useState<string | null>(null)
   const [tokenValidationErrorMsg, setTokenValidationErrorMsg] = useState<string | null>(null)
+  const [isRefreshingToken, setIsRefreshingToken] = useState<boolean>(false)
+  const [refreshTokenError, setRefreshTokenError] = useState<string | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false)
   const [logoutError, setLogoutError] = useState<string | null>(null)
 
@@ -133,6 +141,10 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
           localStorage.setItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN, response.data.refreshToken)
           localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(response.data.user))
           localStorage.setItem(AUTH_STORAGE_KEYS.LOGGED_IN, 'true')
+
+          /* Set session expiry time */
+          const sessionExpiryTime = addMinutesToCurrentTime(SESSION_TIMEOUT)
+          localStorage.setItem(AUTH_STORAGE_KEYS.SESSION_EXPIRY_TIME, sessionExpiryTime.toString())
 
           console.log('[useAuthOperations] Stored user data:', JSON.parse(localStorage.getItem(AUTH_STORAGE_KEYS.USER) || '{}'))
 
@@ -360,6 +372,77 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
     }
   }, [])
 
+  /* Refresh token operation */
+  const refreshToken = useCallback(async (): Promise<boolean> => {
+    try {
+      setIsRefreshingToken(true)
+      setRefreshTokenError(null)
+
+      console.log('[useAuthOperations] Refreshing authentication token')
+
+      /* Get user email from localStorage */
+      const storedUser = localStorage.getItem(AUTH_STORAGE_KEYS.USER)
+      if (!storedUser) {
+        const errorMsg = 'User data not found. Please log in again.'
+        console.error('[useAuthOperations] User data not found in localStorage')
+        setRefreshTokenError(errorMsg)
+        return false
+      }
+
+      const userData = JSON.parse(storedUser)
+      const refreshTokenData: RefreshTokenApiRequest = {
+        email: userData.email
+      }
+
+      /* Call refresh token API */
+      const response: RefreshTokenApiResponse = await authManagementService.refreshToken(refreshTokenData)
+
+      /* Check if refresh was successful */
+      if (response.success && response.data?.accessToken) {
+        /* Update access token in localStorage */
+        localStorage.setItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN, response.data.accessToken)
+
+        /* Extend session expiry time */
+        const sessionExpiryTime = addMinutesToCurrentTime(SESSION_TIMEOUT)
+        localStorage.setItem(AUTH_STORAGE_KEYS.SESSION_EXPIRY_TIME, sessionExpiryTime.toString())
+
+        /* Dispatch auth state change event */
+        window.dispatchEvent(new Event('authStateChanged'))
+
+        console.log('[useAuthOperations] Token refreshed successfully')
+        return true
+      } else {
+        /* Handle API success=false case */
+        const errorMsg = response.error || response.message || 'Failed to refresh token'
+        console.error('[useAuthOperations] Token refresh failed:', errorMsg)
+
+        createToastNotification({
+          type: 'error',
+          title: 'Session Refresh Failed',
+          description: 'Your session could not be refreshed. Please log in again.'
+        })
+
+        setRefreshTokenError(errorMsg)
+        return false
+      }
+
+    } catch (error: unknown) {
+      const errorMsg = 'Failed to refresh token. Please log in again.'
+      console.error('[useAuthOperations] Token refresh error:', error)
+
+      const err = error as AxiosError
+      handleApiError(err, {
+        title: 'Session Refresh Failed'
+      })
+
+      setRefreshTokenError(errorMsg)
+      return false
+
+    } finally {
+      setIsRefreshingToken(false)
+    }
+  }, [])
+
   /* Logout user operation */
   const logoutUser = useCallback(async (): Promise<boolean> => {
     try {
@@ -378,6 +461,7 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
         localStorage.removeItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN)
         localStorage.removeItem(AUTH_STORAGE_KEYS.USER)
         localStorage.removeItem(AUTH_STORAGE_KEYS.LOGGED_IN)
+        localStorage.removeItem(AUTH_STORAGE_KEYS.SESSION_EXPIRY_TIME)
 
         /* Clear any pending 2FA data */
         localStorage.removeItem(AUTH_STORAGE_KEYS.PENDING_2FA_USER_ID)
@@ -422,6 +506,7 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
       localStorage.removeItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN)
       localStorage.removeItem(AUTH_STORAGE_KEYS.USER)
       localStorage.removeItem(AUTH_STORAGE_KEYS.LOGGED_IN)
+      localStorage.removeItem(AUTH_STORAGE_KEYS.SESSION_EXPIRY_TIME)
       localStorage.removeItem(AUTH_STORAGE_KEYS.PENDING_2FA_USER_ID)
       localStorage.removeItem(AUTH_STORAGE_KEYS.PENDING_2FA_EMAIL)
 
@@ -466,6 +551,11 @@ export const useAuthOperations = (): UseAuthOperationsReturn => {
     isValidatingToken,
     tokenValidationErrorCode,
     tokenValidationErrorMsg,
+
+    /* Refresh token operations */
+    refreshToken,
+    isRefreshingToken,
+    refreshTokenError,
 
     /* Logout operations */
     logoutUser,

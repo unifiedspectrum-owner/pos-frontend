@@ -7,6 +7,7 @@ import { FiAlertTriangle, FiX, FiCheck } from 'react-icons/fi';
 
 /* Shared module imports */
 import { PrimaryButton, SecondaryButton, TextInputField } from '@shared/components/form-elements';
+import { IconType } from 'react-icons';
 
 /* Props interface for confirmation dialog */
 interface ConfirmationDialogProps {
@@ -18,9 +19,14 @@ interface ConfirmationDialogProps {
   confirmVariant?: 'danger' | 'primary'; /* Button variant style */
   isLoading?: boolean; /* Loading state for confirm button */
   onConfirm: () => void; /* Confirm action handler */
-  onCancel: () => void; /* Cancel action handler */
+  onCancel?: () => void; /* Cancel action handler */
   confirmationText?: string; /* Optional text that user must type to confirm */
   confirmationLabel?: string; /* Label for the confirmation text field */
+  preventOutsideClick?: boolean; /* Prevent closing when clicking outside */
+  showCancelBtn?: boolean; /* Show/hide cancel button */
+  onOutsideClick?: () => void; /* Custom handler for outside clicks (defaults to onCancel) */
+  confirmIcon?: IconType; /* Custom icon for confirm button */
+  cancelIcon?: IconType; /* Custom icon for cancel button */
 }
 
 /* Confirmation dialog component with customizable buttons */
@@ -35,6 +41,11 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   onConfirm,
   onCancel,
   confirmationText, /* Optional confirmation text */
+  preventOutsideClick = false, /* Default allow outside click */
+  showCancelBtn = true, /* Default show cancel button */
+  onOutsideClick, /* Optional custom outside click handler */
+  confirmIcon, /* Optional custom confirm icon */
+  cancelIcon = FiX, /* Default cancel icon */
 }) => {
   /* State for confirmation text input */
   const [inputValue, setInputValue] = useState<string>('')
@@ -70,14 +81,19 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   }
 
   return (
-    <Dialog.Root 
-      open={isOpen} 
-      size="sm" 
+    <Dialog.Root
+      open={isOpen}
+      size="sm"
       placement="center"
-      onOpenChange={(details) => { 
+      onOpenChange={(details) => {
         /* Handle dialog close on backdrop click */
-        if (!details.open) {
-          onCancel();
+        if (!details.open && !preventOutsideClick && isOpen) {
+          /* Use custom outside click handler if provided, otherwise use onCancel */
+          if (onOutsideClick) {
+            onOutsideClick();
+          } else if (onCancel) {
+            onCancel();
+          }
         }
       }}
     >
@@ -132,22 +148,24 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
               {/* Dialog action buttons */}
               <Dialog.Footer p={3}>
                 <HStack gap={3}>
-                  {/* Cancel button */}
-                  <SecondaryButton
-                    onClick={onCancel}
-                    leftIcon={FiX}
-                    size="md"
-                  >
-                    {cancelText}
-                  </SecondaryButton>
-                  
+                  {/* Cancel button - only show if showCancelBtn is true and onCancel is provided */}
+                  {showCancelBtn && onCancel && (
+                    <SecondaryButton
+                      onClick={onCancel}
+                      leftIcon={cancelIcon}
+                      size="md"
+                    >
+                      {cancelText}
+                    </SecondaryButton>
+                  )}
+
                   {/* Conditional confirm button based on variant */}
                   {confirmVariant === 'danger' ? (
                     <PrimaryButton
                       onClick={handleConfirm}
                       size="md"
                       bg="red.500" /* Danger styling */
-                      leftIcon={FiAlertTriangle}
+                      leftIcon={confirmIcon || FiAlertTriangle}
                       loading={isLoading}
                       disabled={isLoading || isConfirmDisabled}
                     >
@@ -157,7 +175,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                     <PrimaryButton
                       onClick={handleConfirm}
                       size="md"
-                      leftIcon={FiCheck} /* Success icon */
+                      leftIcon={confirmIcon || FiCheck} /* Success icon */
                       loading={isLoading}
                       disabled={isLoading || isConfirmDisabled}
                     >

@@ -4,21 +4,19 @@
 import { FaLock, FaEnvelope, FaShieldAlt, FaKey } from 'react-icons/fa'
 import { MdToggleOn } from 'react-icons/md'
 
+/* Shared module imports */
+import { FormFieldStructure } from '@shared/types'
+import { FORM_FIELD_TYPES } from '@shared/constants'
+
 /* Auth management module imports */
-import { TwoFAType } from '@auth-management/types'
+import { TwoFAType, TokenValidationState } from '@auth-management/types'
+import { ForgotPasswordFormData, LoginFormData, ResetPasswordFormData, Enable2FAFormData } from '@auth-management/schemas'
 
 /* 2FA Type Constants */
 export const TWO_FA_TYPES = {
   TOTP: 'totp',
   BACKUP: 'backup'
 } satisfies Record<string, TwoFAType>;
-
-/* Auth management module imports */
-import { TokenValidationState } from '@auth-management/types'
-import { ForgotPasswordFormData, LoginFormData, ResetPasswordFormData, Enable2FAFormData } from '@auth-management/schemas'
-
-/* Shared module imports */
-import { FormFieldStructure } from '@shared/types'
 
 /* Default form values for login */
 export const LOGIN_FORM_DEFAULT_VALUES: LoginFormData = {
@@ -48,7 +46,7 @@ export const ENABLE_2FA_FORM_DEFAULT_VALUES: Enable2FAFormData = {
 export const LOGIN_FORM_QUESTIONS: FormFieldStructure[] = [
   {
     id: 1,
-    type: "INPUT",
+    type: FORM_FIELD_TYPES.INPUT,
     label: "Email Address",
     schema_key: "email",
     placeholder: "Enter your email address",
@@ -62,7 +60,7 @@ export const LOGIN_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 2,
-    type: "PASSWORD",
+    type: FORM_FIELD_TYPES.PASSWORD,
     label: "Password",
     schema_key: "password",
     placeholder: "Enter your password",
@@ -76,7 +74,7 @@ export const LOGIN_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 3,
-    type: "CHECKBOX",
+    type: FORM_FIELD_TYPES.CHECKBOX,
     label: "Remember Me",
     schema_key: "remember_me",
     placeholder: "Keep me logged in",
@@ -94,7 +92,7 @@ export const LOGIN_FORM_QUESTIONS: FormFieldStructure[] = [
 export const FORGOT_PASSWORD_FORM_QUESTIONS: FormFieldStructure[] = [
   {
     id: 1,
-    type: "INPUT",
+    type: FORM_FIELD_TYPES.INPUT,
     label: "Email Address",
     schema_key: "email",
     placeholder: "Enter your registered email address",
@@ -112,7 +110,7 @@ export const FORGOT_PASSWORD_FORM_QUESTIONS: FormFieldStructure[] = [
 export const RESET_PASSWORD_FORM_QUESTIONS: FormFieldStructure[] = [
   {
     id: 1,
-    type: "PASSWORD",
+    type: FORM_FIELD_TYPES.PASSWORD,
     label: "New Password",
     schema_key: "new_password",
     placeholder: "Enter your new password",
@@ -126,7 +124,7 @@ export const RESET_PASSWORD_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 2,
-    type: "PASSWORD",
+    type: FORM_FIELD_TYPES.PASSWORD,
     label: "Confirm Password",
     schema_key: "confirm_password",
     placeholder: "Confirm your new password",
@@ -144,7 +142,7 @@ export const RESET_PASSWORD_FORM_QUESTIONS: FormFieldStructure[] = [
 export const VERIFY_2FA_FORM_QUESTIONS: FormFieldStructure[] = [
   {
     id: 1,
-    type: "PIN",
+    type: FORM_FIELD_TYPES.PIN,
     label: "Enter 6-digit code",
     schema_key: "totp_code",
     placeholder: "Enter the 6-digit code from your authenticator app",
@@ -158,7 +156,7 @@ export const VERIFY_2FA_FORM_QUESTIONS: FormFieldStructure[] = [
   },
   {
     id: 2,
-    type: "INPUT",
+    type: FORM_FIELD_TYPES.INPUT,
     label: "Enter backup code",
     schema_key: "b_code",
     placeholder: "Enter your backup recovery code",
@@ -176,7 +174,7 @@ export const VERIFY_2FA_FORM_QUESTIONS: FormFieldStructure[] = [
 export const ENABLE_2FA_FORM_QUESTIONS: FormFieldStructure[] = [
   {
     id: 1,
-    type: "PIN",
+    type: FORM_FIELD_TYPES.PIN,
     label: "Verification Code",
     schema_key: "code",
     placeholder: "Enter the 6-digit code from your authenticator app",

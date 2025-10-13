@@ -1,3 +1,6 @@
+/* Quill editor styles */
+@import 'quill/dist/quill.snow.css';
+
 :root {
   /* Brand Color Palette - Updated from CLAUDE.md */
   --primary: #885CF7;
@@ -6,15 +9,15 @@
   --white: #FFFFFF;
   --gray: #39393E;
   --dark: #17171A;
-  
+
   /* Supporting Colors */
   --success-green: #10b981;
   --warning-orange: #f59e0b;
   --error-red: #ef4444;
-  
+
   /* Background and Foreground */
   --foreground: var(--dark);
-  
+
   /* Typography */
   --font-outfit: 'Outfit', system-ui, -apple-system, sans-serif;
 }

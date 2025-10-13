@@ -21,7 +21,9 @@ const TenantManagement: React.FC = () => {
   const { hasSpecificPermission } = usePermissions()
 
   /* Tenant data hook */
-  const { tenants, loading, error, lastUpdated, pagination, fetchTenants, refetch } = useTenants()
+  const { tenants, loading, error, lastUpdated, pagination, fetchTenants, refetch } = useTenants({
+    autoFetch: true
+  })
 
   /* Navigation handlers */
   const handleAddTenant = () => {

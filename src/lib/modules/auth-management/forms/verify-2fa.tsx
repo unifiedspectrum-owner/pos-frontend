@@ -11,7 +11,7 @@ import { FaShieldAlt, FaArrowLeft, FaKey } from 'react-icons/fa'
 /* Shared module imports */
 import { PRIMARY_COLOR } from '@shared/config'
 import { PinInputField, PrimaryButton, TextInputField, SecondaryButton } from '@shared/components/form-elements'
-import { ADMIN_PAGE_ROUTES } from '@shared/constants'
+import { ADMIN_PAGE_ROUTES, FORM_FIELD_TYPES } from '@shared/constants'
 
 /* Auth management module imports */
 import { Verify2FAApiRequest, TwoFAType } from '@auth-management/types'
@@ -144,7 +144,7 @@ const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
                   }
 
                   /* Render field based on type */
-                  if(field.type == "PIN" && twoFAType === TWO_FA_TYPES.TOTP && schemaKey == "totp_code") {
+                  if(field.type == FORM_FIELD_TYPES.PIN && twoFAType === TWO_FA_TYPES.TOTP && schemaKey == "totp_code") {
                     return (
                       <GridItem key={field.id} colSpan={field.grid.col_span}>
                         <Controller
@@ -168,7 +168,7 @@ const Verify2FAForm: React.FC<Verify2FAFormProps> = ({ userEmail, userId }) => {
                     )
                   }
 
-                  if(field.type == "INPUT" && twoFAType === TWO_FA_TYPES.BACKUP && schemaKey == "b_code") {
+                  if(field.type == FORM_FIELD_TYPES.INPUT && twoFAType === TWO_FA_TYPES.BACKUP && schemaKey == "b_code") {
                     return (
                       <GridItem key={field.id} colSpan={field.grid.col_span}>
                         <Controller

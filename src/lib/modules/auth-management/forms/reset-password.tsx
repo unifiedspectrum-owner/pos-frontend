@@ -12,7 +12,8 @@ import { FaKey } from 'react-icons/fa'
 import { PRIMARY_COLOR } from '@shared/config'
 import { PasswordInputField, PrimaryButton } from '@shared/components/form-elements'
 import { LoaderWrapper } from '@shared/components/common'
-
+import { useFieldNavigation } from '@shared/hooks'
+import { FORM_FIELD_TYPES } from '@shared/constants'
 
 /* Auth management module imports */
 import { ResetPasswordApiRequest, TokenValidationState } from '@auth-management/types'
@@ -37,7 +38,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, tokenValid
   const { resetPassword, isResetPasswordLoading } = useAuthOperations()
 
   /* Form management */
-  const { control, handleSubmit, formState: { errors }, clearErrors, setValue } = useForm<ResetPasswordFormData>({
+  const { control, handleSubmit, formState: { errors }, clearErrors, setValue, trigger } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: RESET_PASSWORD_FORM_DEFAULT_VALUES,
     mode: 'onChange'
@@ -62,6 +63,13 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, tokenValid
   const handleBackToLogin = () => {
     router.push(AUTH_PAGE_ROUTES.LOGIN)
   }
+
+  /* Field navigation hook for Enter key handling */
+  const { getFieldProps } = useFieldNavigation<ResetPasswordFormData>({
+    trigger,
+    onSubmit: handleSubmit(onSubmit),
+    fields: ['new_password', 'confirm_password']
+  })
 
   return (
     <Box
@@ -126,7 +134,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, tokenValid
 
                     /* Render field based on type */
                     switch(field.type) {
-                      case 'PASSWORD':
+                      case FORM_FIELD_TYPES.PASSWORD:
                         return (
                           <GridItem key={field.id} colSpan={field.grid.col_span}>
                             <Controller
@@ -135,6 +143,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token, tokenValid
                               render={({ field: controllerField }) => (
                                 <PasswordInputField
                                   {...commonProps}
+                                  {...getFieldProps(schemaKey)}
                                   value={controllerField.value?.toString() || ''}
                                   onChange={(e) => {
                                     clearErrors(schemaKey)
