@@ -18,6 +18,7 @@ import { suspendTenantAccountSchema, SuspendTenantFormData } from '@tenant-manag
 import { SuspendTenantApiRequest } from '@tenant-management/types/account/suspension'
 import { useTenantSuspension } from '@tenant-management/hooks'
 import { TENANT_SUSPENSION_QUESTIONS } from '@tenant-management/constants'
+import { getCurrentISOString } from "@shared/utils";
 
 /* Modal component props interface */
 interface TenantSuspensionModalProps {
@@ -222,7 +223,7 @@ const TenantSuspensionModal: React.FC<TenantSuspensionModalProps> = ({
                                         {...commonProps}
                                         value={field.value}
                                         onChange={field.onChange}
-                                        min={new Date().toISOString().split('T')[0]}
+                                        min={getCurrentISOString().split('T')[0]}
                                         helperText={que.schema_key === 'suspend_until' ? 
                                           "If left empty, the suspension will remain active until manually reactivated." : 
                                           undefined

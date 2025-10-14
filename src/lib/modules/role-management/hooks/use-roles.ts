@@ -9,6 +9,7 @@ import { handleApiError } from '@shared/utils/api'
 /* Role module imports */
 import { roleManagementService } from '@role-management/api'
 import { Role, RolePermission } from '@role-management/types'
+import { getCurrentISOString } from "@shared/utils";
 
 /* Hook interface */
 interface UseRolesParams {
@@ -75,7 +76,7 @@ export const useRoles = (params: UseRolesParams = {}): UseRolesReturn => {
       if (response.success) {
         setRoles(response.data.roles)
         setPagination(response.pagination)
-        setLastUpdated(new Date().toLocaleString())
+        setLastUpdated(getCurrentISOString())
         setCurrentPage(page)
         setCurrentLimit(limit)
         console.log('[useRoles] Successfully fetched', response.data.roles.length, 'roles')

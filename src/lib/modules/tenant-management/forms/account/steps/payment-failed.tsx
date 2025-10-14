@@ -10,6 +10,7 @@ import { PrimaryButton, SecondaryButton } from '@shared/components/form-elements
 
 /* Tenant module imports */
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
+import { getCurrentISOString } from "@shared/utils";
 
 /* Payment failed step component props interface */
 interface PaymentFailedStepProps {
@@ -136,7 +137,7 @@ const PaymentFailedStep: React.FC<PaymentFailedStepProps> = ({
       errorCode,
       errorMessage,
       retryAttempts,
-      timestamp: new Date().toISOString()
+      timestamp: getCurrentISOString()
     }
     localStorage.setItem('payment_support_data', JSON.stringify(supportData))
   }

@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { createToastNotification } from '@shared/utils/ui'
 import { handleApiError } from '@shared/utils/api'
 import { useCountdownTimer } from '@shared/hooks/use-countdown-timer'
+import { getCurrentISOString } from "@shared/utils";
 
 /* Tenant module imports */
 import { accountService } from '@tenant-management/api'
@@ -132,7 +133,7 @@ export const useOTPManagement = ({
             phoneOTPSent,
             emailResendTimer: 300,
             phoneResendTimer: phoneVerification.resendTimer,
-            lastUpdated: new Date().toISOString()
+            lastUpdated: getCurrentISOString()
           }
           localStorage.setItem(TENANT_ACCOUNT_CREATION_LS_KEYS.OTP_STATE, JSON.stringify(otpStateData))
         }, 0)
@@ -183,7 +184,7 @@ export const useOTPManagement = ({
             phoneOTPSent: true,
             emailResendTimer: emailVerification.resendTimer,
             phoneResendTimer: 300,
-            lastUpdated: new Date().toISOString()
+            lastUpdated: getCurrentISOString()
           }
           localStorage.setItem(TENANT_ACCOUNT_CREATION_LS_KEYS.OTP_STATE, JSON.stringify(otpStateData))
         }, 0)

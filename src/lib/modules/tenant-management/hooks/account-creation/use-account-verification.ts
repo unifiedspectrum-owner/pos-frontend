@@ -6,6 +6,7 @@ import { useState, useCallback, useEffect } from 'react'
 /* Shared module imports */
 import { handleApiError } from '@shared/utils/api'
 import { createToastNotification } from '@shared/utils/ui'
+import { getCurrentISOString } from "@shared/utils";
 
 /* Tenant module imports */
 import { accountService } from '@tenant-management/api'
@@ -116,10 +117,10 @@ export const useOTPVerification = (config: VerificationConfig) => {
           
           if (config.type === 'email_verification') {
             verificationStatus.email_verified = true
-            verificationStatus.email_verified_at = new Date().toISOString()
+            verificationStatus.email_verified_at = getCurrentISOString()
           } else if (config.type === 'phone_verification') {
             verificationStatus.phone_verified = true
-            verificationStatus.phone_verified_at = new Date().toISOString()
+            verificationStatus.phone_verified_at = getCurrentISOString()
           }
           
           localStorage.setItem(TENANT_ACCOUNT_CREATION_LS_KEYS.TENANT_VERIFICATION_DATA, JSON.stringify(verificationStatus))

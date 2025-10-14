@@ -13,6 +13,7 @@ import {
 /* Shared module imports */
 import { PrimaryButton } from '@shared/components/form-elements/buttons'
 import { createToastNotification } from '@shared/utils/ui'
+import { getCurrentISOString } from "@shared/utils";
 
 /* Tenant module imports */
 import { AssignedPlanDetails, CachedPaymentStatusData, InitiateSubscriptionPaymentApiRequest } from '@/lib/modules/tenant-management/types'
@@ -228,15 +229,15 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
         if (completionResult) {
           const paymentStatusData: CachedPaymentStatusData = {
             paymentSucceeded: true,
-            completedAt: new Date().toISOString()
+            completedAt: getCurrentISOString()
           }
 
           /* Store payment success in localStorage and clear any failed payment data */
           localStorage.removeItem(TENANT_ACCOUNT_CREATION_LS_KEYS.FAILED_PAYMENT_INTENT)
           localStorage.setItem(TENANT_ACCOUNT_CREATION_LS_KEYS.PAYMENT_DATA, JSON.stringify(paymentStatusData))
 
-          /* Navigate to payment success page */
-          router.push('/tenant/payment-success')
+          /* Navigate to payment success page with payment_intent parameter */
+          router.push(`/tenant/payment-success?payment_intent=${paymentIntent.id}`)
 
           /* Call payment success callback if provided */
           if (onPaymentSuccess) {
@@ -389,7 +390,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
         if (completionResult) {
           const paymentStatusData: CachedPaymentStatusData = {
             paymentSucceeded: true,
-            completedAt: new Date().toISOString(),
+            completedAt: getCurrentISOString(),
             retrySuccessful: true
           }
 
@@ -399,8 +400,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
           /* Clean up failed payment data */
           localStorage.removeItem(TENANT_ACCOUNT_CREATION_LS_KEYS.FAILED_PAYMENT_INTENT)
 
-          /* Navigate to payment success page */
-          router.push('/tenant/payment-success')
+          /* Navigate to payment success page with payment_intent parameter */
+          router.push(`/tenant/payment-success?payment_intent=${paymentIntent.id}`)
 
           /* Call success callback */
           if (onPaymentSuccess) {

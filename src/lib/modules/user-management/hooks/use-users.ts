@@ -4,7 +4,7 @@ import { AxiosError } from 'axios'
 
 /* Shared module imports */
 import { PaginationInfo } from '@shared/types'
-import { handleApiError } from '@shared/utils'
+import { getCurrentISOString, handleApiError } from '@shared/utils'
 
 /* User module imports */
 import { userManagementService } from '@user-management/api'
@@ -67,7 +67,7 @@ export const useUsers = (params: UseUsersParams = {}): UseUsersReturn => {
       if (response.success) {
         setUsers(response.data.users)
         setPagination(response.pagination)
-        setLastUpdated(new Date().toLocaleString())
+        setLastUpdated(getCurrentISOString())
         setCurrentPage(page)
         setCurrentLimit(limit)
         console.log('[useUsers] Successfully fetched', response.data.users.length, 'users')

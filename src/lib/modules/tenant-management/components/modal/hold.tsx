@@ -18,6 +18,7 @@ import { holdTenantAccountSchema, HoldTenantFormData } from '@tenant-management/
 import { HoldTenantApiRequest } from '@tenant-management/types/account/suspension'
 import { useTenantSuspension } from '@tenant-management/hooks'
 import { TENANT_HOLD_QUESTIONS } from '@tenant-management/constants'
+import { getCurrentISOString } from "@shared/utils";
 
 /* Modal component props interface */
 interface TenantHoldModalProps {
@@ -222,7 +223,7 @@ const TenantHoldModal: React.FC<TenantHoldModalProps> = ({
                                         {...commonProps}
                                         value={field.value}
                                         onChange={field.onChange}
-                                        min={new Date().toISOString().split('T')[0]}
+                                        min={getCurrentISOString().split('T')[0]}
                                         helperText={que.schema_key === 'hold_until' ? 
                                           "If left empty, the hold will remain active until manually lifted." : 
                                           undefined

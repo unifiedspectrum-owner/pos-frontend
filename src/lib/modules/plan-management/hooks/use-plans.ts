@@ -9,6 +9,7 @@ import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 /* Plan management module imports */
 import { planService } from '@plan-management/api'
 import { Plan } from '@plan-management/types'
+import { getCurrentISOString } from '@shared/utils'
 
 /* Hook interface */
 interface UsePlansParams {
@@ -55,7 +56,7 @@ export const usePlans = (params: UsePlansParams = {}): UsePlansReturn => {
       /* Handle successful response */
       if (response.data.success && response.data.data) {
         setPlans(response.data.data)
-        setLastUpdated(response.data.timestamp || new Date().toLocaleString())
+        setLastUpdated(response.data.timestamp || getCurrentISOString())
         console.log('[usePlans] Successfully fetched', response.data.data.length, 'plans')
       } else {
         /* Handle API error response */

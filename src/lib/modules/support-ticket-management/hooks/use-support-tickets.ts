@@ -9,6 +9,7 @@ import { handleApiError } from '@shared/utils/api'
 /* Support ticket module imports */
 import { ticketsService, categoriesService } from '@support-ticket-management/api'
 import { TicketListItem, TicketCategory } from '@support-ticket-management/types'
+import { getCurrentISOString } from "@shared/utils";
 
 /* Hook interface */
 interface UseSupportTicketsParams {
@@ -81,7 +82,7 @@ export const useSupportTickets = (params: UseSupportTicketsParams = {}): UseSupp
       if (response.success) {
         setTickets(response.data.tickets)
         setPagination(response.pagination)
-        setLastUpdated(new Date().toLocaleString())
+        setLastUpdated(getCurrentISOString())
         setCurrentPage(page)
         setCurrentLimit(limit)
         console.log('[useSupportTickets] Successfully fetched', response.data.tickets.length, 'support tickets')

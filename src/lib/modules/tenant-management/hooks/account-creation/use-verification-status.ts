@@ -7,6 +7,7 @@ import { Control } from 'react-hook-form'
 /* Shared module imports */
 import { createToastNotification } from '@shared/utils/ui'
 import { handleApiError } from '@shared/utils/api'
+import { getCurrentISOString } from "@shared/utils";
 
 /* Tenant module imports */
 import { TenantInfoFormData } from '@tenant-management/schemas/account'
@@ -61,8 +62,8 @@ export const useVerificationStatus = ({
     const verificationStatus: TenantVerificationStatusCachedData = {
       email_verified: emailVerified,
       phone_verified: phoneVerified,
-      email_verified_at: emailVerified ? new Date().toISOString() : null,
-      phone_verified_at: phoneVerified ? new Date().toISOString() : null,
+      email_verified_at: emailVerified ? getCurrentISOString() : null,
+      phone_verified_at: phoneVerified ? getCurrentISOString() : null,
     }
     localStorage.setItem(TENANT_ACCOUNT_CREATION_LS_KEYS.TENANT_VERIFICATION_DATA, JSON.stringify(verificationStatus))
   }, [emailVerified, phoneVerified])
@@ -105,8 +106,8 @@ export const useVerificationStatus = ({
       const verificationStatus: TenantVerificationInfo = {
         email_verified: emailVerified,
         phone_verified: phoneVerified,
-        email_verified_at: emailVerified ? new Date().toISOString() : null,
-        phone_verified_at: phoneVerified ? new Date().toISOString() : null
+        email_verified_at: emailVerified ? getCurrentISOString() : null,
+        phone_verified_at: phoneVerified ? getCurrentISOString() : null
       }
 
       /* Check for existing tenant_id */

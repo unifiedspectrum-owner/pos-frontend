@@ -14,7 +14,7 @@ import { PRIMARY_COLOR } from '@shared/config'
 /* Tenant module imports */
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 import { paymentService } from '@tenant-management/api'
-import { handleApiError } from '@shared/utils'
+import { getCurrentISOString, handleApiError } from '@shared/utils'
 import { CachedPaymentStatusData } from '@/lib/modules/tenant-management/types/subscription'
 import { AxiosError } from 'axios'
 
@@ -87,7 +87,7 @@ const PaymentSuccessPage: React.FC = () => {
 
           const paymentStatusData: CachedPaymentStatusData = {
             paymentSucceeded: true,
-            completedAt: new Date().toISOString(),
+            completedAt: getCurrentISOString(),
             paymentIntent,
             statusMessage: statusInfo.status_message
           }
