@@ -10,7 +10,9 @@ import { createToastNotification } from '@shared/utils/ui/notifications'
 import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 
 /* Tenant management module imports */
-import { tenantActionsService } from '@tenant-management/api'
+import { tenantActionsService, paymentService } from '@tenant-management/api'
+import { completeTenantSubscriptionPayment } from '@tenant-management/schemas'
+import { CompleteSubscriptionPaymentApiResponse } from '@tenant-management/types/payment'
 
 /* Hook interface */
 interface UseTenantOperationsReturn {
@@ -18,6 +20,11 @@ interface UseTenantOperationsReturn {
   deleteTenant: (tenantId: string, tenantName?: string) => Promise<boolean>
   isDeleting: boolean
   deleteError: string | null
+
+  /* Payment operations */
+  completePayment: (data: completeTenantSubscriptionPayment) => Promise<CompleteSubscriptionPaymentApiResponse | null>
+  isCompletingPayment: boolean
+  paymentError: string | null
 }
 
 /* Custom hook for tenant operations */
@@ -25,6 +32,8 @@ export const useTenantOperations = (): UseTenantOperationsReturn => {
   /* Hook state */
   const [isDeleting, setIsDeleting] = useState<boolean>(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isCompletingPayment, setIsCompletingPayment] = useState<boolean>(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
 
   /* Delete tenant operation */
   const deleteTenant = useCallback(async (tenantId: string, tenantName?: string): Promise<boolean> => {
@@ -87,10 +96,75 @@ export const useTenantOperations = (): UseTenantOperationsReturn => {
     }
   }, [])
 
+  /* Complete tenant subscription payment operation */
+  const completePayment = useCallback(async (data: completeTenantSubscriptionPayment): Promise<CompleteSubscriptionPaymentApiResponse | null> => {
+    try {
+      setIsCompletingPayment(true)
+      setPaymentError(null)
+
+      /* Artificial delay for testing loading states */
+      if (LOADING_DELAY_ENABLED) {
+        await new Promise(resolve => setTimeout(resolve, LOADING_DELAY))
+      }
+
+      console.log('[useTenantOperations] Completing payment for tenant:', data.tenant_id)
+
+      /* Call payment completion API */
+      const response = await paymentService.completeTenantSubscriptionPayment(data)
+
+      /* Check if payment completion was successful */
+      if (response.success) {
+        /* Success notification */
+        createToastNotification({
+          type: 'success',
+          title: 'Payment Completed Successfully',
+          description: response.message || 'Your subscription payment has been processed successfully.'
+        })
+
+        console.log('[useTenantOperations] Successfully completed payment:', response.data)
+        return response
+
+      } else {
+        /* Handle API success=false case */
+        const errorMsg = response.message || 'Failed to complete payment'
+        console.error('[useTenantOperations] Payment completion failed:', errorMsg)
+
+        createToastNotification({
+          type: 'error',
+          title: 'Payment Completion Failed',
+          description: errorMsg
+        })
+
+        setPaymentError(errorMsg)
+        return null
+      }
+
+    } catch (error: unknown) {
+      const errorMsg = 'Failed to complete payment'
+      console.error('[useTenantOperations] Payment completion error:', error)
+
+      const err = error as AxiosError
+      handleApiError(err, {
+        title: 'Failed to Complete Payment'
+      })
+
+      setPaymentError(errorMsg)
+      return null
+
+    } finally {
+      setIsCompletingPayment(false)
+    }
+  }, [])
+
   return {
     /* Delete operations */
     deleteTenant,
     isDeleting,
-    deleteError
+    deleteError,
+
+    /* Payment operations */
+    completePayment,
+    isCompletingPayment,
+    paymentError
   }
 }

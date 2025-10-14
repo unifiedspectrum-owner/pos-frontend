@@ -40,7 +40,7 @@ const menuItems: SidebarMenuItems[] = [
     icon: FaChartLine,
     label: 'Dashboard',
     path: ADMIN_PAGE_ROUTES.DASHBOARD.HOME,
-    module_code: 'dashboard',
+    module_code: 'admin-dashboard',
     sub_menu_items: [
       {
         id: 1,

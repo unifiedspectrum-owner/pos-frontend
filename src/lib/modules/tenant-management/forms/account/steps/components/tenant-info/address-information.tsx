@@ -110,7 +110,7 @@ const AddressInformation: React.FC<AddressInformationProps> = ({
                     </GridItem>
                   )
 
-                case 'COMBOBOX': 
+                case 'COMBOBOX':
                   if (schemaKey === 'state_province') {
                     return (
                       <GridItem key={que.id} colSpan={[3, 3, que.grid.col_span]}>
@@ -119,13 +119,14 @@ const AddressInformation: React.FC<AddressInformationProps> = ({
                           control={control}
                           render={({ field }) => (
                             <ComboboxField
+                              key={`state-combobox-${countryValue || 'no-country'}`}
                               {...commonProps}
                               value={field.value?.toString() || ''}
                               onChange={field.onChange}
                               options={stateOptions}
                               name={field.name}
                               disabled={!countryValue || stateOptions.length === 0 || que.disabled}
-                              placeholder={!countryValue ? 'Select country first' : que.placeholder}
+                              placeholder={!countryValue ? 'Select country first' : stateOptions.length === 0 ? 'No states available' : que.placeholder}
                               showClearTrigger={true}
                             />
                           )}

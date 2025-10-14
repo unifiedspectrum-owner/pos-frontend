@@ -256,5 +256,89 @@
       "admin": "管理员",
       "supportTicketManagement": "支持工单管理"
     }
+  },
+  "Dashboard": {
+    "title": "仪表板",
+    "buttons": {
+      "refresh": "刷新",
+      "viewAll": "查看全部",
+      "viewDetails": "查看详情",
+      "managePlans": "管理套餐",
+      "viewAllTickets": "查看所有工单",
+      "viewAllTenants": "查看所有租户"
+    },
+    "errors": {
+      "loadingDashboard": "加载仪表板时出错",
+      "fetchFailed": "加载仪表板数据失败"
+    },
+    "messages": {
+      "dataRefreshed": "仪表板数据刷新成功",
+      "loading": "正在加载仪表板数据..."
+    },
+    "metrics": {
+      "tenants": {
+        "label": "总租户数",
+        "today": "今天"
+      },
+      "users": {
+        "label": "总用户数",
+        "today": "今天"
+      },
+      "tickets": {
+        "label": "支持工单",
+        "overdue": "已逾期"
+      },
+      "revenue": {
+        "label": "月度收入",
+        "growth": "环比"
+      }
+    },
+    "sections": {
+      "revenueTrend": {
+        "title": "收入趋势（最近12个月）",
+        "placeholder": "图表可视化将在此处呈现",
+        "period": "期间"
+      },
+      "tenantStatus": {
+        "title": "租户状态分布"
+      },
+      "recentTenants": {
+        "title": "最近的租户",
+        "columns": {
+          "organization": "组织",
+          "email": "邮箱",
+          "plan": "套餐",
+          "status": "状态",
+          "mrr": "MRR"
+        }
+      },
+      "plansOverview": {
+        "title": "订阅套餐概览",
+        "subscriptions": "订阅"
+      },
+      "ticketsOverview": {
+        "title": "支持工单概览",
+        "ofTotal": "占总数"
+      },
+      "systemAlerts": {
+        "title": "系统警报和活动"
+      },
+      "quickStats": {
+        "topRevenuePlans": {
+          "title": "收入最高的套餐"
+        },
+        "activeUsers": {
+          "title": "活跃用户",
+          "total": "总计",
+          "onlineNow": "当前在线",
+          "locked": "已锁定"
+        },
+        "failedPayments": {
+          "title": "支付失败",
+          "thisMonth": "本月",
+          "amount": "金额"
+        }
+      }
+    }
   }
 }

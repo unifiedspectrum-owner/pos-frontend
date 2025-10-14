@@ -20,6 +20,7 @@ export const TENANT_API_ROUTES = {
   PAYMENT: {
     INITIATE: '/account/payment/initiate',
     STATUS: '/account/payment/status',
+    COMPLETE: '/account/payment/complete',
   },
   ACTIONS: {
     SUSPEND: '/suspend',

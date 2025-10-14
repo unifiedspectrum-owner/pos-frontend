@@ -49,6 +49,7 @@ const LoaderWrapper: React.FC<LoaderWrapperProps> = ({
         minHeight={minHeight}
         bg={loadingBg}
         borderRadius="md"
+        w={'100%'}
       >
         <Center height="100%" minHeight={minHeight}>
           {customLoader || (

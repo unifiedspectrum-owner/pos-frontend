@@ -34,3 +34,16 @@ export const assignPlanToTenantSchema = z.object({
     addon_assignments: z.array(addonAssignments)
   })).default([])
 });
+
+/* Stripe payment intent ID validation */
+export const STRIPE_PAYMENT_INTENT_ID_REGEX = /^pi_[a-zA-Z0-9_]+$/;
+
+/* Schema for completing payment and updating transaction records */
+export const completePaymentSchema = z.object({
+  tenant_id: z.string().min(1, 'Tenant ID is required'),
+  payment_intent: z.string()
+    .min(1, 'Payment intent ID is required')
+    .regex(STRIPE_PAYMENT_INTENT_ID_REGEX, 'Payment intent ID must be a valid Stripe payment intent ID (starts with pi_)')
+});
+
+export type completeTenantSubscriptionPayment = z.infer<typeof completePaymentSchema>;

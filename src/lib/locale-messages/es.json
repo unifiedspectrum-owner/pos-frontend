@@ -257,5 +257,89 @@
       "admin": "Administrador",
       "supportTicketManagement": "Gestión de Tickets de Soporte"
     }
+  },
+  "Dashboard": {
+    "title": "Panel de Control",
+    "buttons": {
+      "refresh": "Actualizar",
+      "viewAll": "Ver Todos",
+      "viewDetails": "Ver Detalles",
+      "managePlans": "Gestionar Planes",
+      "viewAllTickets": "Ver Todos los Tickets",
+      "viewAllTenants": "Ver Todos los Inquilinos"
+    },
+    "errors": {
+      "loadingDashboard": "Error al Cargar el Panel de Control",
+      "fetchFailed": "Error al cargar los datos del panel de control"
+    },
+    "messages": {
+      "dataRefreshed": "Datos del panel actualizados exitosamente",
+      "loading": "Cargando datos del panel de control..."
+    },
+    "metrics": {
+      "tenants": {
+        "label": "Total de Inquilinos",
+        "today": "hoy"
+      },
+      "users": {
+        "label": "Total de Usuarios",
+        "today": "hoy"
+      },
+      "tickets": {
+        "label": "Tickets de Soporte",
+        "overdue": "vencidos"
+      },
+      "revenue": {
+        "label": "Ingresos Mensuales",
+        "growth": "MoM"
+      }
+    },
+    "sections": {
+      "revenueTrend": {
+        "title": "Tendencia de Ingresos (Últimos 12 Meses)",
+        "placeholder": "Aquí se mostraría la visualización del gráfico",
+        "period": "Período"
+      },
+      "tenantStatus": {
+        "title": "Distribución del Estado de Inquilinos"
+      },
+      "recentTenants": {
+        "title": "Inquilinos Recientes",
+        "columns": {
+          "organization": "Organización",
+          "email": "Correo",
+          "plan": "Plan",
+          "status": "Estado",
+          "mrr": "MRR"
+        }
+      },
+      "plansOverview": {
+        "title": "Vista General de Planes de Suscripción",
+        "subscriptions": "suscripciones"
+      },
+      "ticketsOverview": {
+        "title": "Vista General de Tickets de Soporte",
+        "ofTotal": "del total"
+      },
+      "systemAlerts": {
+        "title": "Alertas del Sistema y Actividad"
+      },
+      "quickStats": {
+        "topRevenuePlans": {
+          "title": "Planes con Mayores Ingresos"
+        },
+        "activeUsers": {
+          "title": "Usuarios Activos",
+          "total": "Total",
+          "onlineNow": "En Línea Ahora",
+          "locked": "Bloqueados"
+        },
+        "failedPayments": {
+          "title": "Pagos Fallidos",
+          "thisMonth": "Este Mes",
+          "amount": "Monto"
+        }
+      }
+    }
   }
 }

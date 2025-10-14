@@ -27,6 +27,8 @@
       "@role-management/*": ["./src/lib/modules/role-management/*"],
       "@auth-management/*": ["./src/lib/modules/auth-management/*"],
       "@support-ticket-management/*": ["./src/lib/modules/support-ticket-management/*"],
+      "@dashboard/*": ["./src/lib/modules/dashboard/*"],
+      "@public/*": ["./src/lib/modules/public/*"],
     },
     "types": [
         "./cloudflare-env.d.ts",

@@ -1,6 +1,7 @@
 /* React and Chakra UI component imports */
 import React, { useState, useEffect } from 'react'
 import { Text, Flex, Alert, Box } from '@chakra-ui/react'
+import { useRouter } from 'next/navigation'
 
 /* Stripe payment integration imports */
 import {
@@ -17,6 +18,7 @@ import { createToastNotification } from '@shared/utils/ui'
 import { AssignedPlanDetails, CachedPaymentStatusData, InitiateSubscriptionPaymentApiRequest } from '@/lib/modules/tenant-management/types'
 import { paymentService } from '@tenant-management/api'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
+import { useTenantOperations } from '@tenant-management/hooks/tenant-actions'
 
 /* Props interface for CheckoutForm component */
 interface CheckoutFormProps {
@@ -31,7 +33,7 @@ interface CheckoutFormProps {
 }
 
 /* CheckoutForm component with Stripe PaymentElement */
-const CheckoutForm: React.FC<CheckoutFormProps> = ({ 
+const CheckoutForm: React.FC<CheckoutFormProps> = ({
   amount,
   planData,
   planTotalAmount,
@@ -44,6 +46,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
   /* Stripe hooks for payment processing */
   const stripe = useStripe()
   const elements = useElements()
+  const router = useRouter()
+
+  /* Tenant operations hook for payment completion */
+  const { completePayment, isCompletingPayment } = useTenantOperations()
 
   /* Payment state management */
   const [loading, setLoading] = useState(false)
@@ -139,7 +145,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
         return
       }
 
-      const { type, clientSecret } = response.data
+      const { clientSecret } = response.data
       if (!clientSecret) {
         console.error('[CheckoutForm] Client secret not received:', response.data)
         setLoading(false)
@@ -151,15 +157,16 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
         return
       }
 
-      const confirmIntent = type === "setup" ? stripe.confirmSetup : stripe.confirmPayment
+      // const confirmIntent = type === "setup" ? stripe.confirmSetup : stripe.confirmPayment
 
       /* Confirm the payment intent with Stripe */
-      const { error } = await confirmIntent({
+      const { error, paymentIntent  } = await stripe.confirmPayment({
         elements,
         clientSecret,
         confirmParams: {
           return_url: window.location.origin + '/tenant/payment-success',
         },
+        redirect: 'if_required'
       })
 
       setLoading(false)
@@ -209,26 +216,43 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
         if (onPaymentFailed) {
           onPaymentFailed(errorMessage, mappedErrorCode)
         }
-      } else {
-        console.log('[CheckoutForm] Payment confirmed successfully');
-        const paymentStatusData: CachedPaymentStatusData = {
-          paymentSucceeded: true,
-          completedAt: new Date().toISOString()
-        }
-        
-        /* Store payment success in localStorage and clear any failed payment data */
-        localStorage.removeItem(TENANT_ACCOUNT_CREATION_LS_KEYS.FAILED_PAYMENT_INTENT)
-        localStorage.setItem(TENANT_ACCOUNT_CREATION_LS_KEYS.PAYMENT_DATA, JSON.stringify(paymentStatusData))
-        
-        createToastNotification({
-          title: 'Payment Successful',
-          description: 'Your payment has been processed successfully.',
-          type: 'success'
+      } else if (paymentIntent) {
+        console.log('[CheckoutForm] Payment confirmed successfully', paymentIntent);
+
+        /* Complete the payment on backend */
+        const completionResult = await completePayment({
+          tenant_id: tenantId,
+          payment_intent: paymentIntent.id
         })
-        
-        /* Call payment success callback if provided */
-        if (onPaymentSuccess) {
-          onPaymentSuccess()
+
+        if (completionResult) {
+          const paymentStatusData: CachedPaymentStatusData = {
+            paymentSucceeded: true,
+            completedAt: new Date().toISOString()
+          }
+
+          /* Store payment success in localStorage and clear any failed payment data */
+          localStorage.removeItem(TENANT_ACCOUNT_CREATION_LS_KEYS.FAILED_PAYMENT_INTENT)
+          localStorage.setItem(TENANT_ACCOUNT_CREATION_LS_KEYS.PAYMENT_DATA, JSON.stringify(paymentStatusData))
+
+          /* Navigate to payment success page */
+          router.push('/tenant/payment-success')
+
+          /* Call payment success callback if provided */
+          if (onPaymentSuccess) {
+            onPaymentSuccess()
+          }
+        } else {
+          /* Payment completion failed on backend */
+          createToastNotification({
+            title: 'Payment Completion Error',
+            description: 'Payment was successful but could not be completed. Please contact support.',
+            type: 'error'
+          })
+
+          if (onPaymentFailed) {
+            onPaymentFailed('Payment completion failed on server', 'PROCESSING_ERROR')
+          }
         }
       }
     } catch (error: any) {
@@ -288,19 +312,33 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
         return
       }
 
+      /* Get tenant ID for payment completion */
+      const tenantId = localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.TENANT_ID)
+      if (!tenantId) {
+        console.error('[CheckoutForm] Tenant ID not found for retry')
+        setLoading(false)
+        createToastNotification({
+          title: 'Registration Error',
+          description: 'Tenant ID not found. Please restart the registration process.',
+          type: 'error'
+        })
+        return
+      }
+
       /* Determine intent type from client secret structure */
-      const isSetupIntent = failedClientSecret.includes('seti_')
-      const confirmMethod = isSetupIntent ? stripe.confirmSetup : stripe.confirmPayment
+      // const isSetupIntent = failedClientSecret.includes('seti_')
+      // const confirmMethod = isSetupIntent ? stripe.confirmSetup : stripe.confirmPayment
 
       console.log('[CheckoutForm] Retrying payment with client secret:', failedClientSecret.substring(0, 20) + '...')
 
       /* Retry the payment/setup intent with new payment method */
-      const { error } = await confirmMethod({
+      const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         clientSecret: failedClientSecret,
         confirmParams: {
           return_url: window.location.origin + '/tenant/payment-success',
         },
+        redirect: 'if_required'
       })
 
       setLoading(false)
@@ -339,30 +377,46 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
         if (onPaymentFailed) {
           onPaymentFailed(errorMessage, mappedErrorCode)
         }
-      } else {
-        console.log('[CheckoutForm] Retry payment successful')
-        
-        const paymentStatusData: CachedPaymentStatusData = {
-          paymentSucceeded: true,
-          completedAt: new Date().toISOString(),
-          retrySuccessful: true
-        }
+      } else if (paymentIntent) {
+        console.log('[CheckoutForm] Retry payment successful', paymentIntent)
 
-        /* Payment retry succeeded */
-        localStorage.setItem(TENANT_ACCOUNT_CREATION_LS_KEYS.PAYMENT_DATA, JSON.stringify(paymentStatusData))
-        
-        /* Clean up failed payment data */
-        localStorage.removeItem(TENANT_ACCOUNT_CREATION_LS_KEYS.FAILED_PAYMENT_INTENT)
-
-        createToastNotification({
-          title: 'Payment Successful',
-          description: 'Your payment retry was successful. Thank you!',
-          type: 'success',
+        /* Complete the payment on backend */
+        const completionResult = await completePayment({
+          tenant_id: tenantId,
+          payment_intent: paymentIntent.id
         })
 
-        /* Call success callback */
-        if (onPaymentSuccess) {
-          onPaymentSuccess()
+        if (completionResult) {
+          const paymentStatusData: CachedPaymentStatusData = {
+            paymentSucceeded: true,
+            completedAt: new Date().toISOString(),
+            retrySuccessful: true
+          }
+
+          /* Payment retry succeeded */
+          localStorage.setItem(TENANT_ACCOUNT_CREATION_LS_KEYS.PAYMENT_DATA, JSON.stringify(paymentStatusData))
+
+          /* Clean up failed payment data */
+          localStorage.removeItem(TENANT_ACCOUNT_CREATION_LS_KEYS.FAILED_PAYMENT_INTENT)
+
+          /* Navigate to payment success page */
+          router.push('/tenant/payment-success')
+
+          /* Call success callback */
+          if (onPaymentSuccess) {
+            onPaymentSuccess()
+          }
+        } else {
+          /* Payment completion failed on backend */
+          createToastNotification({
+            title: 'Payment Completion Error',
+            description: 'Payment retry was successful but could not be completed. Please contact support.',
+            type: 'error'
+          })
+
+          if (onPaymentFailed) {
+            onPaymentFailed('Payment completion failed on server', 'PROCESSING_ERROR')
+          }
         }
       }
     } catch (err: any) {
@@ -416,11 +470,15 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
             {/* Payment submission button */}
             <PrimaryButton
               type="submit"
-              disabled={!stripe || loading}
-              loading={!stripe || loading}
+              disabled={!stripe || loading || isCompletingPayment}
+              loading={!stripe || loading || isCompletingPayment}
               width="100%"
             >
-              {hasFailedPayment ? `Retry Payment $${amount.toFixed(2)}` : `Pay $${amount.toFixed(2)}`}
+              {isCompletingPayment
+                ? 'Completing Payment...'
+                : hasFailedPayment
+                  ? `Retry Payment $${amount.toFixed(2)}`
+                  : `Pay $${amount.toFixed(2)}`}
             </PrimaryButton>
           </Flex>
         </form>

@@ -37,6 +37,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.63.0",
     "react-icons": "^5.5.0",
+    "recharts": "^3.2.1",
     "vitest-axe": "^0.1.0",
     "zod": "^4.1.11"
   },

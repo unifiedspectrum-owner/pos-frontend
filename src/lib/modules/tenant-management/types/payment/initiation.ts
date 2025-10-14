@@ -25,3 +25,17 @@ export interface InitiateSubscriptionPaymentApiResponse {
   };
   timestamp: string;
 }
+
+/* API response for payment completion operation */
+export interface CompleteSubscriptionPaymentApiResponse {
+  success: boolean;
+  message: string;
+  data: {
+    tenant: {
+      tenant_id: string,
+      organization_name: string,
+      status: 'active'
+    },
+  };
+  timestamp: string;
+}

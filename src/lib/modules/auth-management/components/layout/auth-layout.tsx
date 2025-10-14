@@ -4,8 +4,8 @@
 import React from 'react'
 import { Flex, VStack } from '@chakra-ui/react'
 
-/* Auth management module imports */
-import { AuthHeader, AuthFooter } from '@auth-management/components/layout'
+/* Public module imports */
+import { PublicHeader, PublicFooter } from '@public/components/layout'
 
 /* Auth layout component props */
 interface AuthLayoutProps {
@@ -17,7 +17,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   return (
     <VStack minH="100vh" w="100%">
       {/* Page header */}
-      <AuthHeader />
+      <PublicHeader />
 
       {/* Main content area */}
       <Flex flex="1" w="100%" justifyContent="center" alignItems="center" py={8} bg="gray.50">
@@ -25,7 +25,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
       </Flex>
 
       {/* Page footer */}
-      <AuthFooter />
+      <PublicFooter />
     </VStack>
   )
 }

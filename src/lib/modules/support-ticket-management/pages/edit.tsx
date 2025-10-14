@@ -16,7 +16,7 @@ import { TicketFormLayout } from '@support-ticket-management/forms'
 import { useTenants } from '@tenant-management/hooks'
 
 /* Shared module imports */
-import { ErrorMessageContainer, FullPageLoader } from '@shared/components'
+import { ErrorMessageContainer, LoaderWrapper } from '@shared/components'
 
 /* Component props interface */
 interface EditTicketPageProps {
@@ -116,43 +116,38 @@ const EditTicketPage: React.FC<EditTicketPageProps> = ({ ticketId }) => {
     router.push(SUPPORT_TICKET_PAGE_ROUTES.HOME)
   }
 
-  /* Loading state */
-  if (isFetching || categoriesLoading || isFetchingComments || baseDetailsLoading) {
-    return <FullPageLoader />
-  }
+  /* Check for loading state */
+  const isLoading = isFetching || categoriesLoading || isFetchingComments || baseDetailsLoading
 
-  /* Error state */
-  if (fetchError || categoriesError || fetchCommentsError || baseDetailsError) {
-    return (
-      <ErrorMessageContainer
-        error={fetchError || categoriesError || fetchCommentsError || baseDetailsError || 'Failed to load ticket data'}
-      />
-    )
-  }
-
-  /* No ticket data state */
-  if (!ticketDetails) {
-    return (
-      <ErrorMessageContainer
-        error="Ticket not found"
-      />
-    )
-  }
+  /* Check for errors */
+  const error = fetchError || categoriesError || fetchCommentsError || baseDetailsError
 
   return (
-    <TicketFormLayout
-      mode={TICKET_FORM_MODES.EDIT}
-      methods={methods as any}
-      onSubmit={onSubmit as any}
-      onCancel={handleCancel}
-      isSubmitting={isUpdating}
-      tenantDetails={baseDetailsTenants}
-      ticketId={ticketId}
-      tenantSelectOptions={tenantSelectOptions}
-      categorySelectOptions={categorySelectOptions}
-      ticketComments={ticketComments}
-      onRefresh={refetchTicketComments}
-    />
+    <LoaderWrapper
+      isLoading={isLoading}
+      loadingText="Loading ticket details..."
+      minHeight="500px"
+    >
+      {error ? (
+        <ErrorMessageContainer error={error || 'Failed to load ticket data'} />
+      ) : !ticketDetails ? (
+        <ErrorMessageContainer error="Ticket not found" />
+      ) : (
+        <TicketFormLayout
+          mode={TICKET_FORM_MODES.EDIT}
+          methods={methods as any}
+          onSubmit={onSubmit as any}
+          onCancel={handleCancel}
+          isSubmitting={isUpdating}
+          tenantDetails={baseDetailsTenants}
+          ticketId={ticketId}
+          tenantSelectOptions={tenantSelectOptions}
+          categorySelectOptions={categorySelectOptions}
+          ticketComments={ticketComments}
+          onRefresh={refetchTicketComments}
+        />
+      )}
+    </LoaderWrapper>
   )
 }
 

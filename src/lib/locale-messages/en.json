@@ -257,5 +257,89 @@
       "admin": "Admin",
       "supportTicketManagement": "Support Ticket Management"
     }
+  },
+  "Dashboard": {
+    "title": "Dashboard",
+    "buttons": {
+      "refresh": "Refresh",
+      "viewAll": "View All",
+      "viewDetails": "View Details",
+      "managePlans": "Manage Plans",
+      "viewAllTickets": "View All Tickets",
+      "viewAllTenants": "View All Tenants"
+    },
+    "errors": {
+      "loadingDashboard": "Error Loading Dashboard",
+      "fetchFailed": "Failed to load dashboard data"
+    },
+    "messages": {
+      "dataRefreshed": "Dashboard data refreshed successfully",
+      "loading": "Loading dashboard data..."
+    },
+    "metrics": {
+      "tenants": {
+        "label": "Total Tenants",
+        "today": "today"
+      },
+      "users": {
+        "label": "Total Users",
+        "today": "today"
+      },
+      "tickets": {
+        "label": "Support Tickets",
+        "overdue": "overdue"
+      },
+      "revenue": {
+        "label": "Monthly Revenue",
+        "growth": "MoM"
+      }
+    },
+    "sections": {
+      "revenueTrend": {
+        "title": "Revenue Trend (Last 12 Months)",
+        "placeholder": "Chart visualization would be rendered here",
+        "period": "Period"
+      },
+      "tenantStatus": {
+        "title": "Tenant Status Distribution"
+      },
+      "recentTenants": {
+        "title": "Recent Tenants",
+        "columns": {
+          "organization": "Organization",
+          "email": "Email",
+          "plan": "Plan",
+          "status": "Status",
+          "mrr": "MRR"
+        }
+      },
+      "plansOverview": {
+        "title": "Subscription Plans Overview",
+        "subscriptions": "subscriptions"
+      },
+      "ticketsOverview": {
+        "title": "Support Tickets Overview",
+        "ofTotal": "of total"
+      },
+      "systemAlerts": {
+        "title": "System Alerts & Activity"
+      },
+      "quickStats": {
+        "topRevenuePlans": {
+          "title": "Top Revenue Plans"
+        },
+        "activeUsers": {
+          "title": "Active Users",
+          "total": "Total",
+          "onlineNow": "Online Now",
+          "locked": "Locked"
+        },
+        "failedPayments": {
+          "title": "Failed Payments",
+          "thisMonth": "This Month",
+          "amount": "Amount"
+        }
+      }
+    }
   }
 }
