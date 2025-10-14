@@ -7,24 +7,26 @@ import { useRouter } from 'next/navigation'
 import { lighten } from 'polished'
 
 /* Icons imports */
-import { HiOutlineEye, HiOutlinePencilAlt } from 'react-icons/hi'
+import { HiOutlineEye, HiOutlinePencilAlt, HiOutlineTrash } from 'react-icons/hi'
 import { MdOutlineFilterList, MdOutlineConfirmationNumber } from 'react-icons/md'
 import { LuSearch } from 'react-icons/lu'
 import { GoDotFill } from 'react-icons/go'
-import { FaUserPlus, FaCommentDots } from 'react-icons/fa'
+import { FaUserPlus, FaCommentDots, FaExchangeAlt } from 'react-icons/fa'
 
 /* Shared module imports */
-import { EmptyStateContainer, Pagination, TextInputField, TableFilterSelect } from '@shared/components'
+import { EmptyStateContainer, Pagination, TextInputField, TableFilterSelect, DynamicDialog, ConfirmationDialog } from '@shared/components'
 import { usePermissions } from '@shared/contexts'
 import { PaginationInfo } from '@shared/types'
-import { GRAY_COLOR, PRIMARY_COLOR } from '@shared/config'
+import { GRAY_COLOR, PRIMARY_COLOR, ERROR_RED_COLOR } from '@shared/config'
 import { PERMISSION_ACTIONS } from '@shared/constants/rbac'
 
 /* Support ticket module imports */
 import { TicketListItem } from '@support-ticket-management/types'
-import { SUPPORT_TICKET_PAGE_ROUTES, TICKET_STATUS, TICKET_STATUS_LABELS, TICKET_STATUS_FILTER_OPTIONS, SUPPORT_TICKET_MODULE_NAME } from '@support-ticket-management/constants'
+import { SUPPORT_TICKET_PAGE_ROUTES, TICKET_STATUS, TICKET_STATUS_LABELS, TICKET_STATUS_OPTIONS, SUPPORT_TICKET_MODULE_NAME } from '@support-ticket-management/constants'
 import { SupportTicketTableSkeleton } from '@support-ticket-management/components'
+import { AssignTicketForm, TicketComments, UpdateTicketStatusForm } from '@support-ticket-management/forms'
 import { STATUS_BADGE_CONFIG } from '@shared/constants'
+import { useCommentOperations, useTicketOperations } from '@support-ticket-management/hooks'
 
 /* Component interfaces */
 interface SupportTicketTableProps {
@@ -36,18 +38,37 @@ interface SupportTicketTableProps {
   pagination?: PaginationInfo
 }
 
+interface DeleteConfirmState {
+  show: boolean
+  ticketId?: number
+  ticketNumber?: string
+}
+
 /* Support ticket table component with search functionality */
 const SupportTicketTable: React.FC<SupportTicketTableProps> = ({
-  tickets, lastUpdated, onPageChange, loading = false, pagination
+  tickets, lastUpdated, onRefresh, onPageChange, loading = false, pagination
 }) => {
   /* Navigation and permissions */
   const router = useRouter()
   const { hasSpecificPermission } = usePermissions()
 
+  /* Fetch ticket comments hook */
+  const { ticketComments, fetchTicketComments, refetchTicketComments } = useCommentOperations()
+
+  /* Ticket operations hook */
+  const { deleteTicket, isDeleting } = useTicketOperations()
+
   /* Component state */
   const [selectedTicketID, setSelectedTicketID] = useState<number | null>(null)
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState<string>(TICKET_STATUS.ALL)
+  const [assignTicketModalOpen, setAssignTicketModalOpen] = useState<boolean>(false)
+  const [selectedTicketForAssignment, setSelectedTicketForAssignment] = useState<TicketListItem | null>(null)
+  const [addCommentModalOpen, setAddCommentModalOpen] = useState<boolean>(false)
+  const [selectedTicketForComment, setSelectedTicketForComment] = useState<TicketListItem | null>(null)
+  const [updateStatusModalOpen, setUpdateStatusModalOpen] = useState<boolean>(false)
+  const [selectedTicketForStatusUpdate, setSelectedTicketForStatusUpdate] = useState<TicketListItem | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState>({ show: false })
 
   /* Filtered tickets based on search and status */
   const filteredTickets = useMemo(() => {
@@ -78,16 +99,89 @@ const SupportTicketTable: React.FC<SupportTicketTableProps> = ({
     router.push(SUPPORT_TICKET_PAGE_ROUTES.EDIT.replace(':id', ticketId.toString()))
   }, [router])
 
-  const handleAssignTicket = useCallback((ticketId: number, event: React.MouseEvent) => {
+  const handleAssignTicket = useCallback((ticket: TicketListItem, event: React.MouseEvent) => {
     event.stopPropagation()
-    /* TODO: Implement assign ticket modal */
-    console.log('Assign ticket:', ticketId)
+    setSelectedTicketForAssignment(ticket)
+    setAssignTicketModalOpen(true)
   }, [])
 
-  const handleAddComment = useCallback((ticketId: number, event: React.MouseEvent) => {
+  const handleCloseAssignModal = useCallback(() => {
+    setAssignTicketModalOpen(false)
+    setSelectedTicketForAssignment(null)
+  }, [])
+
+  const handleAssignSuccess = useCallback(() => {
+    handleCloseAssignModal()
+    /* Refresh ticket list if onRefresh is provided */
+    if (onRefresh) {
+      onRefresh()
+    }
+  }, [handleCloseAssignModal, onRefresh])
+
+  const handleAddComment = useCallback(async (ticket: TicketListItem, event: React.MouseEvent) => {
     event.stopPropagation()
-    /* TODO: Implement add comment modal */
-    console.log('Add comment to ticket:', ticketId)
+    setSelectedTicketForComment(ticket)
+    setAddCommentModalOpen(true)
+    /* Fetch comments for the selected ticket */
+    await fetchTicketComments(ticket.id.toString())
+  }, [fetchTicketComments])
+
+  const handleCloseCommentModal = useCallback(() => {
+    setAddCommentModalOpen(false)
+    setSelectedTicketForComment(null)
+  }, [])
+
+  const handleRefreshComments = useCallback(async () => {
+    /* Refetch comments and refresh ticket list */
+    await refetchTicketComments()
+    if (onRefresh) {
+      onRefresh()
+    }
+  }, [refetchTicketComments, onRefresh])
+
+  const handleUpdateStatus = useCallback((ticket: TicketListItem, event: React.MouseEvent) => {
+    event.stopPropagation()
+    setSelectedTicketForStatusUpdate(ticket)
+    setUpdateStatusModalOpen(true)
+  }, [])
+
+  const handleCloseStatusUpdateModal = useCallback(() => {
+    setUpdateStatusModalOpen(false)
+    setSelectedTicketForStatusUpdate(null)
+  }, [])
+
+  const handleStatusUpdateSuccess = useCallback(() => {
+    handleCloseStatusUpdateModal()
+    /* Refresh ticket list if onRefresh is provided */
+    if (onRefresh) {
+      onRefresh()
+    }
+  }, [handleCloseStatusUpdateModal, onRefresh])
+
+  const handleDeleteTicket = useCallback((ticketId: number, event: React.MouseEvent) => {
+    event.stopPropagation()
+    const ticket = tickets.find(t => t.id === ticketId)
+    setDeleteConfirm({
+      show: true,
+      ticketId,
+      ticketNumber: ticket ? ticket.ticket_id : 'Selected Ticket'
+    })
+  }, [tickets])
+
+  /* Data operations */
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteConfirm.ticketId) return
+
+    const success = await deleteTicket(deleteConfirm.ticketId.toString())
+
+    if (success) {
+      onRefresh?.() /* Trigger parent refresh */
+      setDeleteConfirm({ show: false })
+    }
+  }, [deleteConfirm.ticketId, deleteTicket, onRefresh])
+
+  const handleCancelDelete = useCallback(() => {
+    setDeleteConfirm({ show: false })
   }, [])
 
   return (
@@ -127,7 +221,7 @@ const SupportTicketTable: React.FC<SupportTicketTableProps> = ({
             <TableFilterSelect
               value={statusFilter}
               onValueChange={setStatusFilter}
-              options={TICKET_STATUS_FILTER_OPTIONS}
+              options={TICKET_STATUS_OPTIONS}
               placeholder="Filter by Status"
               disabled={loading}
               icon={<MdOutlineFilterList size={16} color={lighten(0.2, GRAY_COLOR)} />}
@@ -216,7 +310,7 @@ const SupportTicketTable: React.FC<SupportTicketTableProps> = ({
                           bg="none"
                           color="black"
                           _hover={{ color: 'blue.500' }}
-                          onClick={(e) => handleAssignTicket(ticket.id, e)}
+                          onClick={(e) => handleAssignTicket(ticket, e)}
                           title="Assign ticket to user"
                         >
                           <FaUserPlus size={16} />
@@ -224,8 +318,17 @@ const SupportTicketTable: React.FC<SupportTicketTableProps> = ({
                         <IconButton
                           bg="none"
                           color="black"
+                          _hover={{ color: 'orange.500' }}
+                          onClick={(e) => handleUpdateStatus(ticket, e)}
+                          title="Update ticket status"
+                        >
+                          <FaExchangeAlt size={16} />
+                        </IconButton>
+                        <IconButton
+                          bg="none"
+                          color="black"
                           _hover={{ color: 'green.500' }}
-                          onClick={(e) => handleAddComment(ticket.id, e)}
+                          onClick={(e) => handleAddComment(ticket, e)}
                           title="Add comment"
                         >
                           <FaCommentDots size={16} />
@@ -257,6 +360,19 @@ const SupportTicketTable: React.FC<SupportTicketTableProps> = ({
                         <HiOutlinePencilAlt size={18} />
                       </IconButton>
                     )}
+                    {hasSpecificPermission(SUPPORT_TICKET_MODULE_NAME, PERMISSION_ACTIONS.DELETE) && (
+                      <IconButton
+                        bg="none"
+                        color="black"
+                        _hover={{ color: ERROR_RED_COLOR }}
+                        onClick={(e) => handleDeleteTicket(ticket.id, e)}
+                        title="Delete ticket"
+                        disabled={isDeleting}
+                        loading={isDeleting && deleteConfirm.ticketId === ticket.id}
+                      >
+                        <HiOutlineTrash size={18} />
+                      </IconButton>
+                    )}
                   </ButtonGroup>
                 </HStack>
               )
@@ -273,6 +389,80 @@ const SupportTicketTable: React.FC<SupportTicketTableProps> = ({
           />
         )}
       </Flex>
+
+      {/* Assign Ticket Modal */}
+      <DynamicDialog
+        isOpen={assignTicketModalOpen}
+        onClose={handleCloseAssignModal}
+        title="Assign Ticket to User"
+        titleIcon={<FaUserPlus size={20} />}
+        size="lg"
+        closeOnOutsideClick={false}
+      >
+        {selectedTicketForAssignment && (
+          <AssignTicketForm
+            ticketId={selectedTicketForAssignment.id.toString()}
+            ticketNumber={selectedTicketForAssignment.ticket_id}
+            ticketSubject={selectedTicketForAssignment.subject}
+            ticketStatus={selectedTicketForAssignment.status}
+            onSuccess={handleAssignSuccess}
+            onCancel={handleCloseAssignModal}
+          />
+        )}
+      </DynamicDialog>
+
+      {/* Add Comment Modal */}
+      <DynamicDialog
+        isOpen={addCommentModalOpen}
+        onClose={handleCloseCommentModal}
+        title="Ticket Communications"
+        titleIcon={<FaCommentDots size={20} />}
+        size="lg"
+        closeOnOutsideClick={false}
+      >
+        {selectedTicketForComment && (
+          <TicketComments
+            comments={ticketComments}
+            ticketId={selectedTicketForComment.id.toString()}
+            onRefresh={handleRefreshComments}
+          />
+        )}
+      </DynamicDialog>
+
+      {/* Update Ticket Status Modal */}
+      <DynamicDialog
+        isOpen={updateStatusModalOpen}
+        onClose={handleCloseStatusUpdateModal}
+        title="Update Ticket Status"
+        titleIcon={<FaExchangeAlt size={20} />}
+        size="lg"
+        closeOnOutsideClick={false}
+      >
+        {selectedTicketForStatusUpdate && (
+          <UpdateTicketStatusForm
+            ticketId={selectedTicketForStatusUpdate.id.toString()}
+            ticketNumber={selectedTicketForStatusUpdate.ticket_id}
+            ticketSubject={selectedTicketForStatusUpdate.subject}
+            currentStatus={selectedTicketForStatusUpdate.status}
+            onSuccess={handleStatusUpdateSuccess}
+            onCancel={handleCloseStatusUpdateModal}
+          />
+        )}
+      </DynamicDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={deleteConfirm.show}
+        title="Delete Support Ticket"
+        message={`Are you sure you want to delete ticket "${deleteConfirm.ticketNumber}"? This action cannot be undone and will remove all associated data.`}
+        confirmText="Delete Ticket"
+        cancelText="Cancel"
+        confirmVariant="danger"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        confirmationText={deleteConfirm.ticketId?.toString()}
+      />
     </Flex>
   )
 }

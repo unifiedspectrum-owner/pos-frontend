@@ -21,9 +21,9 @@ export const communicationsService = {
   },
 
   /* Add communication/comment to ticket */
-  async createTicketCommunication(data: CreateTicketCommentFormSchema): Promise<CreateTicketCommunicationApiResponse> {
+  async createTicketCommunication(ticketId: string, data: CreateTicketCommentFormSchema): Promise<CreateTicketCommunicationApiResponse> {
     try {
-      const response = await supportTicketApiClient.post<CreateTicketCommunicationApiResponse>(SUPPORT_TICKET_API_ROUTES.ADD_COMMENT, data)
+      const response = await supportTicketApiClient.post<CreateTicketCommunicationApiResponse>(SUPPORT_TICKET_API_ROUTES.ADD_COMMENT.replace(':id', ticketId), data)
       return response.data
     } catch (error) {
       console.error('[CommunicationsService] Failed to create communication:', error)

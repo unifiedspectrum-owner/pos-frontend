@@ -1,7 +1,7 @@
 "use client"
 
 /* Libraries imports */
-import React from 'react'
+import React, { useState } from 'react'
 import { useForm, FormProvider, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Box, Flex, VStack, Icon, GridItem, SimpleGrid, Heading, Text } from '@chakra-ui/react'
@@ -30,32 +30,32 @@ const AddCommentForm: React.FC<AddCommentFormProps> = ({ ticketId, onRefresh }) 
   /* Use comment operations hook */
   const { addTicketComment, isAddingComment } = useCommentOperations()
 
+  /* File field reset key */
+  const [fileFieldKey, setFileFieldKey] = useState<number>(0)
+
   /* Form configuration with Zod validation */
   const methods = useForm<CreateTicketCommentFormSchema>({
     resolver: zodResolver(createTicketCommunicationSchema),
-    defaultValues: {
-      ...TICKET_COMMUNICATION_FORM_DEFAULT_VALUES,
-      ticket_id: ticketId || ''
-    }
+    defaultValues: TICKET_COMMUNICATION_FORM_DEFAULT_VALUES
   })
 
   const { control, handleSubmit, formState: { errors }, reset } = methods
 
   /* Handle form submission */
   const onSubmit = async (data: CreateTicketCommentFormSchema) => {
-    if (!data.message_content?.trim()) {
+    if (!data.message_content?.trim() || !ticketId) {
       return
     }
 
     /* Call API to add comment */
-    const success = await addTicketComment(data)
+    const success = await addTicketComment(ticketId, data)
 
     if (success) {
       /* Reset form after successful submission */
-      reset({
-        ...TICKET_COMMUNICATION_FORM_DEFAULT_VALUES,
-        ticket_id: ticketId || ''
-      })
+      reset(TICKET_COMMUNICATION_FORM_DEFAULT_VALUES)
+
+      /* Force file field to reset by changing key */
+      setFileFieldKey(prev => prev + 1)
 
       /* Trigger parent component refresh */
       if (onRefresh) {
@@ -174,7 +174,7 @@ const AddCommentForm: React.FC<AddCommentFormProps> = ({ ticketId, onRefresh }) 
                   /* Render FILE field */
                   if (field.type === FORM_FIELD_TYPES.FILE) {
                     return (
-                      <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
+                      <GridItem key={`${field.id}-${fileFieldKey}`} colSpan={[1, field.grid.col_span]}>
                         <Controller
                           name={schemaKey}
                           control={control}
@@ -206,6 +206,7 @@ const AddCommentForm: React.FC<AddCommentFormProps> = ({ ticketId, onRefresh }) 
 
                             return (
                               <FileField
+                                key={fileFieldKey}
                                 {...commonProps}
                                 value={Array.isArray(controllerField.value) ? controllerField.value : []}
                                 onChange={handleFileChange}

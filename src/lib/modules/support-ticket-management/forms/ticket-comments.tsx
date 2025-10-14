@@ -25,10 +25,11 @@ interface TicketCommentsProps {
   comments: TicketCommunicationWithAttachments[]
   ticketId?: string
   onRefresh?: () => void
+  showAddCommentForm?: boolean
 }
 
 /* Ticket comments display component */
-const TicketComments: React.FC<TicketCommentsProps> = ({ comments, ticketId, onRefresh }) => {
+const TicketComments: React.FC<TicketCommentsProps> = ({ comments, ticketId, onRefresh, showAddCommentForm = true }) => {
   /* State for toggling internal notes visibility */
   const [showInternal, setShowInternal] = useState(true)
 
@@ -64,16 +65,26 @@ const TicketComments: React.FC<TicketCommentsProps> = ({ comments, ticketId, onR
         )}
       </Flex>
 
-      {/* Comments list */}
-      {filteredComments.length === 0 ? (
-        <EmptyStateContainer
-          icon={<FaCommentSlash />}
-          title="No Communications"
-          description={showInternal ? "No communications have been added to this ticket yet" : "No public communications yet. Toggle internal notes to view all communications."}
-        />
-      ) : (
-        <VStack w="full" gap={4} align="stretch">
-          {filteredComments.map((comment) => {
+      {/* Comments list with fixed height and scroll */}
+      <Box
+        maxH="400px"
+        overflowY="auto"
+        overflowX="hidden"
+        borderRadius="md"
+        borderWidth={1}
+        borderColor="gray.200"
+        p={3}
+        bg="gray.50"
+      >
+        {filteredComments.length === 0 ? (
+          <EmptyStateContainer
+            icon={<FaCommentSlash />}
+            title="No Communications"
+            description={showInternal ? "No communications have been added to this ticket yet" : "No public communications yet. Toggle internal notes to view all communications."}
+          />
+        ) : (
+          <VStack w="full" gap={4} align="stretch">
+            {filteredComments.map((comment) => {
             const isCustomer = comment.sender_type === SENDER_TYPES.CUSTOMER
             const hasAttachments = comment.attachments && comment.attachments.length > 0
             const isInternal = Boolean(comment.is_internal)
@@ -144,7 +155,7 @@ const TicketComments: React.FC<TicketCommentsProps> = ({ comments, ticketId, onR
                     <Text fontSize="xs" fontWeight="600" color="gray.600" mb={2}>
                       Attachments:
                     </Text>
-                    <SimpleGrid columns={3} gap={3} w="full">
+                    <SimpleGrid columns={2} gap={3} w="full">
                       {comment.attachments?.map((attachment) => {
                         const FileIcon = getFileTypeIcon(attachment.mime_type)
                         return (
@@ -194,9 +205,10 @@ const TicketComments: React.FC<TicketCommentsProps> = ({ comments, ticketId, onR
           })}
         </VStack>
       )}
+      </Box>
 
       {/* Add comment form */}
-      <AddCommentForm ticketId={ticketId} onRefresh={onRefresh} />
+      {showAddCommentForm && <AddCommentForm ticketId={ticketId} onRefresh={onRefresh} />}
     </Flex>
   )
 }

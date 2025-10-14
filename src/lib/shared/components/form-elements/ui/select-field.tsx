@@ -1,6 +1,6 @@
 /* React and Chakra UI component imports */
 import React from 'react';
-import { Select, Portal, createListCollection } from '@chakra-ui/react';
+import { Select, createListCollection } from '@chakra-ui/react';
 import { Field } from '@/components/ui/field';
 import { lighten } from 'polished';
 
@@ -51,22 +51,12 @@ const SelectField: React.FC<SelectFieldProps> = ({
   padding,
   borderRadius
 }) => {
-  /* Create collection from options with placeholder as first option */
-  const placeholderOption = placeholder ? [{
-    label: placeholder,
-    value: '',
-    id: 'select-option-placeholder'
-  }] : []
-
   const collection = createListCollection({
-    items: [
-      ...placeholderOption,
-      ...options.map((option, index) => ({
-        label: option.label,
-        value: option.value,
-        id: `select-option-${index}-${option.value}`, // Unique identifier
-      }))
-    ]
+    items: options.map((option, index) => ({
+      label: option.label,
+      value: option.value,
+      id: `select-option-${index}-${option.value}`, // Unique identifier
+    }))
   })
 
   /* Ensure value is in array format for Select.Root and filter out empty values */
@@ -75,7 +65,18 @@ const SelectField: React.FC<SelectFieldProps> = ({
     : value && value !== '' ? [value] : []
 
   return (
-    <Field label={label} invalid={isInValid} readOnly={readOnly} errorText={errorMessage} required={required}>
+    <Field label={label} invalid={isInValid} readOnly={readOnly} errorText={errorMessage} required={required}
+      css={{
+        '& label': {
+          userSelect: 'text',
+          cursor: 'text',
+          pointerEvents: 'auto'
+        },
+        '& label:hover': {
+          cursor: 'text'
+        }
+      }}
+    >
       <Select.Root
         size={size}
         value={selectValue}
@@ -114,36 +115,50 @@ const SelectField: React.FC<SelectFieldProps> = ({
             <Select.Indicator />
           </Select.IndicatorGroup>
         </Select.Control>
-        <Portal>
-          <Select.Positioner>
-            <Select.Content 
-              borderRadius="2xl" 
-              p={2} 
-              gap={1}
-              maxH="200px"
-              overflowY="auto"
-              data-testid="select-content"
-            >
-              {collection.items.map((item, index) => (
-                <Select.Item 
-                  key={item.id || `${item.value}-${index}`}
-                  item={item}
+        <Select.Positioner>
+          <Select.Content
+            position="absolute"
+            zIndex={9999}
+            borderRadius="2xl"
+            p={2}
+            gap={1}
+            maxH="200px"
+            overflowY="auto"
+            bg="white"
+            border="1px solid"
+            borderColor="gray.200"
+            boxShadow="lg"
+            data-testid="select-content"
+          >
+              {collection.items.length > 0 ? (
+                collection.items.map((item, index) => (
+                  <Select.Item
+                    key={item.id || `${item.value}-${index}`}
+                    item={item}
+                    p={2}
+                    borderRadius="lg"
+                    cursor="pointer"
+                    _hover={{
+                      bg: lighten(0.4, GRAY_COLOR)
+                    }}
+                    data-testid={`select-option-${item.value}`}
+                    data-option-index={index}
+                    data-option-value={item.value}
+                  >
+                    {item.label}
+                    <Select.ItemIndicator />
+                  </Select.Item>
+                ))
+              ) : (
+                <Select.Item
+                  item={{ label: 'No options available', value: '', id: 'no-options' }}
                   p={2}
-                  borderRadius="lg"
-                  _hover={{
-                    bg: lighten(0.4, GRAY_COLOR)
-                  }}
-                  data-testid={`select-option-${item.value}`}
-                  data-option-index={index}
-                  data-option-value={item.value}
                 >
-                  {item.label}
-                  <Select.ItemIndicator />
+                  No options available
                 </Select.Item>
-              ))}
+              )}
             </Select.Content>
-          </Select.Positioner>
-        </Portal>
+        </Select.Positioner>
       </Select.Root>
     </Field>
   )

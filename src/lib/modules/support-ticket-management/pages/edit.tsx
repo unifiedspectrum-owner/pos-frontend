@@ -12,6 +12,9 @@ import { useTicketOperations, useSupportTickets, useCommentOperations } from '@s
 import { SUPPORT_TICKET_PAGE_ROUTES, TICKET_FORM_MODES } from '@support-ticket-management/constants'
 import { TicketFormLayout } from '@support-ticket-management/forms'
 
+/* Tenant management module imports */
+import { useTenants } from '@tenant-management/hooks'
+
 /* Shared module imports */
 import { ErrorMessageContainer, FullPageLoader } from '@shared/components'
 
@@ -24,8 +27,8 @@ interface EditTicketPageProps {
 const EditTicketPage: React.FC<EditTicketPageProps> = ({ ticketId }) => {
   const router = useRouter()
 
-  /* Fetch ticket details */
-  const { fetchTicketDetails, ticketDetails, isFetching, fetchError } = useTicketOperations()
+  /* Fetch ticket details and update operations */
+  const { fetchTicketDetails, updateSupportTicket, ticketDetails, isFetching, isUpdating, fetchError } = useTicketOperations()
 
   /* Fetch ticket comments */
   const { fetchTicketComments, refetchTicketComments, ticketComments, isFetchingComments, fetchCommentsError } = useCommentOperations()
@@ -37,15 +40,26 @@ const EditTicketPage: React.FC<EditTicketPageProps> = ({ ticketId }) => {
     categoriesError,
   } = useSupportTickets({ autoFetchCategories: true })
 
+  /* Fetch tenants for dropdown */
+  const {
+    tenantSelectOptions,
+    baseDetailsTenants,
+    baseDetailsLoading,
+    baseDetailsError,
+  } = useTenants({ autoFetchBaseDetails: true })
+
   /* Form configuration with Zod validation schema */
   const methods = useForm<UpdateTicketFormSchema>({
     resolver: zodResolver(updateTicketSchema),
     defaultValues: {
+      tenant_id: '',
       category_id: '',
       subject: '',
-      status: 'new',
       resolution_due: undefined,
-      internal_notes: ''
+      internal_notes: '',
+      requester_name: '',
+      requester_email: '',
+      requester_phone: ''
     }
   })
 
@@ -59,16 +73,19 @@ const EditTicketPage: React.FC<EditTicketPageProps> = ({ ticketId }) => {
 
   /* Populate form when ticket details are loaded */
   useEffect(() => {
-    if (ticketDetails) {
+    if (ticketDetails && tenantSelectOptions.length > 0) {
       methods.reset({
+        tenant_id: ticketDetails.tenant_id || '',
         category_id: ticketDetails.category_id?.toString() || '',
         subject: ticketDetails.subject || '',
-        status: ticketDetails.status,
         resolution_due: ticketDetails.resolution_due || undefined,
-        internal_notes: ticketDetails.internal_notes || ''
+        internal_notes: ticketDetails.internal_notes || '',
+        requester_name: ticketDetails.requester_name || '',
+        requester_email: ticketDetails.requester_email || '',
+        requester_phone: ticketDetails.requester_phone || ''
       })
     }
-  }, [ticketDetails, methods])
+  }, [ticketDetails, tenantSelectOptions, methods])
 
   /* Log fetched comments for debugging */
   useEffect(() => {
@@ -80,20 +97,17 @@ const EditTicketPage: React.FC<EditTicketPageProps> = ({ ticketId }) => {
   /* Handle form submission */
   const onSubmit = async (data: UpdateTicketFormSchema) => {
     try {
-      console.log('Form data for update:', data)
-      console.log('Ticket ID:', ticketId)
+      console.log('[EditTicketPage] Form data for update:', data)
+      console.log('[EditTicketPage] Ticket ID:', ticketId)
 
-      /* TODO: Implement update API call when service is ready */
-      // const success = await updateTicket(ticketId, data)
-      // if (success) {
-      //   router.push(SUPPORT_TICKET_PAGE_ROUTES.HOME)
-      // }
+      /* Call update API */
+      const success = await updateSupportTicket(ticketId, data)
 
-      /* Temporary: Show success message */
-      alert('Update functionality will be implemented when API is ready')
-      router.push(SUPPORT_TICKET_PAGE_ROUTES.HOME)
+      if (success) {
+        router.push(SUPPORT_TICKET_PAGE_ROUTES.HOME)
+      }
     } catch (error) {
-      console.error('Error updating ticket:', error)
+      console.error('[EditTicketPage] Error updating ticket:', error)
     }
   }
 
@@ -103,15 +117,15 @@ const EditTicketPage: React.FC<EditTicketPageProps> = ({ ticketId }) => {
   }
 
   /* Loading state */
-  if (isFetching || categoriesLoading || isFetchingComments) {
+  if (isFetching || categoriesLoading || isFetchingComments || baseDetailsLoading) {
     return <FullPageLoader />
   }
 
   /* Error state */
-  if (fetchError || categoriesError || fetchCommentsError) {
+  if (fetchError || categoriesError || fetchCommentsError || baseDetailsError) {
     return (
       <ErrorMessageContainer
-        error={fetchError || categoriesError || fetchCommentsError || 'Failed to load ticket data'}
+        error={fetchError || categoriesError || fetchCommentsError || baseDetailsError || 'Failed to load ticket data'}
       />
     )
   }
@@ -131,10 +145,10 @@ const EditTicketPage: React.FC<EditTicketPageProps> = ({ ticketId }) => {
       methods={methods as any}
       onSubmit={onSubmit as any}
       onCancel={handleCancel}
-      isSubmitting={false}
-      tenantDetails={[]}
+      isSubmitting={isUpdating}
+      tenantDetails={baseDetailsTenants}
       ticketId={ticketId}
-      tenantSelectOptions={[]}
+      tenantSelectOptions={tenantSelectOptions}
       categorySelectOptions={categorySelectOptions}
       ticketComments={ticketComments}
       onRefresh={refetchTicketComments}

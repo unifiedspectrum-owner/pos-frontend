@@ -34,33 +34,31 @@ export const createTicketSchema = z.object({
   category_id: z.string({ message: "Valid category ID is required" }),
   subject: z.string().min(5, { message: "Subject must be at least 5 characters" }).max(500),
   message_content: z.string().min(10, { message: "Initial message must be at least 10 characters" }),
-  resolution_due: z.string().datetime().nullable().optional(),
+  resolution_due: z.string().nullable().optional(),
   internal_notes: z.string().nullable().optional(),
   attachments: z.array(attachmentSchema).max(5, { message: "Maximum 5 attachments allowed per ticket" }).nullable().optional()
 });
 
 /* Create communication comment request validation schema */
 export const createTicketCommunicationSchema = z.object({
-  ticket_id: z.string().min(1, { message: "Ticket ID is required" }),
   message_content: z.string().min(1, { message: "Message content is required" }).max(10000, { message: "Message content cannot exceed 10000 characters" }),
   is_internal: z.boolean(),
   attachments: z.array(attachmentSchema).max(5, { message: "Maximum 5 attachments allowed per communication" }).nullable().optional()
 });
 
-/* Update ticket request validation schema */
-export const updateTicketSchema = z.object({
-  category_id: z.string({ message: "Valid category ID is required" }).optional(),
-  subject: z.string().min(5, { message: "Subject must be at least 5 characters" }).max(500).optional(),
-  status: ticketStatusSchema.optional(),
-  resolution_due: z.string().datetime().nullable().optional(),
-  internal_notes: z.string().nullable().optional()
+/* Update ticket status schema */
+export const updateTicketStatusSchema = z.object({
+  status: ticketStatusSchema,
+  status_reason: z.string().min(5).max(500),
 });
+
+/* Update ticket request validation schema - all fields from createTicketSchema made optional plus status field */
+export const updateTicketSchema = createTicketSchema.partial();
 
 /* Assign ticket schema */
 export const assignTicketSchema = z.object({
-  ticket_id: z.string().min(1, { message: "Ticket ID is required" }),
-  assigned_to_user_id: z.number().int().positive({ message: "Valid user ID is required" }).nullable().optional(),
-  assignment_reason: z.string().min(5, { message: "Assignment reason must be at least 5 characters" }).max(500).optional()
+  user_id: z.string().min(1, { message: "Valid user ID is required" }),
+  reason: z.string().min(5, { message: "Assignment reason must be at least 5 characters" }).max(500)
 });
 
 /* Ticket creation form schema */
@@ -69,5 +67,9 @@ export type CreateTicketFormSchema = z.infer<typeof createTicketSchema>;
 /* Ticket update form schema */
 export type UpdateTicketFormSchema = z.infer<typeof updateTicketSchema>;
 
+/* Ticket comment form schema */
 export type CreateTicketCommentFormSchema = z.infer<typeof createTicketCommunicationSchema>;
-export type assignTicketFormSchema = z.infer<typeof assignTicketSchema>;
+
+/* Ticket assignment form schema */
+export type AssignTicketFormSchema = z.infer<typeof assignTicketSchema>;
+export type UpdateTicketStatusFormSchema = z.infer<typeof updateTicketStatusSchema>;

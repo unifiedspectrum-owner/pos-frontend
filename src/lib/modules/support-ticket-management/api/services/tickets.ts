@@ -1,10 +1,10 @@
 /* Support ticket CRUD operations API methods */
 
 /* Support ticket management module imports */
-import { SupportTicketListResponse, SupportTicketDetailsResponse, CreateSupportTicketApiResponse } from "@support-ticket-management/types"
+import { SupportTicketListResponse, SupportTicketDetailsResponse, CreateSupportTicketApiResponse, SupportTicketDeletionResponse, UpdateTicketStatusApiResponse, UpdateSupportTicketApiResponse } from "@support-ticket-management/types"
 import { supportTicketApiClient } from "@support-ticket-management/api"
 import { SUPPORT_TICKET_API_ROUTES } from "@support-ticket-management/constants"
-import { CreateTicketFormSchema } from "@support-ticket-management/schemas"
+import { CreateTicketFormSchema, UpdateTicketFormSchema, UpdateTicketStatusFormSchema } from "@support-ticket-management/schemas"
 
 /* Service object for ticket CRUD operations */
 export const ticketsService = {
@@ -47,36 +47,36 @@ export const ticketsService = {
     }
   },
 
-  // /* Update existing support ticket with provided data */
-  // async updateSupportTicket(ticketId: string, data: SupportTicketUpdateRequest): Promise<SupportTicketUpdateResponse> {
-  //   try {
-  //     const response = await supportTicketApiClient.put<SupportTicketUpdateResponse>(SUPPORT_TICKET_API_ROUTES.UPDATE.replace(':id', ticketId), data)
-  //     return response.data
-  //   } catch (error) {
-  //     console.error('[TicketsService] Failed to update support ticket:', error)
-  //     throw error
-  //   }
-  // },
+  /* Update existing support ticket with provided data */
+  async updateSupportTicket(ticketId: string, data: UpdateTicketFormSchema): Promise<UpdateSupportTicketApiResponse> {
+    try {
+      const response = await supportTicketApiClient.put<UpdateSupportTicketApiResponse>(SUPPORT_TICKET_API_ROUTES.UPDATE.replace(':id', ticketId), data)
+      return response.data
+    } catch (error) {
+      console.error('[TicketsService] Failed to update support ticket:', error)
+      throw error
+    }
+  },
 
-  // /* Remove support ticket permanently by ID */
-  // async deleteSupportTicket(ticketId: string): Promise<SupportTicketDeletionResponse> {
-  //   try {
-  //     const response = await supportTicketApiClient.delete<SupportTicketDeletionResponse>(SUPPORT_TICKET_API_ROUTES.DELETE.replace(':id', ticketId))
-  //     return response.data
-  //   } catch (error) {
-  //     console.error('[TicketsService] Failed to delete support ticket:', error)
-  //     throw error
-  //   }
-  // },
+  /* Remove support ticket permanently by ID */
+  async deleteSupportTicket(ticketId: string): Promise<SupportTicketDeletionResponse> {
+    try {
+      const response = await supportTicketApiClient.delete<SupportTicketDeletionResponse>(SUPPORT_TICKET_API_ROUTES.DELETE.replace(':id', ticketId))
+      return response.data
+    } catch (error) {
+      console.error('[TicketsService] Failed to delete support ticket:', error)
+      throw error
+    }
+  },
 
-  // /* Update ticket status */
-  // async updateTicketStatus(ticketId: string, data: TicketStatusUpdateRequest): Promise<SupportTicketUpdateResponse> {
-  //   try {
-  //     const response = await supportTicketApiClient.patch<SupportTicketUpdateResponse>(SUPPORT_TICKET_API_ROUTES.UPDATE_STATUS.replace(':id', ticketId), data)
-  //     return response.data
-  //   } catch (error) {
-  //     console.error('[TicketsService] Failed to update ticket status:', error)
-  //     throw error
-  //   }
-  // },
+  /* Update ticket status */
+  async updateTicketStatus(ticketId: string, data: UpdateTicketStatusFormSchema): Promise<UpdateTicketStatusApiResponse> {
+    try {
+      const response = await supportTicketApiClient.post<UpdateTicketStatusApiResponse>(SUPPORT_TICKET_API_ROUTES.UPDATE_STATUS.replace(':id', ticketId), data)
+      return response.data
+    } catch (error) {
+      console.error('[TicketsService] Failed to update ticket status:', error)
+      throw error
+    }
+  },
 }

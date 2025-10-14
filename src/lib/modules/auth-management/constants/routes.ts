@@ -19,7 +19,7 @@ export const AUTH_API_ROUTES = {
 
 /* Authentication page routes */
 export const AUTH_PAGE_ROUTES = {
-  ADMIN_HOME: '/admin/user-management',
+  ADMIN_HOME: '/admin/support-ticket-management',
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
   FORGOT_PASSWORD: '/auth/forgot-password',

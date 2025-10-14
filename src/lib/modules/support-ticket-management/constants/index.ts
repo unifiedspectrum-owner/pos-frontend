@@ -3,11 +3,14 @@
 /* Routing constants and API endpoints */
 export * from './routes'
 
-/* Status and priority filter constants */
+/* Ticket status constants */
 export * from './status'
+
+/* Communication constants */
+export * from './communication'
 
 /* Form configuration constants */
 export * from './forms'
 
-/* Communication constants */
-export * from './communication'
+/* View page configuration constants */
+export * from './view-config'

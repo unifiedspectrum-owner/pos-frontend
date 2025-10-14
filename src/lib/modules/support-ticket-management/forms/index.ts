@@ -14,3 +14,9 @@ export { default as TicketComments } from './ticket-comments'
 
 /* Add comment form component */
 export { default as AddCommentForm } from './add-comment-form'
+
+/* Assign ticket modal component */
+export { default as AssignTicketForm } from './assign-ticket-form'
+
+/* Update ticket status modal component */
+export { default as UpdateTicketStatusForm } from './update-ticket-status-form'

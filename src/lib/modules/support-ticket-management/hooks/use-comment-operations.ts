@@ -4,6 +4,7 @@ import { AxiosError } from 'axios'
 
 /* Shared module imports */
 import { handleApiError } from '@shared/utils/api'
+import { createToastNotification } from '@shared/utils/ui/notifications'
 import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 
 /* Support ticket module imports */
@@ -15,7 +16,7 @@ import { CreateTicketCommentFormSchema } from '@support-ticket-management/schema
 interface UseCommentOperationsReturn {
   fetchTicketComments: (ticketId: string) => Promise<boolean>
   refetchTicketComments: () => Promise<boolean>
-  addTicketComment: (data: CreateTicketCommentFormSchema) => Promise<boolean>
+  addTicketComment: (ticketId: string, data: CreateTicketCommentFormSchema) => Promise<boolean>
   downloadTicketCommentAttachment: (attachmentId: number, filename: string) => Promise<boolean>
   ticketComments: (TicketCommunication & { attachments?: TicketAttachment[] })[]
   isFetchingComments: boolean
@@ -102,7 +103,7 @@ export const useCommentOperations = (): UseCommentOperationsReturn => {
   }, [lastFetchedTicketId, fetchTicketComments])
 
   /* Add new comment to ticket */
-  const addTicketComment = useCallback(async (data: CreateTicketCommentFormSchema): Promise<boolean> => {
+  const addTicketComment = useCallback(async (ticketId: string, data: CreateTicketCommentFormSchema): Promise<boolean> => {
     try {
       setIsAddingComment(true)
       setAddCommentError(null)
@@ -112,13 +113,20 @@ export const useCommentOperations = (): UseCommentOperationsReturn => {
         await new Promise(resolve => setTimeout(resolve, LOADING_DELAY))
       }
 
-      console.log('[useCommentOperations] Adding ticket comment:', data)
+      console.log('[useCommentOperations] Adding ticket comment:', ticketId, data)
 
       /* Call API */
-      const response = await communicationsService.createTicketCommunication(data)
+      const response = await communicationsService.createTicketCommunication(ticketId, data)
 
       /* Handle success */
       if (response.success) {
+        /* Success notification */
+        createToastNotification({
+          type: 'success',
+          title: 'Comment Added Successfully',
+          description: response.message || 'Your comment has been successfully added to the ticket.'
+        })
+
         console.log('[useCommentOperations] Successfully added comment:', response.data?.communication_id)
 
         return true
@@ -126,6 +134,13 @@ export const useCommentOperations = (): UseCommentOperationsReturn => {
         /* Handle API error response */
         const errorMsg = response.error || response.message || 'Failed to add comment'
         console.error('[useCommentOperations] Add comment failed:', errorMsg)
+
+        createToastNotification({
+          type: 'error',
+          title: 'Failed to Add Comment',
+          description: errorMsg
+        })
+
         setAddCommentError(errorMsg)
         return false
       }
@@ -190,11 +205,25 @@ export const useCommentOperations = (): UseCommentOperationsReturn => {
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
 
+        /* Success notification */
+        createToastNotification({
+          type: 'success',
+          title: 'Attachment Downloaded',
+          description: `File "${downloadFilename}" has been successfully downloaded.`
+        })
+
         return true
       } else {
         /* Handle API error response */
         const errorMsg = response.error || response.message || 'Failed to download attachment'
         console.error('[useCommentOperations] Download failed:', errorMsg)
+
+        createToastNotification({
+          type: 'error',
+          title: 'Download Failed',
+          description: errorMsg
+        })
+
         setDownloadAttachmentError(errorMsg)
         return false
       }

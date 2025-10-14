@@ -7,6 +7,7 @@ export const SUPPORT_TICKET_MODULE_NAME = 'support-ticket-management';
 export const SUPPORT_TICKET_API_ROUTES = {
   BASE_URL: '/support-tickets',
   LIST: '/list',
+  UPDATE_STATUS: '/:id/status',
   ATTACHEMENT: {
     DOWNLOAD: '/attachments/:id/download'
   },
@@ -14,8 +15,11 @@ export const SUPPORT_TICKET_API_ROUTES = {
   CREATE: '',
   UPDATE: '/:id',
   DELETE: '/:id',
-  ASSIGN: '/:id/assign',
-  ADD_COMMENT: '/communications',
+  ASSIGNMENT:{
+    CREATE: '/:id/assign',
+    GET:'/:id/assignment'
+  },
+  ADD_COMMENT: '/:id/communications',
   GET_COMMENTS: '/:id/communications',
   CATEGORIES: '/categories',
   STATISTICS: '/statistics',

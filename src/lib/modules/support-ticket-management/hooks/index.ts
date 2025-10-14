@@ -8,3 +8,6 @@ export * from './use-ticket-operations'
 
 /* Ticket comment operations hook */
 export * from './use-comment-operations'
+
+/* Ticket assignment operations hook */
+export * from './use-assignment-operations'

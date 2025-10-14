@@ -1,10 +1,10 @@
-/* Form configuration constants for support ticket management */
+/* Ticket creation form configuration constants */
 
 /* Libraries imports */
-import { FaInfoCircle, FaUser, FaEnvelope, FaPhone, FaListAlt, FaFileAlt, FaPaperclip, FaCommentDots } from 'react-icons/fa'
+import { FaInfoCircle, FaUser, FaEnvelope, FaPhone, FaListAlt, FaFileAlt, FaPaperclip } from 'react-icons/fa'
 
 /* Support ticket module imports */
-import { CreateTicketFormSchema, CreateTicketCommentFormSchema } from '@support-ticket-management/schemas'
+import { CreateTicketFormSchema } from '@support-ticket-management/schemas'
 
 /* Shared module imports */
 import { FormFieldStructure, FormSectionStructure } from '@shared/types'
@@ -195,6 +195,7 @@ export const MESSAGE_INFO_FORM_QUESTIONS: FormFieldStructure[] = [
   }
 ]
 
+/* Ticket creation form sections configuration */
 export const TICKET_CREATION_FORM_QUESTIONS: FormSectionStructure[] = [
   {
     id: 1,
@@ -213,64 +214,5 @@ export const TICKET_CREATION_FORM_QUESTIONS: FormSectionStructure[] = [
     icon: FaFileAlt,
     heading: "Attachments",
     questions: MESSAGE_INFO_FORM_QUESTIONS
-  }
-]
-
-/* Default form values for ticket communication */
-export const TICKET_COMMUNICATION_FORM_DEFAULT_VALUES: CreateTicketCommentFormSchema = {
-  ticket_id: '',
-  message_content: '',
-  is_internal: false,
-  attachments: []
-}
-
-/* Ticket communication form field configurations */
-export const TICKET_COMMUNICATION_FORM_QUESTIONS: FormFieldStructure[] = [
-  {
-    id: 1,
-    type: FORM_FIELD_TYPES.WYSIWYG_EDITOR,
-    label: "Message",
-    schema_key: "message_content",
-    placeholder: "Enter your message (minimum 1 character, maximum 10000 characters)",
-    left_icon: FaCommentDots,
-    is_required: true,
-    is_active: true,
-    display_order: 1,
-    grid: {
-      col_span: 2
-    }
-  },
-  
-  {
-    id: 2,
-    type: FORM_FIELD_TYPES.FILE,
-    label: "Attachments",
-    schema_key: "attachments",
-    placeholder: "Upload attachments (max 5 files, max 10MB)",
-    left_icon: FaPaperclip,
-    is_required: false,
-    is_active: true,
-    display_order: 2,
-    grid: {
-      col_span: 2
-    }
-  },
-  {
-    id: 3,
-    type: FORM_FIELD_TYPES.TOGGLE,
-    label: "Internal Note",
-    schema_key: "is_internal",
-    placeholder: "Mark as internal note (visible only to agents)",
-    left_icon: FaInfoCircle,
-    is_required: false,
-    is_active: true,
-    display_order: 3,
-    toggle_text: {
-      true: "Internal (Agents Only)",
-      false: "Public (Visible to Customer)"
-    },
-    grid: {
-      col_span: 2
-    }
   }
 ]

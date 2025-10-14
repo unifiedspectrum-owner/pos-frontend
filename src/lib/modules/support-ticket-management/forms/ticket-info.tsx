@@ -1,50 +1,51 @@
 /* Libraries imports */
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Flex, Heading, GridItem, SimpleGrid } from '@chakra-ui/react'
 import { Controller, useFormContext } from 'react-hook-form'
 
 /* Shared module imports */
 import { TextInputField, SelectField, TextAreaField, DateField, FileField } from '@shared/components'
 import { FORM_FIELD_TYPES } from '@shared/constants'
+import { fileToBase64 } from '@shared/utils/formatting'
 
 /* Support ticket module imports */
 import { CreateTicketFormSchema } from '@support-ticket-management/schemas'
-import { TICKET_CREATION_FORM_QUESTIONS } from '@support-ticket-management/constants'
+import { TICKET_CREATION_FORM_QUESTIONS, TicketFormMode } from '@support-ticket-management/constants'
 import { TenantBasicDetails } from '@tenant-management/types/account/list'
+import { NavigationButtons } from '@support-ticket-management/forms'
 
-/* Helper function to convert File to base64 */
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = () => {
-      const base64String = reader.result as string
-      /* Remove data URL prefix to get pure base64 */
-      const base64 = base64String.split(',')[1]
-      resolve(base64)
-    }
-    reader.onerror = (error) => reject(error)
-  })
-}
+/* Fields to hide in edit mode - constant outside component */
+const HIDDEN_FIELDS_IN_EDIT_MODE = ['message_content', 'internal_notes', 'attachments'] as const
 
 /* Component props interface */
 interface TicketFormFieldsProps {
+  mode?: TicketFormMode
   tenantSelectOptions: Array<{ label: string; value: string }>
   categorySelectOptions: Array<{ label: string; value: string }>
   tenantDetails: TenantBasicDetails[]
+  onCancel?: () => void
+  onSubmit?: () => void
+  isSubmitting?: boolean
+  submitText?: string
+  loadingText?: string
 }
 
 /* Form fields component - must be inside FormProvider */
 const TicketForm: React.FC<TicketFormFieldsProps> = ({
+  mode,
   tenantSelectOptions,
   categorySelectOptions,
   tenantDetails,
+  onCancel,
+  onSubmit,
+  isSubmitting = false,
+  submitText,
+  loadingText,
 }) => {
   const { control, formState: { errors }, setValue } = useFormContext<CreateTicketFormSchema>() /* Form validation context */
 
-  /* Handle tenant selection and auto-fill request details */
-  const handleTenantChange = (value: string) => {
-
+  /* Handle tenant selection and auto-fill request details - memoized */
+  const handleTenantChange = useCallback((value: string) => {
     /* Auto-fill request details if tenant is selected */
     if (value && tenantDetails) {
       const selectedTenant = tenantDetails.find(tenant => tenant.tenant_id === value)
@@ -61,12 +62,57 @@ const TicketForm: React.FC<TicketFormFieldsProps> = ({
         }
       }
     }
-  }
+  }, [tenantDetails, setValue])
+
+  /* Memoized file to base64 converter */
+  const handleFileChange = useCallback(async (files: File[], onChange: (value: any) => void) => {
+    try {
+      /* Convert each file to the expected attachment schema */
+      const attachments = await Promise.all(
+        files.map(async (file) => {
+          const base64Content = await fileToBase64(file)
+          const fileExtension = file.name.split('.').pop() || ''
+
+          return {
+            filename: file.name,
+            file_size: file.size,
+            mime_type: file.type,
+            file_extension: fileExtension,
+            file_content: base64Content,
+            is_public: false
+          }
+        })
+      )
+
+      /* Update form value with converted attachments */
+      onChange(attachments)
+    } catch (error) {
+      console.error('Error processing files:', error)
+    }
+  }, [])
 
   return (
-    <Flex flexDir="column" gap={6}>
-      {TICKET_CREATION_FORM_QUESTIONS.map((section) => (
-        <Flex key={section.id} flexDir="column" gap={4}>
+    <>
+      {TICKET_CREATION_FORM_QUESTIONS.map((section) => {
+        /* Filter section questions based on mode */
+        const filteredQuestions = section.questions
+          .filter((field) => field.is_active) /* Only render active fields */
+          .filter((field) => {
+            /* In edit mode, hide specific fields */
+            if (mode === 'EDIT' && HIDDEN_FIELDS_IN_EDIT_MODE.includes(field.schema_key as any)) {
+              return false
+            }
+            return true
+          })
+          .sort((a, b) => Number(a.display_order) - Number(b.display_order)) /* Sort by display order */
+
+        /* Skip rendering entire section if no questions remain after filtering */
+        if (filteredQuestions.length === 0) {
+          return null
+        }
+
+        return (
+        <Flex key={section.id} flexDir="column" gap={4} mb={6}>
           {/* Section heading with icon */}
           <Flex align="center" gap={2}>
             <section.icon size={20} />
@@ -77,10 +123,7 @@ const TicketForm: React.FC<TicketFormFieldsProps> = ({
 
           {/* Section fields */}
           <SimpleGrid w={'100%'} columns={[1, 8]} gap={6}>
-            {section.questions
-              .filter((field) => field.is_active) /* Only render active fields */
-              .sort((a, b) => Number(a.display_order) - Number(b.display_order)) /* Sort by display order */
-              .map((field) => {
+            {filteredQuestions.map((field) => {
                 const schemaKey = field.schema_key as keyof CreateTicketFormSchema
                 const fieldError = errors[schemaKey]
 
@@ -126,14 +169,19 @@ const TicketForm: React.FC<TicketFormFieldsProps> = ({
                           /* Determine which options to use */
                           const options = schemaKey === 'tenant_id' ? tenantSelectOptions : categorySelectOptions
 
+                          /* Handle tenant change with memoized callback */
+                          const handleChange = schemaKey === 'tenant_id'
+                            ? (value: string) => {
+                                controllerField.onChange(value)
+                                handleTenantChange(value)
+                              }
+                            : controllerField.onChange
+
                           return (
                             <SelectField
                               {...commonProps}
                               value={controllerField.value?.toString() || ''}
-                              onChange={schemaKey === 'tenant_id' ? (value) => {
-                                controllerField.onChange(value)
-                                handleTenantChange(value)
-                              } : controllerField.onChange}
+                              onChange={handleChange}
                               options={options}
                             />
                           )
@@ -186,43 +234,14 @@ const TicketForm: React.FC<TicketFormFieldsProps> = ({
                       <Controller
                         name={schemaKey}
                         control={control}
-                        render={({ field: controllerField }) => {
-                          /* Handle file upload and convert to schema format */
-                          const handleFileChange = async (files: File[]) => {
-                            try {
-                              /* Convert each file to the expected attachment schema */
-                              const attachments = await Promise.all(
-                                files.map(async (file) => {
-                                  const base64Content = await fileToBase64(file)
-                                  const fileExtension = file.name.split('.').pop() || ''
-
-                                  return {
-                                    filename: file.name,
-                                    file_size: file.size,
-                                    mime_type: file.type,
-                                    file_extension: fileExtension,
-                                    file_content: base64Content,
-                                    is_public: false
-                                  }
-                                })
-                              )
-
-                              /* Update form value with converted attachments */
-                              controllerField.onChange(attachments)
-                            } catch (error) {
-                              console.error('Error processing files:', error)
-                            }
-                          }
-
-                          return (
-                            <FileField
-                              {...commonProps}
-                              value={controllerField.value || []}
-                              onChange={handleFileChange}
-                              height={'200px'}
-                            />
-                          )
-                        }}
+                        render={({ field: controllerField }) => (
+                          <FileField
+                            {...commonProps}
+                            value={controllerField.value || []}
+                            onChange={(files) => handleFileChange(files, controllerField.onChange)}
+                            height={'200px'}
+                          />
+                        )}
                       />
                     </GridItem>
                   )
@@ -233,8 +252,20 @@ const TicketForm: React.FC<TicketFormFieldsProps> = ({
             }
           </SimpleGrid>
         </Flex>
-      ))}
-    </Flex>
+        )
+      })}
+
+      {/* Navigation buttons - conditionally rendered */}
+      {onSubmit && onCancel && (
+        <NavigationButtons
+          onCancel={onCancel}
+          onSubmit={onSubmit}
+          loading={isSubmitting}
+          submitText={submitText || 'Submit'}
+          loadingText={loadingText || 'Submitting...'}
+        />
+      )}
+    </>
   )
 }
 

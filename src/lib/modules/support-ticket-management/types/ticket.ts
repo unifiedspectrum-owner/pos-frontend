@@ -6,8 +6,6 @@ import { PaginationInfo, ValidationError } from '@shared/types'
 /* Support ticket module imports */
 import { TicketCategory } from './category'
 import { TicketAssignment } from './assignment'
-import { TicketCommunication } from './communication'
-import { TicketAttachment } from './attachment'
 
 /* ====================
    ENUMS & TYPES
@@ -92,9 +90,6 @@ export interface SupportTicketDetails {
   is_overdue: boolean;
   category_details: TicketCategory | null;
   assignment_details: TicketAssignment | null;
-  communications: (TicketCommunication & {
-    attachments?: TicketAttachment[];
-  })[];
 }
 
 /* ====================
@@ -162,6 +157,18 @@ export interface CreateSupportTicketApiResponse {
   timestamp: string;
 }
 
+/* Response after successful support ticket updation */
+export interface UpdateSupportTicketApiResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    ticketId: number;
+  };
+  validation_errors?: ValidationError[];
+  error?: string;
+  timestamp: string;
+}
+
 /* Response after support ticket update operation */
 export interface SupportTicketUpdateResponse {
   success: boolean;
@@ -183,4 +190,17 @@ export interface SupportTicketDeletionResponse {
   };
   error?: string;
   timestamp: string;
+}
+
+
+/* Update ticket status response */
+export interface UpdateTicketStatusApiResponse {
+  success: boolean;
+  message: string;
+  data: {
+    ticket_id: string;
+    status: string;
+  };
+  error?: string;
+  timestamp?: string;
 }

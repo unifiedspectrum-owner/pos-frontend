@@ -11,7 +11,7 @@ import { Breadcrumbs } from '@shared/components'
 /* Support ticket module imports */
 import { CreateTicketFormSchema } from '@support-ticket-management/schemas'
 import { TICKET_FORM_TITLES, TicketFormMode } from '@support-ticket-management/constants'
-import { NavigationButtons, TicketForm, TicketComments } from '@support-ticket-management/forms'
+import { TicketForm, TicketComments } from '@support-ticket-management/forms'
 import { TenantBasicDetails } from '@tenant-management/types/account/list'
 import { TicketCommunication, TicketAttachment } from '@support-ticket-management/types'
 
@@ -58,12 +58,18 @@ const TicketFormLayout: React.FC<TicketFormLayoutProps> = ({
             <Breadcrumbs />
           </Flex>
 
-          {/* Form section with all fields */}
+          {/* Form section with all fields and navigation buttons */}
           <Flex flexDir="column" p={5} gap={4} borderWidth={1} borderRadius={10} borderColor={lighten(0.3, GRAY_COLOR)}>
             <TicketForm
+              mode={mode}
               tenantDetails={tenantDetails}
               tenantSelectOptions={tenantSelectOptions}
               categorySelectOptions={categorySelectOptions}
+              onCancel={onCancel}
+              onSubmit={() => methods.handleSubmit(onSubmit)()}
+              isSubmitting={isSubmitting}
+              submitText={mode === 'CREATE' ? 'Create Ticket' : 'Update Ticket'}
+              loadingText={mode === 'CREATE' ? 'Creating Ticket...' : 'Updating Ticket...'}
             />
           </Flex>
 
@@ -73,15 +79,6 @@ const TicketFormLayout: React.FC<TicketFormLayoutProps> = ({
               <TicketComments comments={ticketComments} ticketId={ticketId} onRefresh={onRefresh} />
             </Flex>
           )}
-
-          {/* Navigation buttons section */}
-          <NavigationButtons
-            onCancel={onCancel}
-            onSubmit={() => methods.handleSubmit(onSubmit)()}
-            loading={isSubmitting}
-            submitText={mode === 'CREATE' ? 'Create Ticket' : 'Update Ticket'}
-            loadingText={mode === 'CREATE' ? 'Creating Ticket...' : 'Updating Ticket...'}
-          />
         </Flex>
       </Flex>
     </FormProvider>

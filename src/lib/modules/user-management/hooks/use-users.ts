@@ -1,5 +1,6 @@
 /* Libraries imports */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { AxiosError } from 'axios'
 
 /* Shared module imports */
 import { PaginationInfo } from '@shared/types'
@@ -8,7 +9,6 @@ import { handleApiError } from '@shared/utils'
 /* User module imports */
 import { userManagementService } from '@user-management/api'
 import { UserAccountDetails } from '@user-management/types'
-import { AxiosError } from 'axios'
 
 /* Hook interface */
 interface UseUsersParams {
@@ -19,6 +19,7 @@ interface UseUsersParams {
 
 interface UseUsersReturn {
   users: UserAccountDetails[]
+  userSelectOptions: Array<{ label: string; value: string }>
   loading: boolean
   error: string | null
   lastUpdated: string
@@ -94,6 +95,14 @@ export const useUsers = (params: UseUsersParams = {}): UseUsersReturn => {
     await fetchUsers(currentPage, currentLimit)
   }, [fetchUsers, currentPage, currentLimit])
 
+  /* Transform users to select options */
+  const userSelectOptions = useMemo(() => {
+    return users.map(user => ({
+      label: `${user.f_name} ${user.l_name}`,
+      value: user.id.toString()
+    }))
+  }, [users])
+
   /* Auto-fetch on mount if enabled */
   useEffect(() => {
     if (autoFetch) {
@@ -103,6 +112,7 @@ export const useUsers = (params: UseUsersParams = {}): UseUsersReturn => {
 
   return {
     users,
+    userSelectOptions,
     loading,
     error,
     lastUpdated,
