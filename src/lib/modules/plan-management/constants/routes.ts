@@ -6,14 +6,25 @@ export const PLAN_MODULE_NAME = 'plan-management';
 /* Plan API endpoints */
 export const PLAN_API_ROUTES = {
   BASE_URL: '/plans',
-  LIST: '',
-  DETAILS: '/:id',
-  CREATE: '',
-  UPDATE: '/:id',
-  DELETE: '/:id',
-  FEATURES: '/features',
-  ADD_ONS: '/add-ons',
-  SLA: '/sla',
+  PLAN: {
+    CREATE: '',
+    LIST: '',
+    DETAILS: '/:id',
+    UPDATE: '/:id',
+    DELETE: '/:id',
+  },
+  FEATURE: {
+    CREATE: '/features',
+    LIST: '/features',
+  },
+  ADD_ON: {
+    CREATE: '/add-ons',
+    LIST: '/add-ons',
+  },
+  SLA: {
+    CREATE: '/sla',
+    LIST: '/sla',
+  },
 } as const;
 
 /* Plan management page routes */

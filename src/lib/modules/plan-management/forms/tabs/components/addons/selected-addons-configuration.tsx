@@ -1,21 +1,21 @@
 /* Configuration panel for selected add-ons with quantity and settings management */
+
+/* Libraries imports */
 import React from 'react'
 import { Box, Text, Flex, Button, SimpleGrid, GridItem, Alert } from '@chakra-ui/react'
-import { Controller, Control, FieldErrors } from 'react-hook-form'
+import { Controller, Control, FieldErrors, Path, FieldArrayWithId } from 'react-hook-form'
 import { lighten } from 'polished'
 import { FiTrash2 } from 'react-icons/fi'
 
-/* Types */
-import { Addon } from '@plan-management/types'
-import { CreatePlanFormData } from '@plan-management/schemas/validation/plans'
-import { Path, FieldArrayWithId } from 'react-hook-form'
-
-/* Constants */
-import { GRAY_COLOR } from '@shared/config'
-import { ADDONS_INFO_QUESTIONS } from '@plan-management/config'
-
-/* Components */
+/* Shared module imports */
 import { SwitchField, TextInputField, SelectField } from '@shared/components'
+import { GRAY_COLOR } from '@shared/config'
+import { FORM_FIELD_TYPES } from '@shared/constants'
+
+/* Plan module imports */
+import { Addon } from '@plan-management/types'
+import { CreatePlanFormData } from '@plan-management/schemas'
+import { ADDONS_INFO_QUESTIONS } from '@plan-management/constants'
 
 type AddonAssignmentFieldArray = FieldArrayWithId<CreatePlanFormData, "addon_assignments", "id">;
 
@@ -82,105 +82,107 @@ const SelectedAddonsConfiguration: React.FC<SelectedAddonsConfigurationProps> = 
             
             {/* Addon configuration fields grid */}
             <SimpleGrid columns={3} gap={4} mb={4}>
-              {sortedQuestions.map((que) => {
-                const fieldPath = `addon_assignments.${assignmentIndex}.${que.schema_key}`;
+              {sortedQuestions.map((field) => {
+                const fieldPath = `addon_assignments.${assignmentIndex}.${field.schema_key}`;
                 const addon = addons.find(a => a.id === assignment.addon_id);
-                
-                switch(que.type) {
-                  case "INPUT":
-                    if (que.schema_key === "addon_name") {
+
+                /* Render appropriate field type based on configuration */
+                switch(field.type) {
+                  case FORM_FIELD_TYPES.INPUT: /* Text input fields */
+                    if (field.schema_key === "addon_name") {
                       /* Special case for addon name - show as disabled */
                       return (
-                        <GridItem key={que.id} colSpan={que.grid.col_span}>
+                        <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
                           <TextInputField
-                            label={que.label}
+                            label={field.label}
                             value={addon?.name || `Add-on #${assignment.addon_id}`}
-                            placeholder={que.placeholder ?? ''}
+                            placeholder={field.placeholder ?? ''}
                             onChange={() => {}} /* No-op since it's disabled */
+                            name="addon_name"
                             isInValid={false}
-                            required={que.is_required}
+                            required={field.is_required}
                             errorMessage=""
-                            disabled={que.disabled || false}
+                            disabled={field.disabled || false}
                             isDebounced={false}
                           />
                         </GridItem>
-                      );
+                      )
                     } else {
                       /* Regular number inputs */
                       return (
-                        <GridItem key={que.id} colSpan={que.grid.col_span}>
+                        <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
                           <Controller
                             name={fieldPath as Path<CreatePlanFormData>}
                             control={control}
-                            render={({ field: { onChange, onBlur, value, name }, fieldState: { error } }) => (
+                            render={({ field: controllerField, fieldState }) => (
                               <TextInputField
-                                label={que.label}
-                                value={value?.toString() || ''}
-                                placeholder={que.placeholder ?? ''}
-                                onChange={(e) => onChange(e.target.value ? parseInt(e.target.value) : null)}
-                                onBlur={onBlur}
-                                name={name}
-                                isInValid={!!error}
-                                required={que.is_required}
-                                errorMessage={error?.message || ""}
+                                label={field.label}
+                                value={controllerField.value?.toString() || ''}
+                                placeholder={field.placeholder ?? ''}
+                                onChange={(e) => controllerField.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                                onBlur={controllerField.onBlur}
+                                name={controllerField.name}
+                                isInValid={!!fieldState.error}
+                                required={field.is_required}
+                                errorMessage={fieldState.error?.message || ""}
                                 isDebounced={true}
                                 debounceMs={300}
                               />
                             )}
                           />
                         </GridItem>
-                      );
+                      )
                     }
 
-                  case "SELECT":
+                  case FORM_FIELD_TYPES.SELECT: /* Dropdown select fields */
                     return (
-                      <GridItem key={que.id} colSpan={que.grid.col_span}>
+                      <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
                         <Controller
                           name={fieldPath as Path<CreatePlanFormData>}
                           control={control}
-                          render={({ field: { onChange, value }, fieldState: { error } }) => (
+                          render={({ field: controllerField, fieldState }) => (
                             <SelectField
-                              label={que.label}
-                              value={String(value || que.values?.[0]?.value || 'basic')}
-                              placeholder={que.placeholder}
-                              isInValid={!!error}
+                              label={field.label}
+                              value={String(controllerField.value || field.values?.[0]?.value || 'basic')}
+                              placeholder={field.placeholder}
+                              isInValid={!!fieldState.error}
                               required={false}
-                              errorMessage={error?.message || ''}
-                              options={que.values || []}
-                              onChange={onChange}
+                              errorMessage={fieldState.error?.message || ''}
+                              options={field.values || []}
+                              onChange={controllerField.onChange}
                               name={fieldPath}
                               size="lg"
                             />
                           )}
                         />
                       </GridItem>
-                    );
+                    )
 
-                  case "TOGGLE":
+                  case FORM_FIELD_TYPES.TOGGLE: /* Switch/toggle fields for boolean values */
                     return (
-                      <GridItem key={que.id} colSpan={que.grid.col_span}>
+                      <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
                         <Controller
                           name={fieldPath as Path<CreatePlanFormData>}
                           control={control}
-                          render={({ field: { onChange, value, name }, fieldState: { error } }) => (
+                          render={({ field: controllerField, fieldState }) => (
                             <SwitchField
-                              label={que.label}
-                              value={Boolean(value) || false}
-                              onChange={onChange}
-                              name={name}
-                              isInValid={!!error}
-                              required={que.is_required}
-                              errorMessage={error?.message || ""}
-                              activeText={que.toggle_text?.true}
-                              inactiveText={que.toggle_text?.false}
+                              label={field.label}
+                              value={Boolean(controllerField.value)}
+                              onChange={controllerField.onChange}
+                              name={controllerField.name}
+                              isInValid={!!fieldState.error}
+                              required={field.is_required}
+                              errorMessage={fieldState.error?.message || ""}
+                              activeText={field.toggle_text?.true}
+                              inactiveText={field.toggle_text?.false}
                             />
                           )}
                         />
                       </GridItem>
-                    );
+                    )
 
                   default:
-                    return null;
+                    return null /* Unsupported field type */
                 }
               })}
             </SimpleGrid>

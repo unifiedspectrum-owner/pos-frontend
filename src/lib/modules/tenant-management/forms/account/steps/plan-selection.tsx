@@ -4,7 +4,7 @@ import { Flex } from '@chakra-ui/react'
 
 
 /* Plan module imports */
-import { Plan } from '@plan-management/types/plans'
+import { Plan } from '@plan-management/types'
 
 /* Tenant module imports */
 import { PlansGrid, BillingCycleSelector, NavigationButton } from './components'

@@ -17,7 +17,7 @@ import {
   FeaturesInfoFormData,
   AddonsInfoFormData,
   SlaInfoFormData
-} from '@plan-management/schemas/validation/plans';
+} from '@plan-management/schemas';
 
 /* Hook for on-demand tab validation using getValues() - no reactive watching */
 export const useTabValidation = (

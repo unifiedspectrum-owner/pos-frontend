@@ -1,91 +1,83 @@
-import { Flex, SimpleGrid, GridItem } from '@chakra-ui/react'
+/* Libraries imports */
 import React from 'react'
+import { SimpleGrid, GridItem } from '@chakra-ui/react'
 import { useFormContext, Controller } from 'react-hook-form'
 
-/* Types & Schemas */
-import { CreatePlanFormData, PRICING_INFO_FIELD_KEYS } from '@plan-management/schemas/validation/plans'
-import { useTabValidation, useTabValidationNavigation } from '@plan-management/hooks'
-import { PlanFormMode } from '@plan-management/types/plans'
+/* Shared module imports */
+import { TextInputField } from '@shared/components/form-elements'
+import { FORM_FIELD_TYPES } from '@shared/constants'
 
-/* Constants */
-import { PRICING_INFO_QUESTIONS } from '@plan-management/config'
-
-/* Components */
-import { TextInputField } from '@shared/components/form-elements/ui'
+/* Plan module imports */
+import { CreatePlanFormData } from '@plan-management/schemas'
+import { PRICING_INFO_QUESTIONS, PLAN_FORM_MODES } from '@plan-management/constants'
 import { VolumeDiscounts } from '@plan-management/forms/tabs/components/volume-discounts'
-import { TabNavigation } from '@plan-management/components'
+import { usePlanFormMode } from '@plan-management/contexts'
 
-interface PlanPricingConfigurationProps {
-  mode: PlanFormMode;
-  onNext?: () => void;
-  onPrevious?: () => void;
-}
+/* Pricing configuration tab component - no props needed */
+const PlanPricingConfiguration: React.FC = () => {
+  /* Get mode from context */
+  const { mode } = usePlanFormMode()
 
-const PlanPricingConfiguration: React.FC<PlanPricingConfigurationProps> = ({ 
-  mode,
-  onNext, 
-  onPrevious
-}) => {
-  /* Form context and validation state */
-  const { control, formState: { errors }, getValues } = useFormContext<CreatePlanFormData>()
-  const { isPricingInfoValid } = useTabValidation(getValues)
-  const isReadOnly = mode === 'view'
-
-  /* Shared navigation logic */
-  const { handleNext } = useTabValidationNavigation(PRICING_INFO_FIELD_KEYS, isReadOnly, onNext);
+  /* Form context */
+  const { control, formState: { errors }, clearErrors } = useFormContext<CreatePlanFormData>()
+  const isReadOnly = mode === PLAN_FORM_MODES.VIEW
 
   return (
-    <Flex flexDir="column" gap={6} p={4}>
+    <>
       {/* Dynamic pricing fields based on configuration */}
-      <SimpleGrid columns={4} gap={4}>
-        {
-          PRICING_INFO_QUESTIONS.filter(que => que.is_active).map((que) => {
-            const fieldError = errors[que.schema_key as keyof CreatePlanFormData];
-            
-            switch(que.type) {
-              case 'INPUT':
+      <SimpleGrid columns={4} gap={4} p={4}>
+        {PRICING_INFO_QUESTIONS
+          .filter((field) => field.is_active) /* Only render active fields */
+          .sort((a, b) => Number(a.display_order) - Number(b.display_order)) /* Sort by display order */
+          .map((field) => {
+            const schemaKey = field.schema_key as keyof CreatePlanFormData
+            const fieldError = errors[schemaKey]
+
+            /* Shared field properties for all input types */
+            const commonProps = {
+              name: schemaKey,
+              label: field.label,
+              placeholder: field.placeholder,
+              isInValid: !isReadOnly && !!fieldError,
+              required: field.is_required && !isReadOnly,
+              errorMessage: !isReadOnly ? fieldError?.message : undefined,
+              readOnly: field.disabled || isReadOnly,
+              disabled: field.disabled || isReadOnly,
+            }
+
+            /* Render appropriate field type based on configuration */
+            switch(field.type) {
+              case FORM_FIELD_TYPES.INPUT: /* Text input fields for pricing values */
                 return (
-                  <GridItem key={que.id} colSpan={que.grid.col_span}>
+                  <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
                     <Controller
-                      name={que.schema_key as keyof CreatePlanFormData}
+                      name={schemaKey}
                       control={control}
                       render={({ field: controllerField }) => (
                         <TextInputField
-                          label={que.label}
+                          {...commonProps}
                           value={controllerField.value?.toString() || ''}
-                          placeholder={que.placeholder || ""}
-                          onChange={controllerField.onChange}
+                          onChange={(value) => {
+                            clearErrors(schemaKey)
+                            controllerField.onChange(value)
+                          }}
                           onBlur={controllerField.onBlur}
-                          name={controllerField.name}
-                          isInValid={!!fieldError}
-                          required={que.is_required}
-                          errorMessage={fieldError?.message || ''}
-                          disabled={que.disabled || isReadOnly}
-                          readOnly={isReadOnly}
                         />
                       )}
                     />
                   </GridItem>
-                );
+                )
+
               default:
-                return null;
+                return null /* Unsupported field type */
             }
           })
         }
       </SimpleGrid>
 
       {/* Volume discounts section */}
-      <VolumeDiscounts mode={mode} />
-
-      {/* Navigation controls */}
-      <TabNavigation
-        onNext={handleNext}
-        onPrevious={onPrevious}
-        isFormValid={isPricingInfoValid}
-        readOnly={isReadOnly}
-      />
-      
-    </Flex>
+      <VolumeDiscounts />
+    </>
   )
 }
 

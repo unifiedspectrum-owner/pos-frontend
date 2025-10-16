@@ -1,19 +1,20 @@
 /* Dynamic form component for creating new SLAs with configurable fields and validation */
+
+/* Libraries imports */
 import React from 'react'
 import { Box, Flex, HStack, SimpleGrid, GridItem } from '@chakra-ui/react'
 import { Controller, UseFormReturn, FieldValues, SubmitHandler } from 'react-hook-form'
 import { lighten } from 'polished'
 import { FiSave } from 'react-icons/fi'
 
-/* Types */
-import { CreateSlaFormData } from '@plan-management/schemas/validation/plans'
-
-/* Constants */
-import { GRAY_COLOR } from '@shared/config'
-import { SLA_CREATE_FORM_CONFIG } from '@plan-management/config'
-
-/* Components */
+/* Shared module imports */
 import { TextInputField, TextAreaField, SelectField, SwitchField, PrimaryButton } from '@shared/components'
+import { GRAY_COLOR } from '@shared/config'
+import { FORM_FIELD_TYPES } from '@shared/constants'
+
+/* Plan module imports */
+import { CreateSlaFormData } from '@plan-management/schemas'
+import { SLA_FORM_QUESTIONS } from '@plan-management/constants'
 
 interface CreateSLAFormProps {
   showCreateSla: boolean;
@@ -49,108 +50,113 @@ const CreateSLAForm: React.FC<CreateSLAFormProps> = ({
         <Flex flexDir="column" gap={4}>
           {/* Dynamic form fields rendered from configuration */}
           <SimpleGrid columns={2} gap={4}>
-            {SLA_CREATE_FORM_CONFIG.filter(field => field.is_active).sort((a, b) => a.display_order - b.display_order).map((field) => {
-              const name = field.schema_key as keyof CreateSlaFormData;
+            {SLA_FORM_QUESTIONS
+              .filter((field) => field.is_active) /* Only render active fields */
+              .sort((a, b) => Number(a.display_order) - Number(b.display_order)) /* Sort by display order */
+              .map((field) => {
+                const schemaKey = field.schema_key as keyof CreateSlaFormData
 
-              switch (field.type) {
-                case 'INPUT':
-                  return (
-                    <GridItem key={field.id} colSpan={field.grid.col_span}>
-                      <Controller
-                        name={name}
-                        control={createSlaForm.control}
-                        render={({ field: controllerField, fieldState }) => (
-                          <TextInputField
-                            label={field.label}
-                            value={controllerField.value || ''}
-                            placeholder={field.placeholder || ''}
-                            onChange={controllerField.onChange}
-                            onBlur={controllerField.onBlur}
-                            name={controllerField.name}
-                            isInValid={!!fieldState.error}
-                            required={field.is_required}
-                            errorMessage={fieldState.error?.message || ''}
-                          />
-                        )}
-                      />
-                    </GridItem>
-                  );
+                /* Shared field properties for all input types */
+                const commonProps = {
+                  name: schemaKey,
+                  label: field.label,
+                  placeholder: field.placeholder,
+                  required: field.is_required,
+                }
 
-                case 'TEXTAREA':
-                  return (
-                    <GridItem key={field.id} colSpan={field.grid.col_span}>
-                      <Controller
-                        name={name}
-                        control={createSlaForm.control}
-                        render={({ field: controllerField, fieldState }) => (
-                          <TextAreaField
-                            label={field.label}
-                            value={controllerField.value || ''}
-                            placeholder={field.placeholder || ''}
-                            onChange={controllerField.onChange}
-                            onBlur={controllerField.onBlur}
-                            name={controllerField.name}
-                            isInValid={!!fieldState.error}
-                            required={field.is_required}
-                            errorMessage={fieldState.error?.message || ''}
-                            isDebounced={false}
-                          />
-                        )}
-                      />
-                    </GridItem>
-                  );
+                /* Render appropriate field type based on configuration */
+                switch (field.type) {
+                  case FORM_FIELD_TYPES.INPUT: /* Text input fields */
+                    return (
+                      <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
+                        <Controller
+                          name={schemaKey}
+                          control={createSlaForm.control}
+                          render={({ field: controllerField, fieldState }) => (
+                            <TextInputField
+                              {...commonProps}
+                              value={controllerField.value || ''}
+                              onChange={controllerField.onChange}
+                              onBlur={controllerField.onBlur}
+                              isInValid={!!fieldState.error}
+                              errorMessage={fieldState.error?.message || ''}
+                            />
+                          )}
+                        />
+                      </GridItem>
+                    )
 
-                case 'SELECT':
-                  return (
-                    <GridItem key={field.id} colSpan={field.grid.col_span}>
-                      <Controller
-                        name={name}
-                        control={createSlaForm.control}
-                        render={({ field: controllerField, fieldState }) => (
-                          <SelectField
-                            label={field.label}
-                            value={controllerField.value || ''}
-                            placeholder={field.placeholder || ''}
-                            isInValid={!!fieldState.error}
-                            required={field.is_required}
-                            errorMessage={fieldState.error?.message || ''}
-                            options={field.values || []}
-                            onChange={controllerField.onChange}
-                            name={controllerField.name}
-                            size="lg"
-                          />
-                        )}
-                      />
-                    </GridItem>
-                  );
+                  case FORM_FIELD_TYPES.TEXTAREA: /* Description field */
+                    return (
+                      <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
+                        <Controller
+                          name={schemaKey}
+                          control={createSlaForm.control}
+                          render={({ field: controllerField, fieldState }) => (
+                            <TextAreaField
+                              {...commonProps}
+                              value={controllerField.value || ''}
+                              onChange={controllerField.onChange}
+                              onBlur={controllerField.onBlur}
+                              isInValid={!!fieldState.error}
+                              errorMessage={fieldState.error?.message || ''}
+                              inputProps={{
+                                rows: 4
+                              }}
+                              isDebounced={false}
+                            />
+                          )}
+                        />
+                      </GridItem>
+                    )
 
-                case 'TOGGLE':
-                  return (
-                    <GridItem key={field.id} colSpan={field.grid.col_span}>
-                      <Controller
-                        name={name}
-                        control={createSlaForm.control}
-                        render={({ field: controllerField, fieldState }) => (
-                          <SwitchField
-                            label={field.label}
-                            value={Boolean(controllerField.value) || false}
-                            onChange={controllerField.onChange}
-                            name={controllerField.name}
-                            isInValid={!!fieldState.error}
-                            required={field.is_required}
-                            errorMessage={fieldState.error?.message || ''}
-                            activeText={field.toggle_text?.true}
-                            inactiveText={field.toggle_text?.false}
-                          />
-                        )}
-                      />
-                    </GridItem>
-                  );
+                  case FORM_FIELD_TYPES.SELECT: /* Dropdown select fields */
+                    return (
+                      <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
+                        <Controller
+                          name={schemaKey}
+                          control={createSlaForm.control}
+                          render={({ field: controllerField, fieldState }) => (
+                            <SelectField
+                              {...commonProps}
+                              value={controllerField.value || ''}
+                              onChange={controllerField.onChange}
+                              isInValid={!!fieldState.error}
+                              errorMessage={fieldState.error?.message || ''}
+                              options={field.values || []}
+                              size="lg"
+                            />
+                          )}
+                        />
+                      </GridItem>
+                    )
 
-                default:
-                  return null;
-              }
-            })}
+                  case FORM_FIELD_TYPES.TOGGLE: /* Switch/toggle fields for boolean values */
+                    return (
+                      <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
+                        <Controller
+                          name={schemaKey}
+                          control={createSlaForm.control}
+                          render={({ field: controllerField, fieldState }) => (
+                            <SwitchField
+                              {...commonProps}
+                              value={Boolean(controllerField.value)}
+                              onChange={controllerField.onChange}
+                              isInValid={!!fieldState.error}
+                              errorMessage={fieldState.error?.message || ''}
+                              activeText={field.toggle_text?.true}
+                              inactiveText={field.toggle_text?.false}
+                            />
+                          )}
+                        />
+                      </GridItem>
+                    )
+
+                  default:
+                    return null /* Unsupported field type */
+                }
+              })
+            }
           </SimpleGrid>
           
           {/* Submit button with loading state */}

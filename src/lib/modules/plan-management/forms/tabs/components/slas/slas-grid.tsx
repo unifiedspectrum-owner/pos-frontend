@@ -14,7 +14,7 @@ import { PRIMARY_COLOR, GRAY_COLOR, DARK_COLOR, WHITE_COLOR } from '@shared/conf
 
 /* Components */
 import { EmptyStateContainer } from '@shared/components'
-import { ResourceSkeleton } from '@plan-management/components'
+import { ResourceGridSkeleton } from '@plan-management/components'
 
 interface SLAsGridProps {
   loading: boolean;
@@ -34,7 +34,7 @@ const SLAsGrid: React.FC<SLAsGridProps> = ({
   /* Show skeleton loader while data is loading */
   if (loading && selectedSlaIds.length === 0) {
     return (
-      <ResourceSkeleton 
+      <ResourceGridSkeleton 
         count={6} 
         columns={3} 
         variant="detailed" 

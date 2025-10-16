@@ -8,7 +8,7 @@ import { handleApiError, validatePayload } from '@shared/utils'
 import { createToastNotification } from '@shared/utils'
 
 /* Plan management module imports */
-import { Plan } from '@plan-management/types/plans'
+import { Plan } from '@plan-management/types'
 
 /* Tenant module imports */
 import { subscriptionService } from '@tenant-management/api'

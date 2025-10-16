@@ -11,7 +11,7 @@ import { EmptyStateContainer } from '@shared/components/common'
 import { NumberInputField } from '@shared/components/form-elements/ui'
 
 /* Plan module imports */
-import { Plan } from '@plan-management/types/plans'
+import { Plan } from '@plan-management/types'
 
 /* Tenant module imports */
 import { MAX_BRANCH_COUNT } from '@tenant-management/constants'

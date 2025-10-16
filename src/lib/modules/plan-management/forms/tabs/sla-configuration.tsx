@@ -1,47 +1,33 @@
-import { Flex } from '@chakra-ui/react'
+/* Libraries imports */
 import React from 'react'
-import { useFormContext } from 'react-hook-form'
-import { CreatePlanFormData, createSlaSchema, CreateSlaFormData } from '@plan-management/schemas/validation/plans'
-import { useTabValidation, useResourceManagement, useResourceCreation, useResourceSelection, useResourceConfirmation, useTabValidationNavigation } from '@plan-management/hooks'
-import { SupportSLA, PlanFormMode } from '@plan-management/types'
-import { PLAN_FORM_MODES } from '@plan-management/config'
+import { Flex } from '@chakra-ui/react'
+
+/* Shared module imports */
 import { ConfirmationDialog } from '@shared/components'
-import { TabNavigation, SearchHeader } from '@plan-management/components'
+
+/* Plan module imports */
+import { createSlaSchema, CreateSlaFormData } from '@plan-management/schemas'
+import { useResourceManagement, useResourceCreation, useResourceSelection, useResourceConfirmation } from '@plan-management/hooks'
+import { SupportSLA } from '@plan-management/types'
+import { PLAN_FORM_MODES, SLA_SECTION_TITLES } from '@plan-management/constants'
+import { ResourceSearchHeader } from '@plan-management/components'
+import { usePlanFormMode } from '@plan-management/contexts'
 import CreateSLAForm from '@plan-management/forms/tabs/components/slas/create-sla-form'
 import SLAsGrid from '@plan-management/forms/tabs/components/slas/slas-grid'
 import SelectedSLAsSummary from '@plan-management/forms/tabs/components/slas/selected-slas-summary'
 
 /* SLA configuration tab component props */
 interface PlanSlaConfigurationProps {
-  mode: PlanFormMode /* Form operation mode */
-  onNext?: () => void /* Next tab navigation handler */
-  onPrevious?: () => void /* Previous tab navigation handler */
-  isFirstTab?: boolean /* Is this the first tab in sequence */
-  onSubmit?: (data: CreatePlanFormData) => void /* Form submission handler */
-  onEdit?: () => void /* Edit mode handler */
-  onBackToList?: () => void /* Return to list handler */
-  submitButtonText?: string /* Custom submit button text */
-  isSubmitting?: boolean /* Is form currently submitting */
   isActive?: boolean /* Is this tab currently active */
 }
 
 /* SLA configuration form tab component */
-const PlanSlaConfiguration: React.FC<PlanSlaConfigurationProps> = ({ 
-  mode,
-  onNext, 
-  onPrevious,
-  isFirstTab = false,
-  onSubmit,
-  onEdit,
-  onBackToList,
-  submitButtonText = "Create Plan",
-  isSubmitting = false,
+const PlanSlaConfiguration: React.FC<PlanSlaConfigurationProps> = ({
   isActive = true
 }) => {
-  /* Form context and validation hooks */
-  const { getValues } = useFormContext<CreatePlanFormData>();
-  const { isEntireFormValid: isFormValid } = useTabValidation(getValues);
-  const isReadOnly = mode === PLAN_FORM_MODES.VIEW /* Check if in read-only mode */;
+  /* Get mode from context */
+  const { mode } = usePlanFormMode()
+  const isReadOnly = mode === PLAN_FORM_MODES.VIEW /* Check if in read-only mode */
 
   /* SLA data management with search and loading states */
   const {
@@ -93,40 +79,6 @@ const PlanSlaConfiguration: React.FC<PlanSlaConfigurationProps> = ({
     resourceType: 'SLA'
   });
 
-  /* Tab navigation with validation for final tab */
-  const { handleNext: handleNextNavigation } = useTabValidationNavigation(['support_sla_ids'], isReadOnly, () => {
-    /* Custom navigation logic for final SLA tab */
-    if (isFormValid && onSubmit) {
-      onSubmit(getValues());
-    } else if (onNext) {
-      onNext();
-    }
-  });
-
-  /* Wrapper function for form submission without parameters */
-  const handleFormSubmit = () => {
-    if (onSubmit) {
-      onSubmit(getValues());
-    }
-  };
-
-  /* Enhanced next handler with form submission logic */
-  const handleNext = async () => {
-    /* In read-only mode handle submission directly */
-    if (isReadOnly) {
-      if (isFormValid && onSubmit) {
-        onSubmit(getValues());
-      } else if (onNext) {
-        onNext();
-      }
-      return;
-    }
-
-    /* Use navigation hook for validation and proceed */
-    await handleNextNavigation();
-  };
-
-
   /* Display logic based on mode and state */
   const displaySlas = isReadOnly 
     ? slas.filter(sla => selectedSlaIds.includes(sla.id))
@@ -134,18 +86,18 @@ const PlanSlaConfiguration: React.FC<PlanSlaConfigurationProps> = ({
 
   /* Header title based on current context */
   const getTitle = () => {
-    if (showCreateSla) return "Create SLA";
+    if (showCreateSla) return SLA_SECTION_TITLES.CREATE;
     if (isReadOnly) {
       const count = selectedSlas.length;
-      return `Included SLAs (${count})`;
+      return `${SLA_SECTION_TITLES.INCLUDED} (${count})`;
     }
-    return "Available SLAs";
+    return SLA_SECTION_TITLES.AVAILABLE;
   };
 
   return (
     <Flex flexDir="column" gap={6} p={4}>
       {/* Search header with create SLA toggle */}
-      <SearchHeader
+      <ResourceSearchHeader
         title={getTitle()}
         showSearch={showSearch}
         searchTerm={searchTerm}
@@ -189,21 +141,6 @@ const PlanSlaConfiguration: React.FC<PlanSlaConfigurationProps> = ({
           readOnly={isReadOnly}
         />
       )}
-
-      {/* Tab navigation with form submission controls */}
-      <TabNavigation
-        onNext={handleNext}
-        onPrevious={onPrevious}
-        onSubmit={handleFormSubmit}
-        onEdit={onEdit}
-        onBackToList={onBackToList}
-        isFirstTab={isFirstTab}
-        isLastTab={true}
-        isSubmitting={isSubmitting}
-        isFormValid={isFormValid}
-        submitButtonText={submitButtonText}
-        readOnly={isReadOnly}
-      />
 
       {/* SLA removal confirmation modal */}
       {!isReadOnly && (

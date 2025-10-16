@@ -54,13 +54,13 @@ export const usePlans = (params: UsePlansParams = {}): UsePlansReturn => {
       console.log('[usePlans] Plans API response:', response)
 
       /* Handle successful response */
-      if (response.data.success && response.data.data) {
-        setPlans(response.data.data)
-        setLastUpdated(response.data.timestamp || getCurrentISOString())
-        console.log('[usePlans] Successfully fetched', response.data.data.length, 'plans')
+      if (response.success && response.data) {
+        setPlans(response.data)
+        setLastUpdated(response.timestamp || getCurrentISOString())
+        console.log('[usePlans] Successfully fetched', response.data.length, 'plans')
       } else {
         /* Handle API error response */
-        const errorMsg = response.data.message || 'Failed to fetch plans'
+        const errorMsg = response.message || 'Failed to fetch plans'
         setError(errorMsg)
         console.error('[usePlans] API error:', errorMsg)
       }

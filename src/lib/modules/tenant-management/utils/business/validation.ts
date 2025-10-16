@@ -1,7 +1,7 @@
 /* Tenant plan and branch validation utilities */
 
 /* Plan module imports */
-import { Plan } from '@plan-management/types/plans'
+import { Plan } from '@plan-management/types'
 
 /* Validation result interface with optional error message */
 export interface ValidationResult {

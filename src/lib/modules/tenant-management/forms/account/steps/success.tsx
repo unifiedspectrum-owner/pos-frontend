@@ -10,7 +10,7 @@ import { PrimaryButton } from '@shared/components/form-elements/buttons'
 import { PRIMARY_COLOR } from '@shared/config'
 
 /* Plan module imports */
-import { Plan } from '@plan-management/types/plans'
+import { Plan } from '@plan-management/types'
 
 /* Tenant module imports */
 import { getBillingCycleLabel } from '@tenant-management/utils'

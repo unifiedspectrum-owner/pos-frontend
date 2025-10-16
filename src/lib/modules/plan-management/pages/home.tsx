@@ -1,6 +1,6 @@
 "use client"
 
-/* React and Chakra UI component imports */
+/* Libraries imports */
 import React from 'react'
 import { Flex } from '@chakra-ui/react'
 import { useRouter } from '@/i18n/navigation'
@@ -11,7 +11,7 @@ import { HeaderSection, ErrorMessageContainer } from '@shared/components'
 import { usePermissions } from '@shared/contexts'
 import { PERMISSION_ACTIONS } from '@shared/constants/rbac'
 
-/* Plan module imports */
+/* Plan management module imports */
 import PlanTable from '@plan-management/tables/plans'
 import { PLAN_MODULE_NAME, PLAN_PAGE_ROUTES } from '@plan-management/constants'
 import { usePlans } from '@plan-management/hooks'

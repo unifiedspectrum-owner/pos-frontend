@@ -1,5 +1,5 @@
 import { useFormContext } from 'react-hook-form';
-import { CreatePlanFormData } from '@plan-management/schemas/validation/plans';
+import { CreatePlanFormData } from '@plan-management/schemas';
 
 /* Hook for managing resource selection (features, SLAs, addons) */
 export function useResourceSelection<T extends { id: number }>(
@@ -14,7 +14,7 @@ export function useResourceSelection<T extends { id: number }>(
   /* Toggle resource selection */
   const toggleSelection = (resourceId: number) => {
     const isSelected = selectedIds.includes(resourceId);
-    
+
     let newIds;
     if (isSelected) {
       /* Remove resource from selection */
@@ -23,14 +23,14 @@ export function useResourceSelection<T extends { id: number }>(
       /* Add resource to selection */
       newIds = [...selectedIds, resourceId];
     }
-    
-    setValue(fieldName, newIds, { shouldValidate: true, shouldDirty: true });
+
+    setValue(fieldName, newIds, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
   };
 
   /* Remove resource from selection */
   const removeSelection = (resourceId: number) => {
     const newIds = selectedIds.filter(id => id !== resourceId);
-    setValue(fieldName, newIds, { shouldValidate: true, shouldDirty: true });
+    setValue(fieldName, newIds, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
   };
 
   /* Get selected resources */

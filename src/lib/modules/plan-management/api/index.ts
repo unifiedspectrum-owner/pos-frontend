@@ -4,4 +4,4 @@
 export * from './client'
 
 /* API service methods for plan operations */
-export * from './services'
+export * from './services/'

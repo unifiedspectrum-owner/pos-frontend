@@ -11,7 +11,7 @@ import { ConfirmationDialog } from '@shared/components'
 import { GRAY_COLOR, PRIMARY_COLOR, WHITE_COLOR } from '@shared/config'
 
 /* Plan module imports */
-import { Addon } from '@plan-management/types/plans'
+import { Addon } from '@plan-management/types'
 
 /* Tenant module imports */
 import { AddonBranchSelection, SelectedAddon, PlanBillingCycle } from '@tenant-management/types'

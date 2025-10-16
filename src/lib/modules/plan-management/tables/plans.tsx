@@ -12,7 +12,7 @@ import { useTranslations } from 'next-intl'
 import { lighten } from 'polished'
 
 /* Plan management module imports */
-import { Plan } from '@plan-management/types/plans'
+import { Plan } from '@plan-management/types'
 import { PLAN_MODULE_NAME, PLAN_PAGE_ROUTES } from '@plan-management/constants'
 import { PlanTableSkeleton } from '@plan-management/components'
 import { usePlanOperations } from '@plan-management/hooks'

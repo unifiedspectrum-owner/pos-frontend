@@ -4,7 +4,7 @@ import { Box, Flex } from '@chakra-ui/react'
 
 
 /* Plan module imports */
-import { Addon, Plan } from '@plan-management/types/plans'
+import { Addon, Plan } from '@plan-management/types'
 
 /* Tenant module imports */
 import { AddonSelectionModal, SelectedAddonsSummary, AvailableAddonsGrid, NavigationButton } from './components'

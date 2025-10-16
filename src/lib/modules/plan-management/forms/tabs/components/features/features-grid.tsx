@@ -5,7 +5,7 @@ import { MdStars, MdOutlineCheckBoxOutlineBlank } from 'react-icons/md'
 import { FiPlus } from 'react-icons/fi'
 import { Feature } from '@plan-management/types'
 import { PRIMARY_COLOR, GRAY_COLOR, DARK_COLOR, WHITE_COLOR } from '@shared/config'
-import { ResourceSkeleton } from '@plan-management/components'
+import { ResourceGridSkeleton } from '@plan-management/components'
 import { EmptyStateContainer } from '@shared/components'
 
 /* Features grid component props */
@@ -28,7 +28,7 @@ const FeaturesGrid: React.FC<FeaturesGridProps> = ({
   /* Display loading skeleton while fetching data */
   if (loading) {
     return (
-      <ResourceSkeleton 
+      <ResourceGridSkeleton 
         count={6} 
         columns={3} 
         variant="simple" 

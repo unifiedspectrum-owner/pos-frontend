@@ -10,7 +10,7 @@ import { ConfirmationDialog } from '@shared/components'
 import EmptyStateContainer from '@shared/components/common/empty-state-container'
 
 /* Plan module imports */
-import { Plan, Addon } from '@plan-management/types/plans'
+import { Plan, Addon } from '@plan-management/types'
 
 /* Tenant module imports */
 import { SelectedAddon, PlanBillingCycle } from '@tenant-management/types'

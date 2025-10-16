@@ -7,26 +7,27 @@ import { FiPlus, FiTrash2, FiInfo } from 'react-icons/fi'
 import { MdDiscount } from 'react-icons/md'
 
 /* Types */
-import { CreatePlanFormData } from '@plan-management/schemas/validation/plans'
-import { PlanFormMode } from '@plan-management/types/plans'
+import { CreatePlanFormData } from '@plan-management/schemas'
 
 /* Constants */
 import { GRAY_COLOR } from '@shared/config'
-import { VOLUME_DISCOUNT_FIELD_CONFIG } from '@plan-management/config'
+import { VOLUME_DISCOUNT_FIELD_CONFIG, PLAN_FORM_MODES } from '@plan-management/constants'
 
 /* Hooks */
 import { useResourceConfirmation } from '@plan-management/hooks'
 
 /* Components */
 import { PrimaryButton, EmptyStateContainer, ConfirmationDialog, TextInputField } from '@shared/components'
+import { usePlanFormMode } from '@plan-management/contexts'
 
-interface VolumeDiscountsProps {
-  mode: PlanFormMode;
-}
+interface VolumeDiscountsProps {}
 
-const VolumeDiscounts: React.FC<VolumeDiscountsProps> = ({ mode }) => {
-  const { control } = useFormContext<CreatePlanFormData>();
-  const isReadOnly = mode === 'view'
+const VolumeDiscounts: React.FC<VolumeDiscountsProps> = () => {
+  /* Get mode from context */
+  const { mode } = usePlanFormMode()
+
+  const { control, clearErrors } = useFormContext<CreatePlanFormData>();
+  const isReadOnly = mode === PLAN_FORM_MODES.VIEW
 
   const { fields: volumeDiscounts, append, remove } = useFieldArray({
     control,
@@ -120,12 +121,17 @@ const VolumeDiscounts: React.FC<VolumeDiscountsProps> = ({ mode }) => {
                       label={fieldConfig.label}
                       value={value?.toString() || ''}
                       placeholder={fieldConfig.placeholder || ''}
-                      onChange={onChange}
+                      onChange={(newValue) => {
+                        clearErrors(`volume_discounts.${index}.${fieldConfig.schema_key}` as Path<CreatePlanFormData>)
+                        clearErrors(`volume_discounts.${index}` as Path<CreatePlanFormData>)
+                        clearErrors('volume_discounts')
+                        onChange(newValue)
+                      }}
                       onBlur={onBlur}
                       name={name}
-                      isInValid={!!error}
-                      required={fieldConfig.is_required}
-                      errorMessage={error?.message || ""}
+                      isInValid={!isReadOnly && !!error}
+                      required={fieldConfig.is_required && !isReadOnly}
+                      errorMessage={!isReadOnly ? error?.message || "" : ""}
                       readOnly={isReadOnly}
                       disabled={isReadOnly}
                     />

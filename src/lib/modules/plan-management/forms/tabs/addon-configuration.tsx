@@ -1,38 +1,36 @@
+/* Libraries imports */
 import React from 'react'
 import { Flex } from '@chakra-ui/react'
 import { useFormContext, useFieldArray } from 'react-hook-form'
 
-/* Types & Schemas */
-import { CreatePlanFormData, createAddonSchema, CreateAddonFormData } from '@plan-management/schemas/validation/plans'
-import { useTabValidation, useResourceManagement, useResourceCreation, useTabValidationNavigation, useResourceConfirmation } from '@plan-management/hooks'
-import { Addon, PlanFormMode } from '@plan-management/types'
-import { PLAN_FORM_MODES } from '@plan-management/config'
+/* Shared module imports */
 import { ConfirmationDialog } from '@shared/components'
-import { TabNavigation, SearchHeader } from '@plan-management/components'
 
+/* Plan module imports */
+import { CreatePlanFormData, createAddonSchema, CreateAddonFormData } from '@plan-management/schemas'
+import { useResourceManagement, useResourceCreation, useResourceConfirmation } from '@plan-management/hooks'
+import { Addon } from '@plan-management/types'
+import { PLAN_FORM_MODES, ADDON_SECTION_TITLES, ADDON_FEATURE_LEVELS, ADDON_PRICING_SCOPES } from '@plan-management/constants'
+import { ResourceSearchHeader } from '@plan-management/components'
+import { usePlanFormMode } from '@plan-management/contexts'
 import CreateAddonForm from '@plan-management/forms/tabs/components/addons/create-addon-form'
 import AddonsGrid from '@plan-management/forms/tabs/components/addons/addons-grid'
 import SelectedAddonsConfiguration from '@plan-management/forms/tabs/components/addons/selected-addons-configuration'
 
 /* Addon configuration tab component props */
 interface PlanAddonConfigurationProps {
-  mode: PlanFormMode /* Form operation mode */
-  onNext?: () => void /* Next tab navigation handler */
-  onPrevious?: () => void /* Previous tab navigation handler */
-  isFirstTab?: boolean /* Is this the first tab in sequence */
   isActive?: boolean /* Is this tab currently active */
 }
 
 /* Addon configuration form tab component */
-const PlanAddonConfiguration: React.FC<PlanAddonConfigurationProps> = ({ 
-  mode,
-  onNext, 
-  onPrevious, 
+const PlanAddonConfiguration: React.FC<PlanAddonConfigurationProps> = ({
   isActive = true
 }) => {
-  /* Form context and validation hooks */
-  const { control, formState: { errors }, getValues } = useFormContext<CreatePlanFormData>();
-  const { isAddonsValid } = useTabValidation(getValues);
+  /* Get mode from context */
+  const { mode } = usePlanFormMode()
+
+  /* Form context */
+  const { control, formState: { errors } } = useFormContext<CreatePlanFormData>();
   const isReadOnly = mode === PLAN_FORM_MODES.VIEW /* Check if in read-only mode */;
 
   /* Addon assignments field array management */
@@ -63,12 +61,9 @@ const PlanAddonConfiguration: React.FC<PlanAddonConfigurationProps> = ({
   } = useResourceCreation<CreateAddonFormData>(
     'addons',
     createAddonSchema,
-    { name: '', description: '', base_price: '', pricing_scope: 'branch' },
+    { name: '', description: '', base_price: '', pricing_scope: ADDON_PRICING_SCOPES.BRANCH },
     refetchAddons
   );
-
-  /* Tab navigation with validation */
-  const { handleNext } = useTabValidationNavigation(['addon_assignments'], isReadOnly, onNext);
 
   /* Extract selected addon IDs for confirmation dialogs */
   const selectedAddonIds = addonAssignments.map((a) => a.addon_id);
@@ -85,7 +80,7 @@ const PlanAddonConfiguration: React.FC<PlanAddonConfigurationProps> = ({
     selectedIds: selectedAddonIds,
     onToggleSelection: (addonId: number) => {
       const existingIndex = addonAssignments.findIndex((a) => a.addon_id === addonId);
-      
+
       if (existingIndex >= 0) {
         /* Remove existing addon assignment */
         remove(existingIndex);
@@ -95,7 +90,7 @@ const PlanAddonConfiguration: React.FC<PlanAddonConfigurationProps> = ({
         if (addon) {
           append({
             addon_id: addonId,
-            feature_level: 'basic',
+            feature_level: ADDON_FEATURE_LEVELS.BASIC,
             is_included: false,
             default_quantity: addon.default_quantity || null,
             min_quantity: addon.min_quantity || null,
@@ -130,18 +125,18 @@ const PlanAddonConfiguration: React.FC<PlanAddonConfigurationProps> = ({
 
   /* Header title based on current context */
   const getTitle = () => {
-    if (showCreateAddon) return "Create Add-on";
+    if (showCreateAddon) return ADDON_SECTION_TITLES.CREATE;
     if (isReadOnly) {
       const count = addonAssignments.length;
-      return `Included Add-ons (${count})`;
+      return `${ADDON_SECTION_TITLES.INCLUDED} (${count})`;
     }
-    return "Available Add-ons";
+    return ADDON_SECTION_TITLES.AVAILABLE;
   };
 
   return (
     <Flex flexDir="column" gap={6} p={4}>
       {/* Search header with create addon toggle */}
-      <SearchHeader
+      <ResourceSearchHeader
         title={getTitle()}
         showSearch={showSearch}
         searchTerm={searchTerm}
@@ -188,14 +183,6 @@ const PlanAddonConfiguration: React.FC<PlanAddonConfigurationProps> = ({
           onRemoveAddon={handleRemoveAddonFromCard}
         />
       )}
-
-      {/* Tab navigation with validation state */}
-      <TabNavigation
-        onNext={handleNext}
-        onPrevious={onPrevious}
-        readOnly={isReadOnly}
-        isFormValid={isAddonsValid}
-      />
 
       {/* Addon removal confirmation modal */}
       {!isReadOnly && (

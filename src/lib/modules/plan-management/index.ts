@@ -4,8 +4,8 @@ export * from './api';
 /* UI components for plan management */
 export * from './components';
 
-/* Configuration constants and settings */
-export * from './config';
+/* Context providers and hooks */
+export * from './contexts';
 
 /* Application constants and routes */
 export * from './constants';

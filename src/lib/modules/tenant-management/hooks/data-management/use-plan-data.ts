@@ -97,7 +97,7 @@ export const usePlanData = () => {
     try {
       console.log('Fetching plans from API...')
       /* Get plans from API service */
-      const { data: response} = await planService.getAllSubscriptionPlans()
+      const response = await planService.getAllSubscriptionPlans()
       
       /* Process successful response */
       if (response.success && response.data) {

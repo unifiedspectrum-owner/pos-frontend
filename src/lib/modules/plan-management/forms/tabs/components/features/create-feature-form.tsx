@@ -1,11 +1,17 @@
+/* Libraries imports */
 import React from 'react'
 import { Box, Flex, HStack, SimpleGrid, GridItem } from '@chakra-ui/react'
 import { Controller, UseFormReturn, FieldValues, SubmitHandler } from 'react-hook-form'
 import { lighten } from 'polished'
-import { CreateFeatureFormData } from '@plan-management/schemas/validation/plans'
-import { FEATURE_CREATE_FORM_CONFIG } from '@plan-management/config'
-import { GRAY_COLOR } from '@shared/config'
+
+/* Shared module imports */
 import { TextInputField, TextAreaField, PrimaryButton } from '@shared/components'
+import { GRAY_COLOR } from '@shared/config'
+import { FORM_FIELD_TYPES } from '@shared/constants'
+
+/* Plan module imports */
+import { CreateFeatureFormData } from '@plan-management/schemas'
+import { FEATURE_FORM_QUESTIONS } from '@plan-management/constants'
 
 /* Create feature form component props */
 interface CreateFeatureFormProps {
@@ -33,61 +39,70 @@ const CreateFeatureForm: React.FC<CreateFeatureFormProps> = ({
         <Flex flexDir="column" gap={4}>
           {/* Dynamic form fields based on configuration */}
           <SimpleGrid columns={1} gap={4}>
-            {FEATURE_CREATE_FORM_CONFIG.filter(field => field.is_active).sort((a, b) => a.display_order - b.display_order).map((field) => {
-              const name = field.schema_key as keyof CreateFeatureFormData /* Field name for form control */
-              const colSpan = field.grid.col_span /* Grid column span */;
-              
-              switch (field.type) {
-                case 'INPUT':
-                  return (
-                    <GridItem key={field.id} colSpan={colSpan}>
-                      <Controller
-                        name={name}
-                        control={createFeatureForm.control}
-                        render={({ field: controllerField, fieldState }) => (
-                          <TextInputField
-                            label={field.label}
-                            value={controllerField.value}
-                            placeholder={field.placeholder || ''}
-                            onChange={controllerField.onChange}
-                            onBlur={controllerField.onBlur}
-                            name={controllerField.name}
-                            isInValid={!!fieldState.error}
-                            required={field.is_required}
-                            errorMessage={fieldState.error?.message || ''}
-                          />
-                        )}
-                      />
-                    </GridItem>
-                  );
+            {FEATURE_FORM_QUESTIONS
+              .filter((field) => field.is_active) /* Only render active fields */
+              .sort((a, b) => Number(a.display_order) - Number(b.display_order)) /* Sort by display order */
+              .map((field) => {
+                const schemaKey = field.schema_key as keyof CreateFeatureFormData
 
-                case 'TEXTAREA':
-                  return (
-                    <GridItem key={field.id} colSpan={colSpan}>
-                      <Controller
-                        name={name}
-                        control={createFeatureForm.control}
-                        render={({ field: controllerField, fieldState }) => (
-                          <TextAreaField
-                            label={field.label}
-                            value={controllerField.value || ''}
-                            placeholder={field.placeholder || ''}
-                            onChange={controllerField.onChange}
-                            onBlur={controllerField.onBlur}
-                            name={controllerField.name}
-                            isInValid={!!fieldState.error}
-                            required={field.is_required}
-                            errorMessage={fieldState.error?.message || ''}
-                          />
-                        )}
-                      />
-                    </GridItem>
-                  );
+                /* Shared field properties for all input types */
+                const commonProps = {
+                  name: schemaKey,
+                  label: field.label,
+                  placeholder: field.placeholder,
+                  required: field.is_required,
+                }
 
-                default:
-                  return null;
-              }
-            })}
+                /* Render appropriate field type based on configuration */
+                switch (field.type) {
+                  case FORM_FIELD_TYPES.INPUT: /* Text input fields */
+                    return (
+                      <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
+                        <Controller
+                          name={schemaKey}
+                          control={createFeatureForm.control}
+                          render={({ field: controllerField, fieldState }) => (
+                            <TextInputField
+                              {...commonProps}
+                              value={controllerField.value || ''}
+                              onChange={controllerField.onChange}
+                              onBlur={controllerField.onBlur}
+                              isInValid={!!fieldState.error}
+                              errorMessage={fieldState.error?.message || ''}
+                            />
+                          )}
+                        />
+                      </GridItem>
+                    )
+
+                  case FORM_FIELD_TYPES.TEXTAREA: /* Description field */
+                    return (
+                      <GridItem key={field.id} colSpan={[1, field.grid.col_span]}>
+                        <Controller
+                          name={schemaKey}
+                          control={createFeatureForm.control}
+                          render={({ field: controllerField, fieldState }) => (
+                            <TextAreaField
+                              {...commonProps}
+                              value={controllerField.value || ''}
+                              onChange={controllerField.onChange}
+                              onBlur={controllerField.onBlur}
+                              isInValid={!!fieldState.error}
+                              errorMessage={fieldState.error?.message || ''}
+                              inputProps={{
+                                rows: 4
+                              }}
+                            />
+                          )}
+                        />
+                      </GridItem>
+                    )
+
+                  default:
+                    return null /* Unsupported field type */
+                }
+              })
+            }
           </SimpleGrid>
           
           {/* Submit button with loading indicator */}

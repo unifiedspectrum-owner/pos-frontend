@@ -10,14 +10,14 @@ import { FaPlus } from 'react-icons/fa'
 /* Types */
 import { Addon } from '@plan-management/types'
 import { FieldArrayWithId } from 'react-hook-form'
-import { CreatePlanFormData } from '@plan-management/schemas/validation/plans'
+import { CreatePlanFormData } from '@plan-management/schemas'
 
 /* Constants */
 import { PRIMARY_COLOR, GRAY_COLOR, DARK_COLOR, WHITE_COLOR, SECONDARY_COLOR } from '@shared/config'
 
 /* Components */
 import { EmptyStateContainer } from '@shared/components'
-import { ResourceSkeleton } from '@plan-management/components'
+import { ResourceGridSkeleton } from '@plan-management/components'
 
 type AddonAssignmentFieldArray = FieldArrayWithId<CreatePlanFormData, "addon_assignments", "id">;
 
@@ -41,7 +41,7 @@ const AddonsGrid: React.FC<AddonsGridProps> = ({
   /* Show skeleton loader while data is loading */
   if (loading && addonAssignments.length === 0) {
     return (
-      <ResourceSkeleton 
+      <ResourceGridSkeleton 
         count={6} 
         columns={3} 
         variant="detailed" 

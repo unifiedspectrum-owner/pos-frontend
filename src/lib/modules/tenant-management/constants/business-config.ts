@@ -14,7 +14,7 @@ export const PLAN_BILLING_CYCLES: PlanBillingCycle[] = [PLAN_BILLING_CYCLE.MONTH
 export const ADDON_PRICING_SCOPE = {
   ORGANIZATION: "organization",
   BRANCH: "branch"
-}
+} as const
 
 /* Maximum number of branches allowed per account (system limit) */
 export const MAX_BRANCH_COUNT = 100;

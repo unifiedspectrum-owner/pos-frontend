@@ -1,37 +1,33 @@
-import { Flex } from '@chakra-ui/react'
+/* Libraries imports */
 import React from 'react'
-import { useFormContext } from 'react-hook-form'
-import { CreatePlanFormData, createFeatureSchema, CreateFeatureFormData } from '@plan-management/schemas/validation/plans'
-import { useTabValidation } from '@plan-management/hooks/use-tab-validation'
-import { Feature } from '@plan-management/types'
-import { PlanFormMode } from '@plan-management/types'
-import { useResourceManagement, useResourceCreation, useResourceSelection, useResourceConfirmation, useTabValidationNavigation } from '@plan-management/hooks'
+import { Flex } from '@chakra-ui/react'
+
+/* Shared module imports */
 import { ConfirmationDialog } from '@shared/components'
-import { TabNavigation, SearchHeader } from '@plan-management/components'
-import { PLAN_FORM_MODES } from '@plan-management/config'
+
+/* Plan module imports */
+import { createFeatureSchema, CreateFeatureFormData } from '@plan-management/schemas'
+import { useResourceManagement, useResourceCreation, useResourceSelection, useResourceConfirmation } from '@plan-management/hooks'
+import { Feature } from '@plan-management/types'
+import { PLAN_FORM_MODES, FEATURE_SECTION_TITLES } from '@plan-management/constants'
+import { ResourceSearchHeader } from '@plan-management/components'
+import { usePlanFormMode } from '@plan-management/contexts'
 import CreateFeatureForm from '@plan-management/forms/tabs/components/features/create-feature-form'
 import FeaturesGrid from '@plan-management/forms/tabs/components/features/features-grid'
 import SelectedFeaturesSummary from '@plan-management/forms/tabs/components/features/selected-features-summary'
 
 /* Feature selection tab component props */
 interface PlanFeatureSelectionProps {
-  mode: PlanFormMode /* Form operation mode */
-  onNext?: () => void /* Next tab navigation handler */
-  onPrevious?: () => void /* Previous tab navigation handler */
   isActive?: boolean /* Is this tab currently active */
 }
 
 /* Feature selection form tab component */
-const PlanFeatureSelection: React.FC<PlanFeatureSelectionProps> = ({ 
-  mode,
-  onNext, 
-  onPrevious, 
+const PlanFeatureSelection: React.FC<PlanFeatureSelectionProps> = ({
   isActive = true
 }) => {
-  /* Form context and validation hooks */
-  const { getValues } = useFormContext<CreatePlanFormData>();
-  const { isFeaturesValid } = useTabValidation(getValues);
-  const isReadOnly = mode === PLAN_FORM_MODES.VIEW /* Check if in read-only mode */;
+  /* Get mode from context */
+  const { mode } = usePlanFormMode()
+  const isReadOnly = mode === PLAN_FORM_MODES.VIEW /* Check if in read-only mode */
 
   /* Feature data management with search and loading states */
   const {
@@ -69,22 +65,19 @@ const PlanFeatureSelection: React.FC<PlanFeatureSelectionProps> = ({
 
   /* Feature removal confirmation dialogs */
   const {
-    confirmState, 
-    handleToggleWithConfirm, 
+    confirmState,
+    handleToggleWithConfirm,
     handleRemoveWithConfirm,
-    handleConfirm, 
+    handleConfirm,
     handleCancel,
   } = useResourceConfirmation({
-    resources: features, 
+    resources: features,
     selectedIds: selectedFeatureIds,
-    onToggleSelection: handleFeatureToggle, 
+    onToggleSelection: handleFeatureToggle,
     onRemoveSelection: handleRemoveFeature,
-    getResourceName: (feature: Feature) => feature.name, 
+    getResourceName: (feature: Feature) => feature.name,
     resourceType: 'Feature'
   });
-
-  /* Tab navigation with validation */
-  const { handleNext } = useTabValidationNavigation(['feature_ids'], isReadOnly, onNext);
 
   /* Display logic based on mode and state */
   const displayResources = isReadOnly 
@@ -93,18 +86,18 @@ const PlanFeatureSelection: React.FC<PlanFeatureSelectionProps> = ({
 
   /* Header title based on current context */
   const getTitle = () => {
-    if (showCreateFeature) return "Create Feature";
+    if (showCreateFeature) return FEATURE_SECTION_TITLES.CREATE;
     if (isReadOnly) {
       const count = selectedFeatures.length;
-      return `Included Features (${count})`;
+      return `${FEATURE_SECTION_TITLES.INCLUDED} (${count})`;
     }
-    return "Available Features";
+    return FEATURE_SECTION_TITLES.AVAILABLE;
   };
 
   return (
     <Flex flexDir="column" gap={6} p={4}>
       {/* Search header with create feature toggle */}
-      <SearchHeader
+      <ResourceSearchHeader
         title={getTitle()}
         showSearch={showSearch}
         searchTerm={searchTerm}
@@ -148,14 +141,6 @@ const PlanFeatureSelection: React.FC<PlanFeatureSelectionProps> = ({
           readOnly={isReadOnly}
         />
       )}
-
-      {/* Tab navigation with validation state */}
-      <TabNavigation
-        onNext={handleNext}
-        onPrevious={onPrevious}
-        isFormValid={isFeaturesValid}
-        readOnly={isReadOnly}
-      />
 
       {/* Feature removal confirmation modal */}
       {!isReadOnly && (
