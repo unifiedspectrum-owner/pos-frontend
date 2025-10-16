@@ -16,13 +16,13 @@ export const AUTH_STORAGE_KEYS = {
 export type AuthStorageKey = typeof AUTH_STORAGE_KEYS[keyof typeof AUTH_STORAGE_KEYS]
 
 /* Session timeout duration in minutes */
-export const SESSION_TIMEOUT = 60  // 1 hours
+export const SESSION_TIMEOUT = 24*60  // 24 hours
 
 /* Session warning threshold in minutes (show warning this many minutes before expiry) */
-export const SESSION_WARNING_THRESHOLD = 1  // 1 minutes
+export const SESSION_WARNING_THRESHOLD = 1  // 1 minute
 
 /* Inactivity threshold in minutes (show warning after this many minutes of no activity) */
-export const INACTIVITY_THRESHOLD = 15  // 15 minutes
+export const INACTIVITY_THRESHOLD = 23*60  // 23 hours
 
 /* Inactivity dialog countdown duration in minutes */
 export const INACTIVITY_DIALOG_COUNTDOWN = 1  // 1 minute

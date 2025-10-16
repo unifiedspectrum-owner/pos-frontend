@@ -14,7 +14,8 @@ import {
   TicketsOverviewData,
   ActivityFeedData,
   GeographicData,
-  ConversionMetricsData
+  ConversionMetricsData,
+  TenantsDeploymentsData
 } from './dashboard';
 
 /* ============================================
@@ -63,6 +64,7 @@ export interface DashboardTablesApiResponse {
     recentTenants: RecentTenantsData;
     ticketsOverview: TicketsOverviewData;
     activityFeed: ActivityFeedData;
+    tenantsDeployments: TenantsDeploymentsData
   };
 }
 

@@ -9,7 +9,7 @@ import { handleApiError } from '@shared/utils/api'
 import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 
 /* Dashboard module imports */
-import { dashboardService } from '@dashboard/api'
+import { dashboardService, DashboardDateParams } from '@dashboard/api'
 import { DashboardOverviewApiResponse, DashboardChartsApiResponse, DashboardTablesApiResponse, DashboardAnalyticsApiResponse } from '@dashboard/types'
 
 /* Hook return interface */
@@ -26,16 +26,16 @@ interface UseDashboardReturn {
   chartsError: string | null
   tablesError: string | null
   analyticsError: string | null
-  fetchOverview: () => Promise<void>
-  fetchCharts: () => Promise<void>
+  fetchOverview: (params?: DashboardDateParams) => Promise<void>
+  fetchCharts: (params?: DashboardDateParams) => Promise<void>
   fetchTables: () => Promise<void>
   fetchAnalytics: () => Promise<void>
-  fetchAllDashboardData: () => Promise<void>
-  refetchOverview: () => Promise<void>
-  refetchCharts: () => Promise<void>
+  fetchAllDashboardData: (params?: DashboardDateParams) => Promise<void>
+  refetchOverview: (params?: DashboardDateParams) => Promise<void>
+  refetchCharts: (params?: DashboardDateParams) => Promise<void>
   refetchTables: () => Promise<void>
   refetchAnalytics: () => Promise<void>
-  refetch: () => Promise<void>
+  refetch: (params?: DashboardDateParams) => Promise<void>
 }
 
 /* Custom hook for fetching dashboard data */
@@ -62,7 +62,7 @@ export const useDashboard = (): UseDashboardReturn => {
   const [analyticsError, setAnalyticsError] = useState<string | null>(null)
 
   /* Fetch dashboard overview data */
-  const fetchOverview = useCallback(async () => {
+  const fetchOverview = useCallback(async (params?: DashboardDateParams) => {
     try {
       setOverviewLoading(true)
       setOverviewError(null)
@@ -72,10 +72,10 @@ export const useDashboard = (): UseDashboardReturn => {
         await new Promise(resolve => setTimeout(resolve, LOADING_DELAY))
       }
 
-      console.log('[useDashboard] Fetching dashboard overview')
+      console.log('[useDashboard] Fetching dashboard overview with params:', params)
 
       /* Call API to get dashboard overview */
-      const response = await dashboardService.getOverview()
+      const response = await dashboardService.getOverview(params)
 
       console.log('[useDashboard] Overview API response:', response)
 
@@ -105,7 +105,7 @@ export const useDashboard = (): UseDashboardReturn => {
   }, [])
 
   /* Fetch dashboard charts data */
-  const fetchCharts = useCallback(async () => {
+  const fetchCharts = useCallback(async (params?: DashboardDateParams) => {
     try {
       setChartsLoading(true)
       setChartsError(null)
@@ -115,10 +115,10 @@ export const useDashboard = (): UseDashboardReturn => {
         await new Promise(resolve => setTimeout(resolve, LOADING_DELAY))
       }
 
-      console.log('[useDashboard] Fetching dashboard charts')
+      console.log('[useDashboard] Fetching dashboard charts with params:', params)
 
       /* Call API to get dashboard charts */
-      const response = await dashboardService.getCharts()
+      const response = await dashboardService.getCharts(params)
 
       console.log('[useDashboard] Charts API response:', response)
 
@@ -234,11 +234,11 @@ export const useDashboard = (): UseDashboardReturn => {
   }, [])
 
   /* Fetch all dashboard data in parallel */
-  const fetchAllDashboardData = useCallback(async () => {
-    console.log('[useDashboard] Fetching all dashboard data')
+  const fetchAllDashboardData = useCallback(async (params?: DashboardDateParams) => {
+    console.log('[useDashboard] Fetching all dashboard data with params:', params)
     await Promise.all([
-      fetchOverview(),
-      fetchCharts(),
+      fetchOverview(params),
+      fetchCharts(params),
       fetchTables(),
       fetchAnalytics()
     ])
@@ -246,13 +246,13 @@ export const useDashboard = (): UseDashboardReturn => {
   }, [fetchOverview, fetchCharts, fetchTables, fetchAnalytics])
 
   /* Refetch overview data */
-  const refetchOverview = useCallback(async () => {
-    await fetchOverview()
+  const refetchOverview = useCallback(async (params?: DashboardDateParams) => {
+    await fetchOverview(params)
   }, [fetchOverview])
 
   /* Refetch charts data */
-  const refetchCharts = useCallback(async () => {
-    await fetchCharts()
+  const refetchCharts = useCallback(async (params?: DashboardDateParams) => {
+    await fetchCharts(params)
   }, [fetchCharts])
 
   /* Refetch tables data */
@@ -266,8 +266,8 @@ export const useDashboard = (): UseDashboardReturn => {
   }, [fetchAnalytics])
 
   /* Refetch all dashboard data */
-  const refetch = useCallback(async () => {
-    await fetchAllDashboardData()
+  const refetch = useCallback(async (params?: DashboardDateParams) => {
+    await fetchAllDashboardData(params)
   }, [fetchAllDashboardData])
 
   return {

@@ -79,3 +79,15 @@ export interface AccountStatusApiResponse {
   message: string;
   timestamp: string;
 }
+
+/* API response for account status queries */
+export interface StartResourceProvisioningApiResponse {
+  success: boolean;
+  data: {
+    request_id: string;
+    status_url: string;
+    estimated_time: string;
+  };
+  message: string;
+  timestamp: string;
+}

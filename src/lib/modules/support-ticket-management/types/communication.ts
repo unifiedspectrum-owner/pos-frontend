@@ -1,6 +1,7 @@
 /* TypeScript interfaces for communication-related data structures */
 
 /* Support ticket module imports */
+import { SenderType } from '../constants';
 import { TicketAttachment } from './attachment'
 
 /* ====================
@@ -13,9 +14,6 @@ export type CommunicationType =
   | 'agent_response'
   | 'internal_note'
   | 'system_update';
-
-/* Sender type values */
-export type SenderType = 'customer' | 'agent' | 'system';
 
 /* Message format types */
 export type MessageFormat = 'text' | 'html' | 'markdown';

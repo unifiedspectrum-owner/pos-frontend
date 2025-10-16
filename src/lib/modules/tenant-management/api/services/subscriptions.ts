@@ -4,7 +4,7 @@ import {
   AssignPlanToTenantApiResponse,
   AssignedPlanApiResponse,
 } from "@tenant-management/types/subscription"
-import { AccountStatusApiRequest } from "@tenant-management/types/account"
+import { AccountStatusApiRequest, StartResourceProvisioningApiResponse } from "@tenant-management/types/account"
 import { tenantApiClient } from "@tenant-management/api/clients"
 import { TENANT_API_ROUTES } from "@tenant-management/constants/routes"
 
@@ -29,6 +29,17 @@ export const subscriptionService = {
       return response.data
     } catch (error) {
       console.error('[SubscriptionService] Failed to get assigned plan:', error)
+      throw error
+    }
+  },
+
+  /* Start tenant resource provisioning */
+  async startTenantResourceProvisioning(data: AccountStatusApiRequest): Promise<StartResourceProvisioningApiResponse> {
+    try {
+      const response = await tenantApiClient.post<StartResourceProvisioningApiResponse>(TENANT_API_ROUTES.PROVISION.START, data)
+      return response.data
+    } catch (error) {
+      console.error('[SubscriptionService] Failed to start resource provisioning:', error)
       throw error
     }
   },

@@ -287,6 +287,7 @@ const TenantTable: React.FC<TenantTableProps> = ({
               const subscriptionColors = tenant.subscription_status 
                 ? STATUS_BADGE_CONFIG[tenant.subscription_status]
                 : { color: lighten(0.2, GRAY_COLOR), bg: lighten(0.4, GRAY_COLOR), borderColor: lighten(0.3, GRAY_COLOR) }
+              console.log("tenants", tenant.tenant_id, subscriptionColors)
               
               return (
                 <HStack 

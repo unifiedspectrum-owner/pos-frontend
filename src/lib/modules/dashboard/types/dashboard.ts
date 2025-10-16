@@ -47,6 +47,7 @@ export interface UserMetrics {
   locked: number;
   pending_verification: number;
   new_today: number;
+  new_this_week: number;
   new_this_month: number;
   online_now: number;
   two_fa_enabled: number;
@@ -57,8 +58,12 @@ export interface TicketMetrics {
   open: number;
   new: number;
   overdue: number;
+  new_today: number;
+  new_this_week: number;
+  new_this_month: number;
   resolved_today: number;
   resolved_this_week: number;
+  resolved_this_month: number;
   avg_resolution_time_hours: number;
   satisfaction_avg: number;
 }
@@ -251,7 +256,7 @@ export interface ActiveUsersStats {
   total: number;
   online_now: number;
   locked: number;
-  new_this_week: number;
+  new_this_month: number;
 }
 
 export interface FailedPaymentsStats {
@@ -306,4 +311,65 @@ export interface ChurnData {
 export interface ChurnReason {
   reason: string;
   count: number;
+}
+
+/* Tenants deployment data */
+export interface TenantsDeploymentsData {
+  tenants: TenantDeploymentRow[];
+  total_count: number;
+  showing: number;
+  summary: DeploymentSummary;
+}
+
+export interface TenantDeploymentRow {
+  id: number;
+  tenant_id: string;
+  organization_name: string;
+  primary_email: string;
+  primary_phone: string;
+  tenant_status: 'active' | 'trial' | 'suspended' | 'setup' | 'hold' | 'cancelled' | 'pending_verification' | 'inactive';
+  email_verified: boolean;
+  phone_verified: boolean;
+  onboarding_completed: boolean;
+  onboarding_completed_at: string | null;
+  country: string | null;
+  state_province: string | null;
+  city: string | null;
+  business_category: string;
+  tenant_created_at: string;
+  days_since_created: number;
+  plan_name: string | null;
+  plan_id: number | null;
+  subscription_status: string | null;
+  billing_cycle: 'monthly' | 'yearly' | null;
+  trial_starts_at: string | null;
+  trial_ends_at: string | null;
+  next_billing_date: string | null;
+  trial_days_remaining: number;
+  deployment_type: 'shared' | 'dedicated' | null;
+  d1_database_id: string | null;
+  kv_namespace_id: string | null;
+  r2_bucket_name: string | null;
+  custom_subdomain: string | null;
+  custom_domain: string | null;
+  last_deployment_status: 'success' | 'failed' | null;
+  last_deployed_at: string | null;
+  days_since_deployment: number | null;
+  max_branches_count: number | null;
+  current_branches_count: number | null;
+  branches_usage_percentage: number;
+  config_created_at: string | null;
+  mrr: number;
+  infrastructure_provisioned: boolean;
+  deployment_status: 'deployed' | 'failed' | 'provisioning' | 'pending';
+}
+
+export interface DeploymentSummary {
+  total_tenants: number;
+  deployed: number;
+  provisioning: number;
+  failed: number;
+  pending: number;
+  shared_deployment: number;
+  dedicated_deployment: number;
 }

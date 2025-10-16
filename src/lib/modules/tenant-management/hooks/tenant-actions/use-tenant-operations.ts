@@ -10,9 +10,10 @@ import { createToastNotification } from '@shared/utils/ui/notifications'
 import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 
 /* Tenant management module imports */
-import { tenantActionsService, paymentService } from '@tenant-management/api'
+import { tenantActionsService, paymentService, subscriptionService } from '@tenant-management/api'
 import { completeTenantSubscriptionPayment } from '@tenant-management/schemas'
 import { CompleteSubscriptionPaymentApiResponse } from '@tenant-management/types/payment'
+import { StartResourceProvisioningApiResponse } from '@tenant-management/types/account'
 
 /* Hook interface */
 interface UseTenantOperationsReturn {
@@ -25,6 +26,11 @@ interface UseTenantOperationsReturn {
   completePayment: (data: completeTenantSubscriptionPayment) => Promise<CompleteSubscriptionPaymentApiResponse | null>
   isCompletingPayment: boolean
   paymentError: string | null
+
+  /* Resource provisioning operations */
+  startResourceProvisioning: (tenantId: string, tenantName?: string) => Promise<StartResourceProvisioningApiResponse | null>
+  isProvisioning: boolean
+  provisioningError: string | null
 }
 
 /* Custom hook for tenant operations */
@@ -34,6 +40,8 @@ export const useTenantOperations = (): UseTenantOperationsReturn => {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isCompletingPayment, setIsCompletingPayment] = useState<boolean>(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [isProvisioning, setIsProvisioning] = useState<boolean>(false)
+  const [provisioningError, setProvisioningError] = useState<string | null>(null)
 
   /* Delete tenant operation */
   const deleteTenant = useCallback(async (tenantId: string, tenantName?: string): Promise<boolean> => {
@@ -156,6 +164,68 @@ export const useTenantOperations = (): UseTenantOperationsReturn => {
     }
   }, [])
 
+  /* Start resource provisioning operation */
+  const startResourceProvisioning = useCallback(async (tenantId: string, tenantName?: string): Promise<StartResourceProvisioningApiResponse | null> => {
+    try {
+      setIsProvisioning(true)
+      setProvisioningError(null)
+
+      /* Artificial delay for testing loading states */
+      if (LOADING_DELAY_ENABLED) {
+        await new Promise(resolve => setTimeout(resolve, LOADING_DELAY))
+      }
+
+      console.log('[useTenantOperations] Starting resource provisioning for tenant:', tenantId)
+
+      /* Call resource provisioning API */
+      const response = await subscriptionService.startTenantResourceProvisioning({ tenant_id: tenantId })
+
+      /* Check if provisioning was successful */
+      if (response.success) {
+        /* Success notification */
+        createToastNotification({
+          type: 'success',
+          title: 'Resource Provisioning Started',
+          description: tenantName
+            ? `Resource provisioning has been initiated for '${tenantName}'.`
+            : response.message || 'Resource provisioning has been initiated successfully.'
+        })
+
+        console.log('[useTenantOperations] Successfully started resource provisioning:', response.data)
+        return response
+
+      } else {
+        /* Handle API success=false case */
+        const errorMsg = response.message || 'Failed to start resource provisioning'
+        console.error('[useTenantOperations] Resource provisioning failed:', errorMsg)
+
+        createToastNotification({
+          type: 'error',
+          title: 'Provisioning Failed',
+          description: errorMsg
+        })
+
+        setProvisioningError(errorMsg)
+        return null
+      }
+
+    } catch (error: unknown) {
+      const errorMsg = 'Failed to start resource provisioning'
+      console.error('[useTenantOperations] Resource provisioning error:', error)
+
+      const err = error as AxiosError
+      handleApiError(err, {
+        title: 'Failed to Start Resource Provisioning'
+      })
+
+      setProvisioningError(errorMsg)
+      return null
+
+    } finally {
+      setIsProvisioning(false)
+    }
+  }, [])
+
   return {
     /* Delete operations */
     deleteTenant,
@@ -165,6 +235,11 @@ export const useTenantOperations = (): UseTenantOperationsReturn => {
     /* Payment operations */
     completePayment,
     isCompletingPayment,
-    paymentError
+    paymentError,
+
+    /* Resource provisioning operations */
+    startResourceProvisioning,
+    isProvisioning,
+    provisioningError
   }
 }

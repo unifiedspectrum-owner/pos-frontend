@@ -40,6 +40,8 @@ export type StatusBadgeKey =
   | 'escalated'
   | 'resolved'
   | 'closed'
+  | 'success'
+  | 'failed'
   | 'default'
 
 /* Badge color and icon interface */
@@ -199,6 +201,20 @@ export const STATUS_BADGE_CONFIG: Record<StatusBadgeKey, BadgeColorsWithIcon> = 
     borderColor: lighten(0.3, GRAY_COLOR),
     icon: FaBan,
     colorScheme: 'gray'
+  },
+  success: {
+    color: SUCCESS_GREEN_COLOR2,
+    bg: lighten(0.45, SUCCESS_GREEN_COLOR),
+    borderColor: lighten(0.35, SUCCESS_GREEN_COLOR),
+    icon: FaCheckCircle,
+    colorScheme: 'green'
+  },
+  failed: {
+    color: ERROR_RED_COLOR,
+    bg: lighten(0.35, ERROR_RED_COLOR),
+    borderColor: lighten(0.3, ERROR_RED_COLOR),
+    icon: FaTimesCircle,
+    colorScheme: 'red'
   },
   default: {
     color: lighten(0.2, GRAY_COLOR),
