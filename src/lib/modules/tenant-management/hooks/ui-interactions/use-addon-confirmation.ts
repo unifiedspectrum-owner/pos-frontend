@@ -4,7 +4,7 @@
 import { useState, useCallback } from 'react'
 
 /* Tenant module imports */
-import { SelectedAddon } from '@tenant-management/types/subscription'
+import { SelectedAddon } from '@tenant-management/types'
 
 /* Addon confirmation dialog state interface */
 interface AddonConfirmationState {

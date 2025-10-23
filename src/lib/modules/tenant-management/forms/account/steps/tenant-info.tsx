@@ -12,9 +12,9 @@ import { PRIMARY_COLOR, WHITE_COLOR } from '@shared/config'
 
 /* Tenant module imports */
 import { createTenantAccountSchema, TenantInfoFormData } from '@tenant-management/schemas/account'
-import { accountService } from '@tenant-management/api'
-import { StepTracker, getCachedVerificationStatus, transformFormDataToTenantCacheData, transformFormDataToApiPayload, hasFormDataChanged, getTenantId } from '@tenant-management/utils/workflow'
-import { TenantInfo, CreateAccountApiRequest } from '@tenant-management/types/account'
+import { onboardingService } from '@tenant-management/api'
+import { StepTracker, getCachedVerificationStatus, transformFormDataToTenantCacheData, transformFormDataToApiPayload, hasFormDataChanged, getTenantId } from '@tenant-management/utils'
+import { TenantInfo, CreateAccountApiRequest } from '@tenant-management/types'
 import { BasicInformation, AddressInformation } from '@tenant-management/forms/account/steps/components/tenant-info'
 import { CREATE_TENANT_ACCOUNT_FORM_DEFAULT_VALUES, TENANT_ACCOUNT_CREATION_LS_KEYS, TENANT_BASIC_INFO_QUESTIONS, TENANT_FORM_SECTIONS } from '@tenant-management/constants'
 import { NavigationButton } from '@tenant-management/forms/account/steps/components/navigations'
@@ -138,7 +138,7 @@ const BasicInfoStep: React.FC<TenantInfoStepProps> = ({ isCompleted }) => {
       const state = states.find(s => s.name === pendingStateName)
       if (state) {
         console.log(`Found matching state, setting state ID: ${state.id}`)
-        setValue('state_province', state.id.toString())
+        setValue('state_province', state.name.toString())
         localStorage.removeItem(TENANT_ACCOUNT_CREATION_LS_KEYS.PENDING_STATE_RESTORE)
       }
     }
@@ -175,7 +175,7 @@ const BasicInfoStep: React.FC<TenantInfoStepProps> = ({ isCompleted }) => {
       )
       
       console.log("API Request data", apiRequest)
-      const response = await accountService.createTenantAccount(apiRequest)
+      const response = await onboardingService.createTenantAccount(apiRequest)
 
       if (response.data && response.success) {
         const { tenant_id } = response.data

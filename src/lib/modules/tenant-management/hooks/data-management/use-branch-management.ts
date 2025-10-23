@@ -4,7 +4,7 @@
 import { useState, useCallback, useEffect } from 'react'
 
 /* Tenant module imports */
-import { BranchSelection, CachedPlanData, SelectedAddon } from '@tenant-management/types/subscription'
+import { BranchSelection, CachedPlanData, SelectedAddon } from '@tenant-management/types'
 import { MAX_BRANCH_COUNT, TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 
 /* Branch configuration and management hook */

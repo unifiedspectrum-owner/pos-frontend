@@ -10,10 +10,9 @@ import { createToastNotification } from '@shared/utils/ui/notifications'
 import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 
 /* Tenant management module imports */
-import { tenantActionsService, paymentService, subscriptionService } from '@tenant-management/api'
+import { tenantService, paymentService, subscriptionService } from '@tenant-management/api'
 import { completeTenantSubscriptionPayment } from '@tenant-management/schemas'
-import { CompleteSubscriptionPaymentApiResponse } from '@tenant-management/types/payment'
-import { StartResourceProvisioningApiResponse } from '@tenant-management/types/account'
+import { CompleteSubscriptionPaymentApiResponse, StartResourceProvisioningApiResponse } from '@tenant-management/types'
 
 /* Hook interface */
 interface UseTenantOperationsReturn {
@@ -57,7 +56,7 @@ export const useTenantOperations = (): UseTenantOperationsReturn => {
       console.log('[useTenantOperations] Deleting tenant:', tenantId)
 
       /* Call tenant deletion API */
-      const response = await tenantActionsService.deleteTenant(tenantId)
+      const response = await tenantService.deleteTenant(tenantId)
 
       /* Check if deletion was successful */
       if (response.success) {
@@ -178,7 +177,7 @@ export const useTenantOperations = (): UseTenantOperationsReturn => {
       console.log('[useTenantOperations] Starting resource provisioning for tenant:', tenantId)
 
       /* Call resource provisioning API */
-      const response = await subscriptionService.startTenantResourceProvisioning({ tenant_id: tenantId })
+      const response = await subscriptionService.startTenantResourceProvisioning(tenantId)
 
       /* Check if provisioning was successful */
       if (response.success) {

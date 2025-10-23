@@ -19,7 +19,7 @@ import { buildUpdateUserPayload, getChangedFields, mergeRoleAndUserPermissions, 
 
 /* Role module imports */
 import { RolePermission } from '@role-management/types'
-import { useRoles } from '@role-management/hooks'
+import { useRoles, useModules } from '@role-management/hooks'
 
 /* Component props interface */
 interface EditUserPageProps {
@@ -34,6 +34,7 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
   const [isFormReady, setIsFormReady] = useState(false)
   const { fetchUserDetails, userDetails, permissions, updateUser, isUpdating, isFetching } = useUserOperations()
   const { rolePermissions, fetchRolePermissions } = useRoles()
+  const { modules, fetchModules } = useModules()
 
   /* Form configuration with Zod validation schema */
   const methods = useForm<CreateUserFormData>({
@@ -50,10 +51,11 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
         setFetchError(null)
         setIsFormReady(false)
 
-        /* Fetch user details and role permissions in parallel */
+        /* Fetch user details, role permissions, and modules in parallel */
         const [userSuccess] = await Promise.all([
           fetchUserDetails(userId, false),
-          fetchRolePermissions()
+          fetchRolePermissions(),
+          fetchModules()
         ])
 
         if (!userSuccess) {
@@ -63,18 +65,21 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
         setFetchError('An error occurred while loading user details')
       }
     }
-  }, [fetchUserDetails, fetchRolePermissions, userId])
+  }, [fetchUserDetails, fetchRolePermissions, fetchModules, userId])
 
   /* Fetch user data and populate form */
   useEffect(() => {
     fetchUserData()
   }, [userId, fetchUserData])
 
-  /* Populate form when user details, permissions, and role permissions are loaded */
+  /* Populate form when user details, permissions, role permissions, and modules are loaded */
   useEffect(() => {
-    if (userDetails && rolePermissions.length > 0) {
+    if (userDetails && rolePermissions.length > 0 && modules.length > 0) {
       /* Parse phone number from API format */
       const parsedPhone = parsePhoneFromAPI(userDetails.phone)
+
+      /* Get all module IDs to ensure ALL modules are included in the form */
+      const allModuleIds = modules.map(module => module.id)
 
       /* Merge role permissions with user permissions for display */
       /* If user has no custom permissions, still show role permissions */
@@ -82,7 +87,8 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
         permissions,
         rolePermissions,
         userDetails.role_details?.id.toString(),
-        userDetails.role_details?.id.toString() // original role ID (same as current for initial load)
+        userDetails.role_details?.id.toString(), // original role ID (same as current for initial load)
+        allModuleIds
       )
       console.log("Module Ass", moduleAssignments)
 
@@ -108,7 +114,7 @@ const EditUserPage: React.FC<EditUserPageProps> = ({ userId }) => {
       /* Mark form as ready after data is populated */
       setIsFormReady(true)
     }
-  }, [userDetails, permissions, rolePermissions, reset])
+  }, [userDetails, permissions, rolePermissions, modules, reset])
 
 
   /* Handle form submission with change detection */

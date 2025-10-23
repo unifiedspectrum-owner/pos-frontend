@@ -18,7 +18,8 @@ export const mergeRoleAndUserPermissions = (
   userPermissions: UserPermissions[],
   rolePermissions: RolePermission[],
   selectedRoleId?: string,
-  originalRoleId?: string
+  originalRoleId?: string,
+  allModuleIds?: number[]
 ): ModuleAssignment[] => {
   /* Create a map to track all modules from both sources */
   const moduleMap = new Map<number, ModuleAssignment>()
@@ -69,6 +70,22 @@ export const mergeRoleAndUserPermissions = (
       })
     }
   })
+
+  /* If allModuleIds is provided, ensure ALL modules are included in the result (even those with no permissions) */
+  if (allModuleIds && allModuleIds.length > 0) {
+    allModuleIds.forEach(moduleId => {
+      if (!moduleMap.has(moduleId)) {
+        /* Add modules with no permissions set to false */
+        moduleMap.set(moduleId, {
+          module_id: moduleId.toString(),
+          can_create: false,
+          can_read: false,
+          can_update: false,
+          can_delete: false,
+        })
+      }
+    })
+  }
 
   return Array.from(moduleMap.values())
 }

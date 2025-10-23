@@ -15,8 +15,8 @@ import { Plan, Addon } from '@plan-management/types'
 /* Tenant module imports */
 import { SelectedAddon, PlanBillingCycle } from '@tenant-management/types'
 import { useAddonConfirmation } from '@tenant-management/hooks'
-import { calculateSingleAddonPrice } from '@tenant-management/utils/business'
-import { getBillingCycleLabel } from '@tenant-management/utils/formatting'
+import { calculateSingleAddonPrice } from '@tenant-management/utils'
+import { getBillingCycleLabel } from '@tenant-management/utils'
 import { FaPlus } from 'react-icons/fa'
 
 /* Component props interface */

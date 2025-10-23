@@ -21,9 +21,9 @@ import { STATUS_BADGE_CONFIG } from '@shared/constants'
 import { PERMISSION_ACTIONS } from '@shared/constants/rbac'
 
 /* Tenant module imports */
-import { TenantWithPlanDetails } from '@tenant-management/types/account/list'
+import { TenantWithPlanDetails } from '@tenant-management/types'
 import { TenantTableSkeleton, TenantSuspensionModal, TenantHoldModal, TenantActivationModal } from '@tenant-management/components'
-import { TENANT_STATUS_FILTER_OPTIONS, TENANT_SUBSCRIPTION_FILTER_OPTIONS, TENANT_PAGE_ROUTES, TENANT_STATUS_VALUES, TENANT_MODULE_NAME } from '@tenant-management/constants'
+import { TENANT_STATUS_FILTER_OPTIONS, TENANT_SUBSCRIPTION_FILTER_OPTIONS, TENANT_PAGE_ROUTES, TENANT_STATUS, TENANT_MODULE_NAME } from '@tenant-management/constants'
 import { useTenantOperations } from '@tenant-management/hooks'
 
 /* Component interfaces */
@@ -350,8 +350,8 @@ const TenantTable: React.FC<TenantTableProps> = ({
                   {hasSpecificPermission(TENANT_MODULE_NAME, PERMISSION_ACTIONS.UPDATE) && (
                     <ButtonGroup w="15%" justifyContent="center">
                       {/* If tenant is held or suspended, show only activate button */}
-                      {(tenant.tenant_status.toLowerCase() === TENANT_STATUS_VALUES.HOLD ||
-                        tenant.tenant_status.toLowerCase() === TENANT_STATUS_VALUES.SUSPENDED) ? (
+                      {(tenant.tenant_status.toLowerCase() === TENANT_STATUS.HOLD ||
+                        tenant.tenant_status.toLowerCase() === TENANT_STATUS.SUSPENDED) ? (
                         <IconButton
                           bg="none"
                           color="black"

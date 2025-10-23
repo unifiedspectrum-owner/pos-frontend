@@ -1,8 +1,10 @@
-/* Account page exports */
-export * from './account'
+/* Tenant management page exports */
 
-/* Main tenant list page component */
+/* Main tenant listing and management page */
 export { default as TenantManagementHome } from './home'
 
-/* Tenant details page component */
-export { default as TenantDetailsPage } from './view'
+/* Tenant creation page */
+export { default as CreateTenantPage } from './create'
+
+/* Tenant details view page */
+export { default as ViewTenantPage } from './view'

@@ -7,7 +7,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { Addon } from '@plan-management/types'
 
 /* Tenant module imports */
-import { AddonBranchSelection, SelectedAddon, CachedPlanData, PlanBillingCycle } from '@tenant-management/types/subscription'
+import { AddonBranchSelection, SelectedAddon, CachedPlanData, PlanBillingCycle } from '@tenant-management/types'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 
 /* Addon selection and configuration management hook */

@@ -17,8 +17,8 @@ import { handleApiError, PRIMARY_COLOR, WHITE_COLOR } from '@/lib/shared'
 import { CheckoutForm } from './components'
 import { subscriptionService } from '@tenant-management/api'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS, PLAN_BILLING_CYCLE } from '@tenant-management/constants'
-import { AccountStatusApiRequest, AssignedPlanDetails } from '@tenant-management/types'
-import { calculateSingleAddonPrice } from '@tenant-management/utils/business'
+import { AssignedPlanDetails } from '@tenant-management/types'
+import { calculateSingleAddonPrice } from '@tenant-management/utils'
 import { AxiosError } from 'axios'
 
 /* Initialize Stripe with publishable key */
@@ -55,8 +55,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
       /* Fetch assigned plan data from API */
       const tenantId = localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.TENANT_ID)
       if (tenantId) {
-        const apiRequest: AccountStatusApiRequest = { tenant_id: tenantId }
-        const response = await subscriptionService.getAssignedPlanForTenant(apiRequest)
+        const response = await subscriptionService.getAssignedPlanForTenant(tenantId)
         
         if (response.success && response.data) {
           const planData = response.data;

@@ -1,19 +1,12 @@
-/* Tenant module imports */
-import {
-  CreateAccountApiRequest,
-  CreateAccountApiResponse,
-  VerificationOTPApiRequest,
-  VerificationOTPApiResponse,
-  RequestOTPApiRequest,
-  RequestOTPApiResponse,
-  AccountStatusApiResponse,
-  AccountStatusApiRequest,
-} from "@tenant-management/types/account"
-import { tenantApiClient } from "@tenant-management/api/clients"
-import { TENANT_API_ROUTES } from "@tenant-management/constants/routes"
+/* Tenant onboarding API service methods for account creation and verification workflow */
 
-/* Service object containing account management API methods */
-export const accountService = {
+/* Tenant module imports */
+import { CreateAccountApiRequest, CreateAccountApiResponse, VerificationOTPApiRequest, VerificationOTPApiResponse, RequestOTPApiRequest, RequestOTPApiResponse, AccountStatusApiResponse } from "@tenant-management/types"
+import { tenantApiClient } from "@tenant-management/api/client"
+import { TENANT_API_ROUTES } from "@tenant-management/constants"
+
+/* Service object containing tenant onboarding and verification operations */
+export const onboardingService = {
 
   /* Create new tenant account */
   async createTenantAccount(data: CreateAccountApiRequest): Promise<CreateAccountApiResponse> {
@@ -21,7 +14,7 @@ export const accountService = {
       const response = await tenantApiClient.post<CreateAccountApiResponse>(TENANT_API_ROUTES.ACCOUNT.CREATE, data)
       return response.data
     } catch (error) {
-      console.error('[AccountService] Failed to create tenant account:', error)
+      console.error('[OnboardingService] Failed to create tenant account:', error)
       throw error
     }
   },
@@ -32,7 +25,7 @@ export const accountService = {
       const response = await tenantApiClient.post<RequestOTPApiResponse>(TENANT_API_ROUTES.ACCOUNT.REQUEST_OTP, data)
       return response.data
     } catch (error) {
-      console.error('[AccountService] Failed to request OTP:', error)
+      console.error('[OnboardingService] Failed to request OTP:', error)
       throw error
     }
   },
@@ -43,18 +36,18 @@ export const accountService = {
       const response = await tenantApiClient.post<VerificationOTPApiResponse>(TENANT_API_ROUTES.ACCOUNT.VERIFY_OTP, data)
       return response.data
     } catch (error) {
-      console.error('[AccountService] Failed to verify OTP:', error)
+      console.error('[OnboardingService] Failed to verify OTP:', error)
       throw error
     }
   },
 
   /* Get tenant account status */
-  async checkTenantAccountStatus(data: AccountStatusApiRequest): Promise<AccountStatusApiResponse> {
+  async checkTenantAccountStatus(tenantId: string): Promise<AccountStatusApiResponse> {
     try {
-      const response = await tenantApiClient.post<AccountStatusApiResponse>(TENANT_API_ROUTES.ACCOUNT.STATUS, data)
+      const response = await tenantApiClient.get<AccountStatusApiResponse>(TENANT_API_ROUTES.ACCOUNT.STATUS.replace(':id', tenantId))
       return response.data
     } catch (error) {
-      console.error('[AccountService] Failed to check account status:', error)
+      console.error('[OnboardingService] Failed to check account status:', error)
       throw error
     }
   },

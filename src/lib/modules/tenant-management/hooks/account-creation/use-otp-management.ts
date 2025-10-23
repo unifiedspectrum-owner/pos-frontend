@@ -10,7 +10,7 @@ import { useCountdownTimer } from '@shared/hooks/use-countdown-timer'
 import { getCurrentISOString } from "@shared/utils";
 
 /* Tenant module imports */
-import { accountService } from '@tenant-management/api'
+import { onboardingService } from '@tenant-management/api'
 import { useOTPVerification } from '@/lib/modules/tenant-management/hooks/account-creation'
 import { VERIFICATION_CONFIGS, TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 import { cleanupAccountCreationStorage } from '@tenant-management/utils'
@@ -118,7 +118,7 @@ export const useOTPManagement = ({
     
     setIsSendingEmailOTP(true)
     try {
-      const response = await accountService.requestOTP({
+      const response = await onboardingService.requestOTP({
         otp_type: 'email_verification',
         email: email
       })
@@ -169,7 +169,7 @@ export const useOTPManagement = ({
 
     setIsSendingPhoneOTP(true)
     try {
-      const response = await accountService.requestOTP({
+      const response = await onboardingService.requestOTP({
         otp_type: 'phone_verification',
         phone: phoneNumber
       })

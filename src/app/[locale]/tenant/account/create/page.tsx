@@ -1,9 +1,8 @@
-import CreateTenantAccount from '@/lib/modules/tenant-management/pages/account/create'
-import React from 'react'
+import { CreateTenantPage } from '@tenant-management/pages'
 
 const Page = () => {
   return (
-    <CreateTenantAccount />
+    <CreateTenantPage />
   )
 }
 

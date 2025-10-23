@@ -164,16 +164,18 @@ const TextInputFieldWithButton: React.FC<TextInputFieldWithButtonProps> = ({
           />
         
         </InputGroup>
-        <Button 
-          h={'48px'} 
-          bg={PRIMARY_COLOR} 
-          borderRightRadius={'md'}
-          onClick={onButtonClick}
-          disabled={disabled}
-          loading={buttonLoading}
-        >
-          {ButtonText}
-        </Button>
+        { !showVerifiedText && (
+          <Button 
+            h={'48px'} 
+            bg={PRIMARY_COLOR} 
+            borderRightRadius={'md'}
+            onClick={onButtonClick}
+            disabled={disabled}
+            loading={buttonLoading}
+          >
+            {ButtonText}
+          </Button>
+        )}
       </Group>
     </Field>
   );

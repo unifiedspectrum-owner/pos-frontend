@@ -6,8 +6,7 @@ import { useState, useCallback } from 'react'
 /* Tenant module imports */
 import { subscriptionService } from '@tenant-management/api'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
-import { CachedPlanData } from '@tenant-management/types/subscription'
-import { AccountStatusApiRequest } from '@tenant-management/types/account'
+import { CachedPlanData } from '@tenant-management/types'
 
 /* Custom hook for managing assigned plan data */
 export const useAssignedPlan = () => {
@@ -22,8 +21,7 @@ export const useAssignedPlan = () => {
     setError(null)
 
     try {
-      const apiRequest: AccountStatusApiRequest = { tenant_id: tenantId }
-      const response = await subscriptionService.getAssignedPlanForTenant(apiRequest)
+      const response = await subscriptionService.getAssignedPlanForTenant(tenantId)
       
       if (response.success && response.data) {
         /* Transform API response to cached plan data format */

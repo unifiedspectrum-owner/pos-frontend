@@ -176,7 +176,7 @@ const PhoneNumberField: React.FC<PhoneNumberFieldProps> = ({
         </InputGroup>
 
         {/* Verify button */}
-        {showVerifyButton && (
+        {showVerifyButton && !showVerifiedText && (
           <Button
             h={'48px'}
             minW="100px"

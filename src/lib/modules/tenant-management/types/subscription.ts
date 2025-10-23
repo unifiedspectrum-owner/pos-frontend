@@ -1,17 +1,72 @@
-/* TypeScript interfaces for subscription plan data structures */
+/* TypeScript interfaces for subscription-related data structures */
 
 /* Shared module imports */
 import { ValidationError } from "@shared/types";
 
 /* Plan module imports */
-import { Addon, Feature, Plan } from "@plan-management/types";
+import { Addon, AddonPricingScope, Feature, Plan } from "@plan-management/types";
 
 /* Tenant module imports */
-import { PlanBillingCycle, AddonAssignements, BranchAddonAssignments, SelectedAddon, BranchSelection } from '@tenant-management/types/subscription';
+import { PLAN_BILLING_CYCLE } from '@tenant-management/constants';
+
+/* ==================== Billing Types ==================== */
+
+/* Billing cycle type derived from constant */
+export type PlanBillingCycle = typeof PLAN_BILLING_CYCLE[keyof typeof PLAN_BILLING_CYCLE]
+
+/* ==================== Addon Types ==================== */
+
+/* Addon assignment configuration */
+export interface AddonAssignements {
+  addon_id: number;
+  feature_level?: 'basic' | 'premium' | 'custom';
+}
+
+/* Branch-level addon assignments */
+export interface BranchAddonAssignments {
+  branch_id: number;
+  addon_assignments: AddonAssignements[];
+}
+
+/* Complete branch information with name and selection state */
+export interface BranchSelection {
+  branchIndex: number
+  branchName: string
+  isSelected: boolean
+}
+
+/* Legacy type alias for backward compatibility in addons */
+export type AddonBranchSelection = BranchSelection
+
+/* Selected addon configuration with pricing and branch data */
+export interface SelectedAddon {
+  addon_id: number
+  addon_name: string
+  addon_price: number
+  pricing_scope: AddonPricingScope
+  branches: AddonBranchSelection[]
+  is_included: boolean
+}
+
+/* Assigned addon details with assignment tracking */
+export interface AssignedAddonDetails {
+  assignment_id: number;
+  tenant_id: string;
+  branch_id: string | null;
+  addon_id: number;
+  addon_name: string;
+  addon_description: string;
+  addon_price: number;
+  pricing_scope: AddonPricingScope;
+  status: string;
+  feature_level: 'basic' | 'premium' | 'custom';
+  billing_cycle: PlanBillingCycle;
+}
+
+/* ==================== Plan Assignment Types ==================== */
 
 /* Request payload for assigning plan to tenant */
 export interface AssignPlanToTenantApiRequest {
-  tenant_id: string;
   plan_id: number;
   billing_cycle: PlanBillingCycle;
   branches_count: number;
@@ -56,12 +111,12 @@ export interface AssignedPlanDetails {
     monthly_price: number;
     included_branches_count: number | null;
     annual_discount_percentage: number;
-    features: Feature[]; // adjust type if features is an object
-    add_ons: Addon[];   // assuming it's an array of add-ons
+    features: Feature[];
+    add_ons: Addon[];
   };
-  billingCycle: PlanBillingCycle ; // adjust enum if fixed
+  billingCycle: PlanBillingCycle;
   branchCount: number;
-  branches: BranchSelection[]; 
+  branches: BranchSelection[];
   add_ons: SelectedAddon[];
 }
 
@@ -72,6 +127,8 @@ export interface AssignedPlanApiResponse {
   data: AssignedPlanDetails;
   timestamp: string;
 }
+
+/* ==================== Cache Data Types ==================== */
 
 /* localStorage plan data structure interface */
 export interface CachedPlanData {

@@ -11,13 +11,13 @@ import { getCurrentISOString } from "@shared/utils";
 
 /* Tenant module imports */
 import { TenantInfoFormData } from '@tenant-management/schemas/account'
-import { accountService } from '@tenant-management/api'
+import { onboardingService } from '@tenant-management/api'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 import { 
   CreateAccountApiRequest, 
   TenantVerificationInfo, 
   TenantVerificationStatusCachedData 
-} from '@tenant-management/types/account'
+} from '@tenant-management/types'
 import { 
   cleanupAccountCreationStorage, 
   getTenantId, 
@@ -116,7 +116,7 @@ export const useVerificationStatus = ({
       /* Prepare API request with verification status and tenant_id if updating */
       const apiRequest: CreateAccountApiRequest = transformFormDataToApiPayload(currentValues, verificationStatus, existingTenantId)
 
-      const response = await accountService.createTenantAccount(apiRequest)
+      const response = await onboardingService.createTenantAccount(apiRequest)
       
       if (response.data && response.success) {
         console.log('Account updated with verification status:', response.data);

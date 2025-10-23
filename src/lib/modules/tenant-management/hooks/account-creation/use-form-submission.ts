@@ -13,9 +13,9 @@ import { Plan } from '@plan-management/types'
 /* Tenant module imports */
 import { subscriptionService } from '@tenant-management/api'
 import { assignPlanToTenantSchema } from '@tenant-management/schemas'
-import { SelectedAddon, PlanBillingCycle } from '@tenant-management/types/subscription'
-import { validatePlanSelection, validateBranchCount } from '@tenant-management/utils/business'
-import { StepTracker } from '@tenant-management/utils/workflow'
+import { SelectedAddon, PlanBillingCycle } from '@tenant-management/types'
+import { validatePlanSelection, validateBranchCount } from '@tenant-management/utils'
+import { StepTracker } from '@tenant-management/utils'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 import { AxiosError } from 'axios'
 
@@ -132,7 +132,6 @@ export const useTenantFormSubmission = () => {
 
       /* Build API request payload */
       const apiPayload = {
-        tenant_id: tenantId,
         plan_id: data.selectedPlan?.id,
         billing_cycle: data.billingCycle,
         branches_count: data.branchCount,
@@ -157,7 +156,7 @@ export const useTenantFormSubmission = () => {
       const validatedPayload = validationResult.data!
 
       /* Execute plan assignment API call */
-      const response = await subscriptionService.assignPlanToTenant(validatedPayload)
+      const response = await subscriptionService.assignPlanToTenant(validatedPayload, tenantId)
 
       if (response.data && response.success) {
         /* Cache submission data for cross-step persistence */

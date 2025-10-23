@@ -1,9 +1,10 @@
+/* Tenant account creation wizard step configurations */
+
 /* React and external library imports */
-import { IconType } from "react-icons"
 import { FaBuilding, FaClipboardList, FaCheckCircle, FaCreditCard, FaPuzzlePiece, FaExclamationTriangle, FaTrophy } from "react-icons/fa"
 
 /* Tenant module imports */
-import { TenantAccountCreationStepType } from "@tenant-management/types"
+import { TenantAccountCreationSteps } from "@tenant-management/types"
 
 /* Step identifiers for tenant account creation flow */
 export const STEP_IDS = {
@@ -15,15 +16,6 @@ export const STEP_IDS = {
   PAYMENT_FAILED: 'payment-failed',
   SUCCESS: 'success'
 } as const
-
-/* Interface defining step configuration properties */
-export interface TenantAccountCreationSteps {
-  id: TenantAccountCreationStepType
-  label: string
-  title: string
-  description: string
-  icon: IconType
-}
 
 /* Complete step configuration for tenant account creation wizard */
 export const TENANT_CREATION_STEPS: TenantAccountCreationSteps[] = [

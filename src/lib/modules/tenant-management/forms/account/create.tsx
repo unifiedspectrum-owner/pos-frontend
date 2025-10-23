@@ -11,13 +11,11 @@ import { handleApiError } from '@shared/utils/api'
 /* Tenant module imports */
 import { BasicInfoStep, PlanSelectionStep, AddonSelectionStep, PlanSummaryStep, PaymentStep, PaymentFailedStep, SuccessStep } from '@tenant-management/forms/account/steps'
 import { TENANT_CREATION_STEPS, STEP_IDS, TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
-import { StepTracker, cleanupAccountCreationStorage, calculateStepProgression, getTenantId, getPaymentStatus, isPlanSummaryCompleted } from '@tenant-management/utils/workflow'
+import { StepTracker, cleanupAccountCreationStorage, calculateStepProgression, getTenantId, getPaymentStatus, isPlanSummaryCompleted } from '@tenant-management/utils'
 import { useAssignedPlan } from '@tenant-management/hooks/data-management'
 import { ProgressHeader } from '@tenant-management/components/layout'
-import { accountService } from '@tenant-management/api'
-import { CachedPlanData } from '@tenant-management/types/subscription'
-import { AccountStatusApiRequest } from '@tenant-management/types/account'
-import { TenantAccountCreationStepType } from '@tenant-management/types/ui'
+import { onboardingService } from '@tenant-management/api'
+import { CachedPlanData, TenantAccountCreationStepType } from '@tenant-management/types'
 import { AxiosError } from 'axios'
 
 /* Main tenant account creation form component */
@@ -44,8 +42,7 @@ const TenantAccountCreationForm: React.FC = () => {
 
     /* Fetch current tenant status */
     try {
-      const apiRequest: AccountStatusApiRequest = { tenant_id: tenantId }
-      const response = await accountService.checkTenantAccountStatus(apiRequest)
+      const response = await onboardingService.checkTenantAccountStatus(tenantId)
 
       if (response.success && response.data) {
         const { tenant_info, verification_status, basic_info_status } = response.data;

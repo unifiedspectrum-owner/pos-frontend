@@ -1,20 +1,15 @@
 /* Tenant module imports */
-import {
-  AssignPlanToTenantApiRequest,
-  AssignPlanToTenantApiResponse,
-  AssignedPlanApiResponse,
-} from "@tenant-management/types/subscription"
-import { AccountStatusApiRequest, StartResourceProvisioningApiResponse } from "@tenant-management/types/account"
-import { tenantApiClient } from "@tenant-management/api/clients"
-import { TENANT_API_ROUTES } from "@tenant-management/constants/routes"
+import { AssignPlanToTenantApiRequest, AssignPlanToTenantApiResponse, AssignedPlanApiResponse, StartResourceProvisioningApiResponse } from "@tenant-management/types"
+import { tenantApiClient } from "@tenant-management/api/client"
+import { TENANT_API_ROUTES } from "@tenant-management/constants"
 
 /* Service object containing subscription management API methods */
 export const subscriptionService = {
 
   /* Assign subscription plan to tenant */
-  async assignPlanToTenant(data: AssignPlanToTenantApiRequest): Promise<AssignPlanToTenantApiResponse> {
+  async assignPlanToTenant(data: AssignPlanToTenantApiRequest, tenantId: string): Promise<AssignPlanToTenantApiResponse> {
     try {
-      const response = await tenantApiClient.post<AssignPlanToTenantApiResponse>(TENANT_API_ROUTES.ACCOUNT.ASSIGN_PLAN, data)
+      const response = await tenantApiClient.post<AssignPlanToTenantApiResponse>(TENANT_API_ROUTES.ACCOUNT.ASSIGN_PLAN.replace(':id', tenantId), data)
       return response.data
     } catch (error) {
       console.error('[SubscriptionService] Failed to assign plan:', error)
@@ -23,9 +18,9 @@ export const subscriptionService = {
   },
 
   /* Get assigned plan details for tenant */
-  async getAssignedPlanForTenant(data: AccountStatusApiRequest): Promise<AssignedPlanApiResponse> {
+  async getAssignedPlanForTenant(tenantId: string): Promise<AssignedPlanApiResponse> {
     try {
-      const response = await tenantApiClient.post<AssignedPlanApiResponse>(TENANT_API_ROUTES.ACCOUNT.GET_ASSIGNED_PLAN, data)
+      const response = await tenantApiClient.get<AssignedPlanApiResponse>(TENANT_API_ROUTES.ACCOUNT.GET_ASSIGNED_PLAN.replace(':id', tenantId))
       return response.data
     } catch (error) {
       console.error('[SubscriptionService] Failed to get assigned plan:', error)
@@ -34,9 +29,9 @@ export const subscriptionService = {
   },
 
   /* Start tenant resource provisioning */
-  async startTenantResourceProvisioning(data: AccountStatusApiRequest): Promise<StartResourceProvisioningApiResponse> {
+  async startTenantResourceProvisioning(tenantId: string): Promise<StartResourceProvisioningApiResponse> {
     try {
-      const response = await tenantApiClient.post<StartResourceProvisioningApiResponse>(TENANT_API_ROUTES.PROVISION.START, data)
+      const response = await tenantApiClient.post<StartResourceProvisioningApiResponse>(TENANT_API_ROUTES.PROVISION.START.replace(':id', tenantId))
       return response.data
     } catch (error) {
       console.error('[SubscriptionService] Failed to start resource provisioning:', error)

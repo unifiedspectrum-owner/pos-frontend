@@ -15,7 +15,7 @@ import TenantTable from '@tenant-management/tables/tenants'
 import { TENANT_MODULE_NAME, TENANT_PAGE_ROUTES } from '@tenant-management/constants'
 import { useTenants } from '@tenant-management/hooks'
 
-const TenantManagement: React.FC = () => {
+const TenantManagementHome: React.FC = () => {
   /* Navigation and permissions */
   const router = useRouter()
   const { hasSpecificPermission } = usePermissions()
@@ -71,4 +71,4 @@ const TenantManagement: React.FC = () => {
   )
 }
 
-export default TenantManagement
+export default TenantManagementHome

@@ -6,7 +6,7 @@ import { Flex, SegmentGroup, Badge, Text } from '@chakra-ui/react'
 import { PRIMARY_COLOR, WHITE_COLOR } from '@shared/config'
 
 /* Tenant module imports */
-import { getBillingCycleLabel } from '@tenant-management/utils/formatting'
+import { getBillingCycleLabel } from '@tenant-management/utils'
 import { PLAN_BILLING_CYCLE, PLAN_BILLING_CYCLES } from '@tenant-management/constants'
 import { PlanBillingCycle } from '@tenant-management/types'
 

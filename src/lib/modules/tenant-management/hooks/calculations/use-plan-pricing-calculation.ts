@@ -2,7 +2,7 @@
 import { useMemo } from 'react'
 
 /* Tenant module imports */
-import { AssignedPlanDetails, PlanBillingCycle } from '@tenant-management/types/subscription'
+import { AssignedPlanDetails, PlanBillingCycle } from '@tenant-management/types'
 import { PLAN_BILLING_CYCLES } from '@tenant-management/constants'
 
 /* Pricing calculation result interface */

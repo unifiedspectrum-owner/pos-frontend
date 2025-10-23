@@ -10,8 +10,8 @@ import { handleApiError } from '@shared/utils/api'
 import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config'
 
 /* Tenant management module imports */
-import { tenantManagementService } from '@tenant-management/api'
-import { TenantBasicDetails, TenantWithPlanDetails } from '@tenant-management/types/account/list'
+import { tenantService } from '@tenant-management/api'
+import { TenantBasicDetails, TenantWithPlanDetails } from '@tenant-management/types'
 
 /* Hook interface */
 interface UseTenantsParams {
@@ -80,7 +80,7 @@ export const useTenants = (params: UseTenantsParams = {}): UseTenantsReturn => {
       console.log('[useTenants] Fetching tenants - page:', page, 'limit:', limit)
 
       /* API call with pagination */
-      const response = await tenantManagementService.listAllTenants(page, limit)
+      const response = await tenantService.listAllTenants(page, limit)
 
       console.log('[useTenants] Tenants API response:', response)
 
@@ -126,7 +126,7 @@ export const useTenants = (params: UseTenantsParams = {}): UseTenantsReturn => {
       console.log('[useTenants] Fetching tenants with base details')
 
       /* Call API */
-      const response = await tenantManagementService.listAllTenantsWithBaseDetails()
+      const response = await tenantService.listAllTenantsWithBaseDetails()
 
       console.log('[useTenants] Base details API response:', response)
 

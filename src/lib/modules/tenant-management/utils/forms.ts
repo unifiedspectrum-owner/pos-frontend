@@ -1,58 +1,14 @@
+/* Form data transformation and payload building utilities */
+
+/* Shared module imports */
+import { formatPhoneForAPI, parsePhoneFromAPI } from '@shared/utils/formatting'
+
 /* Tenant module imports */
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
-import { CachedPaymentStatusData } from '@tenant-management/types/subscription'
-import { formatPhoneForAPI, parsePhoneFromAPI } from '@shared/utils/formatting'
-import { TenantInfoFormData } from '../../schemas/account/creation'
-import { TenantAccountFormCacheData, TenantVerificationStatusCachedData } from '../../types/account/status'
-import { CreateAccountApiRequest } from '../../types/account/creation'
+import { TenantAccountFormCacheData, TenantVerificationStatusCachedData, CreateAccountApiRequest } from '@tenant-management/types'
+import { TenantInfoFormData } from '@tenant-management/schemas'
 
-/* Get tenant ID from localStorage */
-export const getTenantId = (): string | null => localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.TENANT_ID);
-
-/* Parse payment data from localStorage */
-export const getPaymentStatus = (): boolean => {
-  const paymentData = localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.PAYMENT_DATA)
-  if (!paymentData) return false
-  
-  try {
-    const parsed: CachedPaymentStatusData = JSON.parse(paymentData)
-    return parsed.paymentSucceeded || false
-  } catch (error) {
-    console.error('Failed to parse payment data:', error)
-    return false
-  }
-}
-
-/* Check if plan summary is completed */
-export const isPlanSummaryCompleted = (): boolean => {
-  return !!localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.PLAN_SUMMARY_COMPLETED)
-}
-
-/* Get verification status from localStorage with defaults */
-export const getCachedVerificationStatus = (): TenantVerificationStatusCachedData => {
-  const defaultStatus: TenantVerificationStatusCachedData = {
-    email_verified: false,
-    phone_verified: false,
-    email_verified_at: null,
-    phone_verified_at: null
-  }
-
-  const verificationData = localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.TENANT_VERIFICATION_DATA)
-  
-  if (!verificationData) return defaultStatus
-  
-  try {
-    const savedVerification: TenantVerificationStatusCachedData = JSON.parse(verificationData)
-    return {
-      email_verified: savedVerification.email_verified || false,
-      phone_verified: savedVerification.phone_verified || false,
-      email_verified_at: savedVerification.email_verified_at || null,
-      phone_verified_at: savedVerification.phone_verified_at || null
-    }
-  } catch {
-    return defaultStatus
-  }
-}
+/* ==================== Form Data Transformations ==================== */
 
 /* Transform form data to tenant data format */
 export const transformFormDataToTenantCacheData = (formData: TenantInfoFormData): TenantAccountFormCacheData => {
@@ -84,14 +40,16 @@ export const transformFormDataToApiPayload = (
   }
 }
 
+/* ==================== Form Data Comparison ==================== */
+
 /* Check if current form data differs from stored tenant data */
 export const hasFormDataChanged = (formData: TenantInfoFormData): boolean => {
   try {
     const storedData = localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.TENANT_FORM_DATA)
     if (!storedData) return true
-    
+
     const stored: TenantAccountFormCacheData = JSON.parse(storedData)
-    
+
     /* Field-by-field comparison */
     const changes = {
       company_name: formData.company_name !== stored.company_name,
@@ -105,16 +63,16 @@ export const hasFormDataChanged = (formData: TenantInfoFormData): boolean => {
       postal_code: formData.postal_code !== stored.postal_code,
       country: formData.country !== stored.country
     }
-    
+
     const hasChanged = Object.values(changes).some(changed => changed)
-    
+
     console.log('Data comparison:', {
       stored: stored,
       current: formData,
       changes: changes,
       hasChanged: hasChanged
     })
-    
+
     return hasChanged
   } catch (error) {
     console.warn('Error comparing data:', error)

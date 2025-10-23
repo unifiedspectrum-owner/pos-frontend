@@ -6,12 +6,12 @@ import { useState, useCallback } from 'react'
 import { createToastNotification, handleApiError } from '@shared/utils'
 
 /* Tenant module imports */
-import { tenantActionsService } from '@tenant-management/api'
-import { 
+import { tenantService } from '@tenant-management/api'
+import {
   SuspendTenantApiRequest,
   HoldTenantApiRequest,
   ActivateTenantApiRequest
-} from '@tenant-management/types/account/suspension'
+} from '@tenant-management/types'
 import { AxiosError } from 'axios'
 
 /* Hook interface for tenant suspension operations */
@@ -22,9 +22,9 @@ interface UseTenantSuspensionOptions {
 
 /* Return type for the hook */
 interface UseTenantSuspensionReturn {
-  suspendTenant: (data: SuspendTenantApiRequest) => Promise<void>
-  holdTenant: (data: HoldTenantApiRequest) => Promise<void>
-  activateTenant: (data: ActivateTenantApiRequest) => Promise<void>
+  suspendTenant: (data: SuspendTenantApiRequest, tenantId: string) => Promise<void>
+  holdTenant: (data: HoldTenantApiRequest, tenantId: string) => Promise<void>
+  activateTenant: (data: ActivateTenantApiRequest, tenantId: string) => Promise<void>
   isSuspending: boolean
   isHolding: boolean
   isActivating: boolean
@@ -44,11 +44,11 @@ const useTenantSuspension = (options: UseTenantSuspensionOptions = {}): UseTenan
   const isLoading = isSuspending || isHolding || isActivating
 
   /* Suspend tenant operation */
-  const suspendTenant = useCallback(async (data: SuspendTenantApiRequest) => {
+  const suspendTenant = useCallback(async (data: SuspendTenantApiRequest, tenantId: string) => {
     try {
       setIsSuspending(true)
 
-      const response = await tenantActionsService.suspendTenant(data)
+      const response = await tenantService.suspendTenant(data, tenantId)
 
       if (response.success) {
         createToastNotification({
@@ -56,7 +56,7 @@ const useTenantSuspension = (options: UseTenantSuspensionOptions = {}): UseTenan
           title: 'Tenant Suspended',
           description: `The tenant account has been successfully suspended.`
         })
-        
+
         onSuccess?.()
       } else {
         throw new Error(response.message || 'Failed to suspend tenant')
@@ -65,7 +65,7 @@ const useTenantSuspension = (options: UseTenantSuspensionOptions = {}): UseTenan
       console.error('[useTenantSuspension] Error suspending tenant:', error);
       const err = error as AxiosError;
       handleApiError(err, {title:"Suspension Failed"})
-      
+
       onError?.(error)
     } finally {
       setIsSuspending(false)
@@ -73,11 +73,11 @@ const useTenantSuspension = (options: UseTenantSuspensionOptions = {}): UseTenan
   }, [onSuccess, onError])
 
   /* Hold tenant operation */
-  const holdTenant = useCallback(async (data: HoldTenantApiRequest) => {
+  const holdTenant = useCallback(async (data: HoldTenantApiRequest, tenantId: string) => {
     try {
       setIsHolding(true)
 
-      const response = await tenantActionsService.holdTenant(data)
+      const response = await tenantService.holdTenant(data, tenantId)
 
       if (response.success) {
         createToastNotification({
@@ -85,7 +85,7 @@ const useTenantSuspension = (options: UseTenantSuspensionOptions = {}): UseTenan
           title: 'Tenant Placed on Hold',
           description: `The tenant account has been successfully placed on hold.`
         })
-        
+
         onSuccess?.()
       } else {
         throw new Error(response.message || 'Failed to hold tenant')
@@ -95,7 +95,7 @@ const useTenantSuspension = (options: UseTenantSuspensionOptions = {}): UseTenan
 
       const err = error as AxiosError;
       handleApiError(err, {title:"Suspension Failed"})
-      
+
       onError?.(error)
     } finally {
       setIsHolding(false)
@@ -103,11 +103,11 @@ const useTenantSuspension = (options: UseTenantSuspensionOptions = {}): UseTenan
   }, [onSuccess, onError])
 
   /* Activate tenant operation */
-  const activateTenant = useCallback(async (data: ActivateTenantApiRequest) => {
+  const activateTenant = useCallback(async (data: ActivateTenantApiRequest, tenantId: string) => {
     try {
       setIsActivating(true)
 
-      const response = await tenantActionsService.activateTenant(data)
+      const response = await tenantService.activateTenant(data, tenantId)
 
       if (response.success) {
         createToastNotification({
@@ -115,7 +115,7 @@ const useTenantSuspension = (options: UseTenantSuspensionOptions = {}): UseTenan
           title: 'Tenant Activated',
           description: `The tenant account has been successfully activated.`
         })
-        
+
         onSuccess?.()
       } else {
         throw new Error(response.message || 'Failed to activate tenant')

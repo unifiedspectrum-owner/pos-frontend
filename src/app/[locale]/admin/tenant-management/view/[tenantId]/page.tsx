@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { TenantDetailsPage } from '@tenant-management/pages';
+import { ViewTenantPage } from '@tenant-management/pages';
 
 const TenantDetailsRoute = () => {
   const params = useParams();
@@ -18,7 +18,7 @@ const TenantDetailsRoute = () => {
     );
   }
 
-  return <TenantDetailsPage tenantId={tenantId} />;
+  return <ViewTenantPage tenantId={tenantId} />;
 };
 
 export default TenantDetailsRoute;

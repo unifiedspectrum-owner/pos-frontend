@@ -15,9 +15,8 @@ import { Plan } from '@plan-management/types'
 
 /* Tenant module imports */
 import { MAX_BRANCH_COUNT } from '@tenant-management/constants'
-import { calculatePlanPrice } from '@/lib/modules/tenant-management/utils/business'
-import { PlanBillingCycle } from '@/lib/modules/tenant-management/types'
-import { getBillingCycleLabel } from '@/lib/modules/tenant-management/utils/formatting'
+import { calculatePlanPrice, getBillingCycleLabel } from '@tenant-management/utils'
+import { PlanBillingCycle } from '@tenant-management/types'
 
 /* Component props interface */
 interface PlansGridProps {

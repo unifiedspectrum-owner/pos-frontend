@@ -1,5 +1,5 @@
-import { CreateTenantAccount } from '@/lib/modules/tenant-management'
+import { CreateTenantPage } from '@tenant-management/pages'
 
 export default function TenantCreatePage() {
-  return <CreateTenantAccount />
+  return <CreateTenantPage />
 }

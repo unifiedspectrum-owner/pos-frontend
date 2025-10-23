@@ -84,8 +84,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
     >
       <HStack gap={2}>
         {leftIcon && <Icon as={leftIcon} fontSize={'md'}/>} {/* Conditionally render left icon */}
-        {children}
-        {isLoading ? loadingText : buttonText}
+        {buttonText ? (isLoading ? loadingText : buttonText) : children} {/* Render buttonText if provided, otherwise render children */}
         {rightIcon && <Icon as={rightIcon} />} {/* Conditionally render right icon */}
       </HStack>
     </Button>

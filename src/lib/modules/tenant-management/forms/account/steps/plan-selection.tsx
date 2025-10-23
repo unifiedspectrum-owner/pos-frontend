@@ -13,7 +13,7 @@ import { useBranchManagement, useAddonManagement, usePlanData } from '@tenant-ma
 import { usePlanStorage } from '@/lib/modules/tenant-management/hooks/account-creation'
 import { CachedPlanData, PlanBillingCycle } from '@tenant-management/types'
 import { MAX_BRANCH_COUNT, TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
-import { StepTracker } from '@tenant-management/utils/workflow'
+import { StepTracker } from '@tenant-management/utils'
 import { PRIMARY_COLOR, WHITE_COLOR } from '@/lib/shared/config'
 
 /* Props interface for plan selection step component */

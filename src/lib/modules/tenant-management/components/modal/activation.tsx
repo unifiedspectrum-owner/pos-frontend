@@ -15,7 +15,7 @@ import { PrimaryButton, SecondaryButton, TextAreaField, TextInputField } from '@
 
 /* Tenant module imports */
 import { activateTenantAccountSchema, ActivateTenantFormData } from '@tenant-management/schemas/account/suspension'
-import { ActivateTenantApiRequest } from '@tenant-management/types/account/suspension'
+import { ActivateTenantApiRequest } from '@tenant-management/types'
 import { useTenantSuspension } from '@tenant-management/hooks'
 import { TENANT_ACTIVATION_QUESTIONS } from '@tenant-management/constants'
 
@@ -65,7 +65,6 @@ const TenantActivationModal: React.FC<TenantActivationModalProps> = ({
   const { control, handleSubmit, reset, formState: { errors } } = useForm<ActivateTenantFormData>({
     resolver: zodResolver(activateTenantAccountSchema),
     defaultValues: {
-      tenant_id: tenantId,
       reason: ''
     },
     mode: 'onChange'
@@ -90,12 +89,11 @@ const TenantActivationModal: React.FC<TenantActivationModalProps> = ({
 
     /* Prepare activation API request payload */
     const requestData: ActivateTenantApiRequest = {
-      tenant_id: data.tenant_id,
       reason: data.reason.trim()
     }
 
     /* Execute tenant activation */
-    await activateTenant(requestData)
+    await activateTenant(requestData, tenantId)
   }
 
   return (

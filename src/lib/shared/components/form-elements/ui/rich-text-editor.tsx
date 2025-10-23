@@ -6,7 +6,7 @@ import { Box } from '@chakra-ui/react';
 import { Field } from '@/components/ui/field';
 import { lighten } from 'polished';
 import Quill from 'quill';
-import type { QuillOptions } from 'quill';
+import { QuillOptions } from 'quill';
 
 /* Shared module imports */
 import { GRAY_COLOR } from '@shared/config';

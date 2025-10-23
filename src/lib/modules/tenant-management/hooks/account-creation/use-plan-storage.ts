@@ -9,8 +9,7 @@ import { createToastNotification } from '@shared/utils/ui'
 
 /* Tenant module imports */
 import { subscriptionService } from '@tenant-management/api'
-import { CachedPlanData } from '@tenant-management/types/subscription'
-import { AssignPlanToTenantApiRequest } from '@tenant-management/types/subscription'
+import { CachedPlanData, AssignPlanToTenantApiRequest } from '@tenant-management/types'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS, ADDON_PRICING_SCOPE } from '@tenant-management/constants'
 import { AxiosError } from 'axios'
 
@@ -103,9 +102,11 @@ export const usePlanStorage = (): UsePlanStorageReturn => {
           return acc
         }, [] as Array<{ branch_id: number; addon_assignments: Array<{ addon_id: number; feature_level: 'basic' | 'premium' | 'custom' }> }>)
 
+      /* Store tenantId separately for URL parameter */
+      setError(null)
+
       /* Return API request payload */
       return {
-        tenant_id: tenantId,
         plan_id: planData.selectedPlan.id,
         billing_cycle: planData.billingCycle,
         branches_count: planData.branchCount,
@@ -147,8 +148,19 @@ export const usePlanStorage = (): UsePlanStorageReturn => {
         return false
       }
 
+      /* Get tenant ID for URL parameter */
+      const tenantId = localStorage.getItem(TENANT_ACCOUNT_CREATION_LS_KEYS.TENANT_ID)
+      if (!tenantId) {
+        createToastNotification({
+          title: 'Missing Tenant ID',
+          description: 'Unable to identify tenant. Please restart the process.',
+          type: 'error'
+        })
+        return false
+      }
+
       /* Submit to API */
-      await subscriptionService.assignPlanToTenant(apiRequestData)
+      await subscriptionService.assignPlanToTenant(apiRequestData, tenantId)
       
       createToastNotification({
         title: 'Plan Assigned Successfully',

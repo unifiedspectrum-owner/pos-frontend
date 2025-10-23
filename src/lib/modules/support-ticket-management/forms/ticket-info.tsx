@@ -11,7 +11,7 @@ import { fileToBase64 } from '@shared/utils/formatting'
 /* Support ticket module imports */
 import { CreateTicketFormSchema } from '@support-ticket-management/schemas'
 import { TICKET_CREATION_FORM_QUESTIONS, TicketFormMode } from '@support-ticket-management/constants'
-import { TenantBasicDetails } from '@tenant-management/types/account/list'
+import { TenantBasicDetails } from '@tenant-management/types'
 import { NavigationButtons } from '@support-ticket-management/forms'
 
 /* Fields to hide in edit mode - constant outside component */

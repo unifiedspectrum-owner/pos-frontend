@@ -15,7 +15,6 @@ export const addonAssignments = z.object({
 
 /* Schema for assigning subscription plan to tenant with addons */
 export const assignPlanToTenantSchema = z.object({
-  tenant_id: z.string(),
   plan_id: z.number()
     .int('Plan ID must be an integer')
     .positive('Plan ID must be positive'),

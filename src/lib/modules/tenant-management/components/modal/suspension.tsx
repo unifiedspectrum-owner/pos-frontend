@@ -15,7 +15,7 @@ import { PrimaryButton, SecondaryButton, DateField, TextAreaField, TextInputFiel
 
 /* Tenant module imports */
 import { suspendTenantAccountSchema, SuspendTenantFormData } from '@tenant-management/schemas/account/suspension'
-import { SuspendTenantApiRequest } from '@tenant-management/types/account/suspension'
+import { SuspendTenantApiRequest } from '@tenant-management/types'
 import { useTenantSuspension } from '@tenant-management/hooks'
 import { TENANT_SUSPENSION_QUESTIONS } from '@tenant-management/constants'
 import { getCurrentISOString } from "@shared/utils";
@@ -66,7 +66,6 @@ const TenantSuspensionModal: React.FC<TenantSuspensionModalProps> = ({
   const { control, handleSubmit, reset, formState: { errors } } = useForm<SuspendTenantFormData>({
     resolver: zodResolver(suspendTenantAccountSchema),
     defaultValues: {
-      tenant_id: tenantId,
       reason: '',
       suspend_until: null
     },
@@ -92,13 +91,12 @@ const TenantSuspensionModal: React.FC<TenantSuspensionModalProps> = ({
 
     /* Prepare suspension API request payload */
     const requestData: SuspendTenantApiRequest = {
-      tenant_id: data.tenant_id,
       reason: data.reason.trim(),
       suspend_until: data.suspend_until || null
     }
 
     /* Execute tenant suspension */
-    await suspendTenant(requestData)
+    await suspendTenant(requestData, tenantId)
   }
 
   return (

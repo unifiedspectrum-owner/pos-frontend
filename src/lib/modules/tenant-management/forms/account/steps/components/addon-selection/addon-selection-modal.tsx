@@ -15,12 +15,11 @@ import { Addon } from '@plan-management/types'
 
 /* Tenant module imports */
 import { AddonBranchSelection, SelectedAddon, PlanBillingCycle } from '@tenant-management/types'
-import { calculateSingleAddonPrice } from '@tenant-management/utils/business'
+import { calculateSingleAddonPrice, getBillingCycleLabel } from '@tenant-management/utils'
 import { useAddonConfirmation } from '@tenant-management/hooks'
 
 /* UI component imports */
 import { toaster } from '@/components/ui/toaster'
-import { getBillingCycleLabel } from '@/lib/modules/tenant-management/utils/formatting'
 
 /* Modal component props for add-on branch selection */
 interface AddonSelectionModalProps {

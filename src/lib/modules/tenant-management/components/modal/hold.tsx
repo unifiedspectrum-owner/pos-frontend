@@ -15,7 +15,7 @@ import { PrimaryButton, SecondaryButton, DateField, TextAreaField, TextInputFiel
 
 /* Tenant module imports */
 import { holdTenantAccountSchema, HoldTenantFormData } from '@tenant-management/schemas/account/suspension'
-import { HoldTenantApiRequest } from '@tenant-management/types/account/suspension'
+import { HoldTenantApiRequest } from '@tenant-management/types'
 import { useTenantSuspension } from '@tenant-management/hooks'
 import { TENANT_HOLD_QUESTIONS } from '@tenant-management/constants'
 import { getCurrentISOString } from "@shared/utils";
@@ -66,7 +66,6 @@ const TenantHoldModal: React.FC<TenantHoldModalProps> = ({
   const { control, handleSubmit, reset, formState: { errors } } = useForm<HoldTenantFormData>({
     resolver: zodResolver(holdTenantAccountSchema),
     defaultValues: {
-      tenant_id: tenantId,
       reason: '',
       hold_until: null
     },
@@ -92,13 +91,12 @@ const TenantHoldModal: React.FC<TenantHoldModalProps> = ({
 
     /* Prepare hold API request payload */
     const requestData: HoldTenantApiRequest = {
-      tenant_id: data.tenant_id,
       reason: data.reason.trim(),
       hold_until: data.hold_until || null
     }
 
     /* Execute tenant hold */
-    await holdTenant(requestData)
+    await holdTenant(requestData, tenantId)
   }
 
   return (

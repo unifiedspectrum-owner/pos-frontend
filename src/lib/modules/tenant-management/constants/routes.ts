@@ -8,7 +8,7 @@ export const TENANT_API_ROUTES = {
   BASE_URL: '/tenants',
   LIST: '/list',
   PROVISION: {
-    START: '/account/resource-provision'
+    START: '/:id/provision'
   },
   LIST_WITH_BASIC_DETAILS: '/list/basic',
   DETAILS: '/details/:id',
@@ -16,9 +16,9 @@ export const TENANT_API_ROUTES = {
     CREATE: '/account/create',
     REQUEST_OTP: '/account/request-otp',
     VERIFY_OTP: '/account/verify-otp',
-    STATUS: '/account/status',
-    ASSIGN_PLAN: '/account/assign-plan',
-    GET_ASSIGNED_PLAN: '/account/get-assigned-plan',
+    STATUS: '/:id/status',
+    ASSIGN_PLAN: '/:id/plan',
+    GET_ASSIGNED_PLAN: '/:id/plan',
   },
   PAYMENT: {
     INITIATE: '/account/payment/initiate',
@@ -26,9 +26,9 @@ export const TENANT_API_ROUTES = {
     COMPLETE: '/account/payment/complete',
   },
   ACTIONS: {
-    SUSPEND: '/suspend',
-    ACTIVATE: '/activate',
-    HOLD: '/hold',  
+    SUSPEND: '/:id/suspend',
+    ACTIVATE: '/:id/activate',
+    HOLD: '/:id/hold',  
     DELETE: '/:id'
   }
 } as const;

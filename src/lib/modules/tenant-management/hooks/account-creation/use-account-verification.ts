@@ -9,8 +9,8 @@ import { createToastNotification } from '@shared/utils/ui'
 import { getCurrentISOString } from "@shared/utils";
 
 /* Tenant module imports */
-import { accountService } from '@tenant-management/api'
-import { VerificationOTPApiRequest, RequestOTPApiRequest, VerificationType, TenantVerificationStatusCachedData } from '@tenant-management/types/account'
+import { onboardingService } from '@tenant-management/api'
+import { VerificationOTPApiRequest, RequestOTPApiRequest, VerificationType, TenantVerificationStatusCachedData } from '@tenant-management/types'
 import { getCachedVerificationStatus, StepTracker, clearOTPState } from '@tenant-management/utils'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 import { AxiosError } from 'axios'
@@ -104,7 +104,7 @@ export const useOTPVerification = (config: VerificationConfig) => {
         otp_code: otpNumber
       }
 
-      const response = await accountService.verifyOTP(apiRequest)
+      const response = await onboardingService.verifyOTP(apiRequest)
       
       /* Process successful verification */
       if (response.success && response.data?.verified) {
@@ -165,7 +165,7 @@ export const useOTPVerification = (config: VerificationConfig) => {
         ...(phone && { phone })
       }
 
-      const response = await accountService.requestOTP(apiRequest)
+      const response = await onboardingService.requestOTP(apiRequest)
       
       /* Process successful resend */
       if (response.success) {

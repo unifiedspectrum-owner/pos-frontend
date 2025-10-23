@@ -1,12 +1,18 @@
-/* React imports */
-import { FormFieldStructure } from "@shared/types";
+/* Form configuration constants for tenant management */
+
+/* Libraries imports */
 import { FaRegBuilding } from "react-icons/fa6";
 import { FiPhone } from "react-icons/fi";
-import { MdOutlineEmail, MdPersonOutline } from "react-icons/md";
+import { MdOutlineEmail, MdPersonOutline, MdBlock, MdDateRange } from "react-icons/md";
 import { SlLocationPin } from "react-icons/sl";
+
+/* Shared module imports */
+import { FormFieldStructure } from "@shared/types";
+import { FORM_FIELD_TYPES } from "@shared/constants";
 
 /* Tenant module imports */
 import { TenantInfoFormData } from "@tenant-management/schemas/account";
+import { VerificationConfig } from "@tenant-management/hooks/account-creation";
 
 /* Form field structure with section heading */
 export interface FormFieldStructureWithSectionHeading {
@@ -27,7 +33,7 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
     section_values: [
       {
         id: 1,
-        type: "INPUT",
+        type: FORM_FIELD_TYPES.INPUT,
         label: "Company Name",
         schema_key: "company_name",
         placeholder: "Enter your company name",
@@ -41,7 +47,7 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
       },
       {
         id: 2,
-        type: "INPUT",
+        type: FORM_FIELD_TYPES.INPUT,
         label: "Contact Person",
         schema_key: "contact_person",
         placeholder: "Enter the Contact Person Name",
@@ -55,7 +61,7 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
       },
       {
         id: 3,
-        type: "COMBOBOX",
+        type: FORM_FIELD_TYPES.COMBOBOX,
         label: "Country",
         schema_key: "country",
         placeholder: "Enter country",
@@ -68,7 +74,7 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
       },
       {
         id: 4,
-        type: "INPUT_WITH_BUTTON",
+        type: FORM_FIELD_TYPES.INPUT_WITH_BUTTON,
         label: "Email Address",
         schema_key: "primary_email",
         placeholder: "Enter email address",
@@ -82,7 +88,7 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
       },
       {
         id: 5,
-        type: "INPUT_WITH_BUTTON",
+        type: FORM_FIELD_TYPES.INPUT_WITH_BUTTON,
         label: "Secondary Email Address",
         schema_key: "secondary_email",
         placeholder: "Enter secondary email address (optional)",
@@ -96,7 +102,7 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
       },
       {
         id: 6,
-        type: "PHONE_NUMBER",
+        type: FORM_FIELD_TYPES.PHONE_NUMBER,
         label: "Phone Number",
         schema_key: "primary_phone",
         placeholder: "Enter primary phone number",
@@ -110,7 +116,7 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
       },
       {
         id: 7,
-        type: "INPUT_WITH_BUTTON",
+        type: FORM_FIELD_TYPES.INPUT_WITH_BUTTON,
         label: "Secondary Phone Number",
         schema_key: "secondary_phone",
         placeholder: "Enter secondary phone number (optional)",
@@ -129,7 +135,7 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
     section_values: [
       {
         id: 8,
-        type: "TEXTAREA",
+        type: FORM_FIELD_TYPES.TEXTAREA,
         label: "Address Line 1",
         schema_key: "address_line1",
         placeholder: "Enter company address line 1",
@@ -143,7 +149,7 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
       },
       {
         id: 9,
-        type: "TEXTAREA",
+        type: FORM_FIELD_TYPES.TEXTAREA,
         label: "Address Line 2",
         schema_key: "address_line2",
         placeholder: "Enter company address line 2 (optional)",
@@ -157,7 +163,7 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
       },
       {
         id: 10,
-        type: "INPUT",
+        type: FORM_FIELD_TYPES.INPUT,
         label: "City",
         schema_key: "city",
         placeholder: "Enter city",
@@ -170,7 +176,7 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
       },
       {
         id: 11,
-        type: "COMBOBOX",
+        type: FORM_FIELD_TYPES.COMBOBOX,
         label: "State/Province",
         schema_key: "state_province",
         placeholder: "Enter state/province",
@@ -183,7 +189,7 @@ export const TENANT_BASIC_INFO_QUESTIONS: FormFieldStructureWithSectionHeading[]
       },
       {
         id: 12,
-        type: "INPUT",
+        type: FORM_FIELD_TYPES.INPUT,
         label: "Postal Code",
         schema_key: "postal_code",
         placeholder: "Enter postal code",
@@ -210,4 +216,106 @@ export const CREATE_TENANT_ACCOUNT_FORM_DEFAULT_VALUES: TenantInfoFormData = {
   state_province: '',
   postal_code: '',
   country: ''
+}
+
+/* Form field configurations for tenant suspension */
+export const TENANT_SUSPENSION_QUESTIONS: FormFieldStructure[] = [
+  {
+    id: 1,
+    type: FORM_FIELD_TYPES.TEXTAREA,
+    label: "Suspension Reason",
+    schema_key: "reason",
+    placeholder: "Please provide a detailed reason for suspending this tenant account...",
+    left_icon: MdBlock,
+    is_required: true,
+    is_active: true,
+    display_order: 1,
+    grid: {
+      col_span: 1
+    }
+  },
+  {
+    id: 2,
+    type: FORM_FIELD_TYPES.DATE,
+    label: "Suspend Until (Optional)",
+    schema_key: "suspend_until",
+    placeholder: "Select end date for suspension",
+    left_icon: MdDateRange,
+    is_required: false,
+    is_active: true,
+    display_order: 2,
+    grid: {
+      col_span: 1
+    }
+  }
+];
+
+/* Form field configurations for tenant hold */
+export const TENANT_HOLD_QUESTIONS: FormFieldStructure[] = [
+  {
+    id: 1,
+    type: FORM_FIELD_TYPES.TEXTAREA,
+    label: "Hold Reason",
+    schema_key: "reason",
+    placeholder: "Please provide a detailed reason for placing this tenant on hold...",
+    left_icon: MdBlock,
+    is_required: true,
+    is_active: true,
+    display_order: 1,
+    grid: {
+      col_span: 1
+    }
+  },
+  {
+    id: 2,
+    type: FORM_FIELD_TYPES.DATE,
+    label: "Hold Until (Optional)",
+    schema_key: "hold_until",
+    placeholder: "Select end date for hold",
+    left_icon: MdDateRange,
+    is_required: false,
+    is_active: true,
+    display_order: 2,
+    grid: {
+      col_span: 1
+    }
+  }
+];
+
+/* Form field configurations for tenant activation */
+export const TENANT_ACTIVATION_QUESTIONS: FormFieldStructure[] = [
+  {
+    id: 1,
+    type: FORM_FIELD_TYPES.TEXTAREA,
+    label: "Activation Reason",
+    schema_key: "reason",
+    placeholder: "Please provide a reason for activating this tenant account...",
+    left_icon: MdBlock,
+    is_required: true,
+    is_active: true,
+    display_order: 1,
+    grid: {
+      col_span: 1
+    }
+  }
+];
+
+/* Verification configurations for email and phone OTP */
+export const VERIFICATION_CONFIGS: Record<string, VerificationConfig> = {
+  email: {
+    type: 'email_verification',
+    stepType: 'EMAIL_VERIFICATION',
+    verifyButtonText: 'Verify Email OTP',
+    resendDescriptionText: 'A new OTP has been sent to your email address.',
+    successMessage: 'Email',
+    verificationKey: 'email_otp'
+  },
+  phone: {
+    type: 'phone_verification',
+    stepType: 'PHONE_VERIFICATION',
+    verifyButtonText: 'Verify Phone OTP',
+    resendDescriptionText: 'A new OTP has been sent to your phone number.',
+    successMessage: 'Phone',
+    verificationKey: 'phone_otp'
+  }
 }

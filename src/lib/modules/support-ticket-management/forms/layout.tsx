@@ -12,7 +12,7 @@ import { Breadcrumbs } from '@shared/components'
 import { CreateTicketFormSchema } from '@support-ticket-management/schemas'
 import { TICKET_FORM_TITLES, TicketFormMode } from '@support-ticket-management/constants'
 import { TicketForm, TicketComments } from '@support-ticket-management/forms'
-import { TenantBasicDetails } from '@tenant-management/types/account/list'
+import { TenantBasicDetails } from '@tenant-management/types'
 import { TicketCommunication, TicketAttachment } from '@support-ticket-management/types'
 
 /* Component props interface */

@@ -1,3 +1,5 @@
+/* HTTP client configuration for tenant management API */
+
 /* Shared module imports */
 import { createApiClient } from '@shared/api'
 

@@ -5,7 +5,7 @@ import { Control } from 'react-hook-form'
 /* Tenant module imports */
 import { TenantInfoFormData } from '@tenant-management/schemas/account'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
-import { hasFormDataChanged, transformFormDataToTenantCacheData } from '@tenant-management/utils/workflow'
+import { hasFormDataChanged, transformFormDataToTenantCacheData } from '@tenant-management/utils'
 
 /* Hook for form data persistence */
 export const useFormPersistence = (control: Control<TenantInfoFormData>) => {

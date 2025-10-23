@@ -11,7 +11,7 @@ import { AddonSelectionModal, SelectedAddonsSummary, AvailableAddonsGrid, Naviga
 import { useBranchManagement, useAddonManagement } from '@tenant-management/hooks'
 import { usePlanStorage } from '@/lib/modules/tenant-management/hooks/account-creation'
 import { PlanBillingCycle, AddonBranchSelection, CachedPlanData } from '@tenant-management/types'
-import { StepTracker } from '@tenant-management/utils/workflow'
+import { StepTracker } from '@tenant-management/utils'
 import { PRIMARY_COLOR, WHITE_COLOR } from '@/lib/shared/config'
 import { TENANT_ACCOUNT_CREATION_LS_KEYS } from '@tenant-management/constants'
 

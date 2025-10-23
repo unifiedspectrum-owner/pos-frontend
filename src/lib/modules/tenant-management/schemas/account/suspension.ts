@@ -10,21 +10,18 @@ const dateStringSchema = z.string()
 
 /* Schema for holding tenant account */
 export const holdTenantAccountSchema = z.object({
-  tenant_id: z.string().min(1, 'Tenant ID is required'),
   reason: z.string().min(1, 'Hold reason is required').max(500),
   hold_until: dateStringSchema.nullable(),
 });
 
 /* Schema for suspending tenant account */
 export const suspendTenantAccountSchema = z.object({
-  tenant_id: z.string().min(1, 'Tenant ID is required'),
   reason: z.string().min(1, 'Suspension reason is required').max(500),
   suspend_until: dateStringSchema.nullable(),
 });
 
 /* Schema for activating tenant account */
 export const activateTenantAccountSchema = z.object({
-  tenant_id: z.string().min(1, 'Tenant ID is required'),
   reason: z.string().min(1, 'Activation reason is required').max(500),
 });
 

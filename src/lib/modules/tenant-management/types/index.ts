@@ -1,18 +1,16 @@
-/* Tenant management module exports */
+/* Tenant management type exports */
 
-/* Account type definitions */
-export * from './account/creation'
-export * from './account/verification'
-export * from './account/status'
+/* Core tenant domain entities */
+export * from './entities'
 
-/* Subscription type definitions */
-export * from './subscription/billing'
-export * from './subscription/addons'
-export * from './subscription/plans'
+/* API request and response interfaces */
+export * from './api'
 
-/* Payment type definitions */
-export * from './payment/initiation'
-export * from './payment/status'
+/* Subscription-related types */
+export * from './subscription'
 
-/* UI type definitions */
-export * from './ui/workflow'
+/* Payment-related types */
+export * from './payment'
+
+/* UI-specific types */
+export * from './ui'

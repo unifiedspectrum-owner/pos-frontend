@@ -10,10 +10,9 @@ import { ConfirmationDialog } from '@shared/components'
 
 /* Tenant module imports */
 import { SelectedAddon, PlanBillingCycle } from '@tenant-management/types'
-import { calculateSingleAddonPrice } from '@tenant-management/utils/business'
+import { calculateSingleAddonPrice, getBillingCycleLabel } from '@tenant-management/utils'
 import { useAddonConfirmation } from '@tenant-management/hooks'
 import { ADDON_PRICING_SCOPE } from '@tenant-management/constants'
-import { getBillingCycleLabel } from '@/lib/modules/tenant-management/utils/formatting'
 
 /* Props for selected addons summary component */
 interface SelectedAddonsSummaryProps {

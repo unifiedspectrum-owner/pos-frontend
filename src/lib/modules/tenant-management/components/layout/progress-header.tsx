@@ -7,8 +7,7 @@ import { lighten } from 'polished'
 import { PRIMARY_COLOR, WHITE_COLOR } from '@shared/config'
 
 /* Tenant module imports */
-import { TenantAccountCreationStepType } from '@tenant-management/types/ui'
-import { TenantAccountCreationSteps } from '@tenant-management/constants'
+import { TenantAccountCreationStepType, TenantAccountCreationSteps } from '@tenant-management/types'
 
 interface ProgressHeaderProps {
   currentStep: TenantAccountCreationStepType

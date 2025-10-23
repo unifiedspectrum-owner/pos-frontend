@@ -71,8 +71,7 @@ const SecondaryButton: React.FC<SecondaryButtonProps> = ({
     >
       <HStack gap={2}>
         {leftIcon && <Icon as={leftIcon} />} {/* Conditionally render left icon */}
-        {children}
-        {isLoading ? loadingText : buttonText}
+        {buttonText ? (isLoading ? loadingText : buttonText) : children} {/* Render buttonText if provided, otherwise render children */}
         {rightIcon && <Icon as={rightIcon} />} {/* Conditionally render right icon */}
       </HStack>
     </Button>

@@ -1,3 +1,8 @@
+"use client"
+
+/* Libraries imports */
+import dynamic from 'next/dynamic';
+
 /* Form input components */
 export { default as TextInputField } from './text-field'; /* Text input field */
 export { default as PasswordInputField } from './password-input-field'; /* Password input field with strength indicator */
@@ -12,4 +17,6 @@ export { default as PinInputField } from './pin-input'; /* Pin/code input field 
 export { default as PhoneNumberField } from './phone-number-field'; /* Phone number field with country code */
 export { TableFilterSelect } from './table-filter-select'; /* Table filter select dropdown */
 export { default as FileField } from './file-field'; /* File upload field */
-export { default as RichTextEditorField } from './rich-text-editor'; /* Rich text editor field using Quill */
+
+/* Rich text editor with client-side only rendering to avoid SSR issues with Quill */
+export const RichTextEditorField = dynamic(() => import('./rich-text-editor'), { ssr: false });

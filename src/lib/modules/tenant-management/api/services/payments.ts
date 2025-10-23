@@ -5,8 +5,8 @@ import {
   InitiateSubscriptionPaymentApiResponse,
   PaymentStatusApiRequest,
   PaymentStatusApiResponse,
-} from "@tenant-management/types/payment"
-import { tenantApiClient } from "@tenant-management/api/clients"
+} from "@tenant-management/types"
+import { tenantApiClient } from "@tenant-management/api/client"
 import { TENANT_API_ROUTES } from "@tenant-management/constants/routes"
 import { completeTenantSubscriptionPayment } from "@tenant-management/schemas"
 

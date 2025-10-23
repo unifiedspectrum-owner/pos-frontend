@@ -44,14 +44,14 @@ import { ErrorMessageContainer, Breadcrumbs } from '@shared/components/common'
 import { FullPageLoader } from '@shared/components/common'
 
 /* Tenant module imports */
-import { tenantManagementService } from '@tenant-management/api'
+import { tenantService } from '@tenant-management/api'
 import { 
   TenantDetails, 
   TenantSubscriptionDetails, 
   TenantAssignedAddonDetails, 
   TenantTransactionDetails, 
   TenantTransactionSummary 
-} from '@tenant-management/types/account/details'
+} from '@tenant-management/types'
 import { formatDate, handleApiError } from '@/lib/shared'
 import { AxiosError } from 'axios'
 
@@ -224,7 +224,7 @@ export const TenantDetailsViewFields = [
 
 
 /* Page component for viewing tenant details */
-const TenantDetailsPage: React.FC<TenantDetailsPageProps> = ({ tenantId }) => {
+const ViewTenantPage: React.FC<TenantDetailsPageProps> = ({ tenantId }) => {
   /* State management for tenant data and loading */
   const [tenant_details, setTenantDetails] = useState<TenantDetails | null>(null)
   const [subscription_details, setSubscriptionDetails] = useState<TenantSubscriptionDetails | null>(null)
@@ -242,7 +242,7 @@ const TenantDetailsPage: React.FC<TenantDetailsPageProps> = ({ tenantId }) => {
         setIsLoading(true)
         setError(null)
         
-        const response = await tenantManagementService.getTenantDetails(tenantId)
+        const response = await tenantService.getTenantDetails(tenantId)
         
         if (response.success && response.data) {
           setTenantDetails(response.data.tenant_details)
@@ -1145,4 +1145,4 @@ const TenantDetailsPage: React.FC<TenantDetailsPageProps> = ({ tenantId }) => {
   )
 }
 
-export default TenantDetailsPage
+export default ViewTenantPage

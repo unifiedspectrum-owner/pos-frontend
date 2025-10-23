@@ -1,7 +1,7 @@
 /* Tenant management API module exports */
 
-/* HTTP client configuration */
-export * from './clients'
+/* HTTP client for tenant management endpoints */
+export * from './client'
 
-/* All tenant management services */
+/* API service methods for tenant operations */
 export * from './services'
