@@ -1,5 +1,5 @@
 /* Shared module imports */
-import { createApiClient } from '@shared/api/base-client'
+import { createApiClient } from './base-client'
 import { COUNTRIES_API_ROUTES } from '@shared/constants'
 import { CountriesListAPIResponse } from '@shared/types'
 

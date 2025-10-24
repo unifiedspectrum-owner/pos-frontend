@@ -1,5 +1,5 @@
 /* Shared module imports */
-import { createApiClient } from '@shared/api'
+import { createApiClient } from './base-client'
 import { CSRF_API_ROUTES } from '@shared/constants'
 
 /* TypeScript interface for CSRF token API response */

@@ -13,7 +13,8 @@ import { UserAccountDetails, UserAccountStatistics, UserPermissions, UsersFullPe
 export interface UserListApiResponse {
   success: boolean;
   message: string;
-  data: {
+  error?: string;
+  data?: {
     users: UserAccountDetails[];
   };
   pagination: {
@@ -30,7 +31,7 @@ export interface UserListApiResponse {
 export interface UserUpdationApiResponse {
   success: boolean;
   message: string;
-  data: {
+  data?: {
     userId: number
   }
   error?: string;
@@ -60,7 +61,7 @@ export interface UserDeletionApiResponse {
 export interface UserDetailsApiResponse {
   success: boolean;
   message: string;
-  data: {
+  data?: {
     user_details: UserAccountDetails;
     user_statistics: UserAccountStatistics;
     permissions: UserPermissions[];
@@ -72,7 +73,7 @@ export interface UserDetailsApiResponse {
 export interface UserBasicDetailsApiResponse {
   success: boolean;
   message: string;
-  data: {
+  data?: {
     user_details: UserAccountDetails
   }
   error?: string;
@@ -120,7 +121,7 @@ export interface UserCreationApiResponse {
 export interface UserPermissionsSummaryApiResponse {
   success: boolean;
   message: string;
-  data: {
+  data?: {
     user_id: string;
     name: string | null;
     role_id: number;

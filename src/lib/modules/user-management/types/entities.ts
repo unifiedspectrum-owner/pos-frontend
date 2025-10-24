@@ -60,7 +60,7 @@ export interface UserPermissions {
   can_read: boolean;
   can_update: boolean;
   can_delete: boolean;
-  permission_expires_at: string;
+  permission_expires_at: string | null;
 }
 
 /* User permissions combining role and direct permissions */

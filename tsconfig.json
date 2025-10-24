@@ -39,12 +39,12 @@
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/lib/modules/auth-management/hooks/use-2fa-operations.ts"],
   "exclude": [
     "node_modules",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx",
-    "**/test-utils/**",
-    "**/__tests__/**",
-    "**/__mocks__/**"
+    // "**/*.test.ts",
+    // "**/*.test.tsx",
+    // "**/*.spec.ts",
+    // "**/*.spec.tsx",
+    // "**/test-utils/**",
+    // "**/__tests__/**",
+    // "**/__mocks__/**"
   ]
 }
