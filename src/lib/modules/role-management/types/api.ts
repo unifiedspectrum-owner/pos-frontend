@@ -30,7 +30,8 @@ export interface RoleUpdateRequest {
 export interface RoleListResponse {
   success: boolean;
   message: string;
-  data: {
+  error?: string;
+  data?: {
     roles: Role[];
   }
   pagination: PaginationInfo;
@@ -40,7 +41,8 @@ export interface RoleListResponse {
 export interface ModulesListResponse {
   success: boolean;
   message: string;
-  data: {
+  error?: string;
+  data?: {
     modules: Module[];
   };
   pagination: PaginationInfo;
@@ -50,7 +52,7 @@ export interface ModulesListResponse {
 export interface RolePermissionsListResponse {
   success: boolean;
   message: string;
-  data: {
+  data?: {
     permissions: RolePermission[];
   };
   error?: string;
