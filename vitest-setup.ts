@@ -109,6 +109,12 @@ Object.defineProperty(window, 'sessionStorage', {
 // Override globalThis
 Object.assign(global, { window, document: window.document })
 
+// Ensure document.body exists
+if (!window.document.body) {
+  window.document.body = window.document.createElement('body')
+  window.document.documentElement.appendChild(window.document.body)
+}
+
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: (query: string) => ({

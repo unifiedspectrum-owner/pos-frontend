@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest src",
+    "test:ticket": "vitest src/lib/modules/support-ticket-management --run",
     "test:role": "vitest src/lib/modules/role-management --run",
     "test:user": "vitest src/lib/modules/user-management --run",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
