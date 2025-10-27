@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest src",
+    "test:auth": "vitest src/lib/modules/auth-management --run",
     "test:ticket": "vitest src/lib/modules/support-ticket-management --run",
     "test:role": "vitest src/lib/modules/role-management --run",
     "test:user": "vitest src/lib/modules/user-management --run",

@@ -8,7 +8,7 @@ import { LoaderWrapper } from '@shared/components/common'
 
 /* Auth management module imports */
 import { LoginForm } from '@auth-management/forms'
-import { AuthLayout } from '@auth-management/components/layout'
+import { AuthLayout } from '@auth-management/components'
 import { useAuthGuard } from '@auth-management/hooks'
 
 /* Login page component */

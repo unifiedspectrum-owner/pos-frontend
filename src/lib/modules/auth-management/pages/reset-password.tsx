@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 
 /* Auth management module imports */
 import { ResetPasswordForm } from '@auth-management/forms'
-import { AuthLayout } from '@auth-management/components/layout'
+import { AuthLayout } from '@auth-management/components'
 import { useAuthOperations } from '@auth-management/hooks'
 import { TOKEN_VALIDATION_STATE } from '@auth-management/constants'
 import { TokenValidationState } from '@auth-management/types'

@@ -76,30 +76,58 @@ Object.defineProperty(window, "navigator", {
   },
 })
 
-// localStorage mock
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  length: 0,
-  key: vi.fn(),
-}
+// localStorage mock - with functional implementation
+const localStorageMock = (() => {
+  let store: Record<string, string> = {}
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = value
+    },
+    removeItem: (key: string) => {
+      delete store[key]
+    },
+    clear: () => {
+      store = {}
+    },
+    get length() {
+      return Object.keys(store).length
+    },
+    key: (index: number) => {
+      const keys = Object.keys(store)
+      return keys[index] || null
+    },
+  }
+})()
 vi.stubGlobal('localStorage', localStorageMock)
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
   writable: true,
 })
 
-// sessionStorage mock
-const sessionStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  length: 0,
-  key: vi.fn(),
-}
+// sessionStorage mock - with functional implementation
+const sessionStorageMock = (() => {
+  let store: Record<string, string> = {}
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = value
+    },
+    removeItem: (key: string) => {
+      delete store[key]
+    },
+    clear: () => {
+      store = {}
+    },
+    get length() {
+      return Object.keys(store).length
+    },
+    key: (index: number) => {
+      const keys = Object.keys(store)
+      return keys[index] || null
+    },
+  }
+})()
 vi.stubGlobal('sessionStorage', sessionStorageMock)
 Object.defineProperty(window, 'sessionStorage', {
   value: sessionStorageMock,

@@ -10,7 +10,7 @@ import { ADMIN_PAGE_ROUTES } from '@shared/constants'
 
 /* Auth management module imports */
 import { Verify2FAForm } from '@auth-management/forms'
-import { AuthLayout } from '@auth-management/components/layout'
+import { AuthLayout } from '@auth-management/components'
 import { useAuthGuard } from '@auth-management/hooks'
 import { AUTH_STORAGE_KEYS, AUTH_PAGE_ROUTES } from '@auth-management/constants'
 

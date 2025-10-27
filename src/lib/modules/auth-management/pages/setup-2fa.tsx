@@ -5,7 +5,7 @@ import React from 'react'
 
 /* Auth management module imports */
 import { Setup2FAForm } from '@auth-management/forms'
-import { AuthLayout } from '@auth-management/components/layout'
+import { AuthLayout } from '@auth-management/components'
 
 /* 2FA setup page component */
 const Setup2FAPage: React.FC = () => {
