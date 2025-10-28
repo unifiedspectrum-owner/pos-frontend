@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest src",
+    "test:dashboard": "vitest src/lib/modules/dashboard --run",
+    "test:public": "vitest src/lib/modules/public --run",
     "test:tenant": "vitest src/lib/modules/tenant-management --run",
     "test:auth": "vitest src/lib/modules/auth-management --run",
     "test:ticket": "vitest src/lib/modules/support-ticket-management --run",

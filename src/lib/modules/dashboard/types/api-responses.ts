@@ -24,7 +24,7 @@ import {
    ============================================ */
 
 export interface DashboardOverviewApiResponse {
-  success: true;
+  success: boolean;
   timestamp: string;
   data: {
     metrics: {
