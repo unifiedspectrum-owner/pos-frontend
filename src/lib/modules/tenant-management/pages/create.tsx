@@ -5,7 +5,7 @@ import React from 'react'
 import { Flex, VStack } from '@chakra-ui/react'
 
 /* Tenant module imports */
-import TenantAccountCreationForm from '@tenant-management/forms/account/create'
+import {AccountCreateForm } from '@/lib/modules/tenant-management/forms'
 import { Header, Footer } from '@tenant-management/components/layout'
 
 /* Tenant account creation page component */
@@ -17,7 +17,7 @@ const CreateTenantPage: React.FC = () => {
 
       {/* Main content area */}
       <Flex flex="1" w="100%" justifyContent="center" alignItems="center" py={8}>
-        <TenantAccountCreationForm />
+        <AccountCreateForm />
       </Flex>
 
       {/* Page footer */}

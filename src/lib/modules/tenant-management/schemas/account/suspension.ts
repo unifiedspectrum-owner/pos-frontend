@@ -6,7 +6,11 @@ import { DATE_FORMAT_REGEX } from '@shared/constants';
 
 /* Date string validation schema for YYYY-MM-DD format */
 const dateStringSchema = z.string()
-  .regex(DATE_FORMAT_REGEX, "Date must be in YYYY-MM-DD format");
+  .regex(DATE_FORMAT_REGEX, "Date must be in YYYY-MM-DD format")
+  .refine((date) => {
+    const parsed = new Date(date);
+    return !isNaN(parsed.getTime()) && date === parsed.toISOString().split('T')[0];
+  }, "Date must be a valid date");
 
 /* Schema for holding tenant account */
 export const holdTenantAccountSchema = z.object({

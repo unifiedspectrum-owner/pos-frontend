@@ -16,8 +16,8 @@ import { Plan } from '@plan-management/types'
 /* Tenant management module imports */
 import { PLAN_BILLING_CYCLE, MAX_BRANCH_COUNT } from '@tenant-management/constants'
 import { PlanBillingCycle } from '@tenant-management/types'
-import PlansGrid from '@tenant-management/forms/account/steps/components/plan-selection/plans-grid'
-import BillingCycleSelector from '@tenant-management/forms/account/steps/components/plan-selection/billing-cycle-selector'
+import PlansGrid from '@/lib/modules/tenant-management/forms/steps/components/plan-selection/plans-grid'
+import BillingCycleSelector from '@/lib/modules/tenant-management/forms/steps/components/plan-selection/billing-cycle-selector'
 
 /* Public module imports */
 import { PublicLayout } from '@public/components/layout'
