@@ -50,5 +50,5 @@ export interface CreateSlaApiResponse {
     name: string;
     status: boolean;
   };
-  validation_errors: ValidationError[];
+  validation_errors?: ValidationError[];
 }

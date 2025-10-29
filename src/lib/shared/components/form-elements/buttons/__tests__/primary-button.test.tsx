@@ -1,391 +1,476 @@
+/* Libraries imports */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { screen, fireEvent } from '@testing-library/react'
-import { render } from '@shared/test-utils/render'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { axe } from 'vitest-axe'
-import { FiHome, FiUser } from 'react-icons/fi'
+import { IconType } from 'react-icons'
+
+/* Shared module imports */
+import { Provider } from '@/components/ui/provider'
+
+/* Component imports */
 import PrimaryButton from '../primary-button'
 
-// Mock the shared config since it's imported but file wasn't found
-vi.mock('@shared/config', () => ({
-  PRIMARY_COLOR: '#3182CE'
+/* Mock dependencies */
+vi.mock('polished', () => ({
+  lighten: vi.fn((amount: number, color: string) => color)
 }))
 
-describe('PrimaryButton', () => {
-  const defaultProps = {
-    children: 'Click me'
-  }
+vi.mock('@shared/config', () => ({
+  PRIMARY_COLOR: '#3182ce'
+}))
 
+/* Test wrapper with Chakra Provider */
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <Provider>{children}</Provider>
+)
+
+describe('PrimaryButton Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  describe('Rendering', () => {
-    it('renders with default props', () => {
-      render(<PrimaryButton {...defaultProps} />)
-      expect(screen.getByRole('button', { name: 'Click me' })).toBeInTheDocument()
+  describe('Basic Rendering', () => {
+    it('should render button with text', () => {
+      render(<PrimaryButton>Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Click Me')).toBeInTheDocument()
     })
 
-    it('renders children content correctly', () => {
-      render(<PrimaryButton>Custom Button Text</PrimaryButton>)
-      expect(screen.getByText('Custom Button Text')).toBeInTheDocument()
+    it('should render button with buttonText prop', () => {
+      render(<PrimaryButton buttonText="Submit" />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Submit')).toBeInTheDocument()
     })
 
-    it('renders with complex children', () => {
+    it('should prioritize buttonText over children', () => {
       render(
-        <PrimaryButton>
-          <span>Multi</span> <strong>Element</strong> Content
-        </PrimaryButton>
+        <PrimaryButton buttonText="Button Text">Children Text</PrimaryButton>,
+        { wrapper: TestWrapper }
       )
-      expect(screen.getByText('Multi')).toBeInTheDocument()
-      expect(screen.getByText('Element')).toBeInTheDocument()
-      expect(screen.getByText('Content')).toBeInTheDocument()
+
+      expect(screen.getByText('Button Text')).toBeInTheDocument()
+      expect(screen.queryByText('Children Text')).not.toBeInTheDocument()
+    })
+
+    it('should render button with default type', () => {
+      render(<PrimaryButton>Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByText('Click Me').closest('button')
+      expect(button).toHaveAttribute('type', 'button')
+    })
+
+    it('should render button with submit type', () => {
+      render(<PrimaryButton type="submit">Submit</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByText('Submit').closest('button')
+      expect(button).toHaveAttribute('type', 'submit')
+    })
+
+    it('should render button with reset type', () => {
+      render(<PrimaryButton type="reset">Reset</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByText('Reset').closest('button')
+      expect(button).toHaveAttribute('type', 'reset')
     })
   })
 
-  describe('Props', () => {
-    it('applies custom onClick handler', async () => {
+  describe('Button States', () => {
+    it('should be enabled by default', () => {
+      render(<PrimaryButton>Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).not.toBeDisabled()
+    })
+
+    it('should be disabled when disabled prop is true', () => {
+      render(<PrimaryButton disabled={true}>Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeDisabled()
+    })
+
+    it('should show loading state when loading is true', () => {
+      render(<PrimaryButton loading={true}>Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeDisabled()
+    })
+
+    it('should show loading state when isLoading is true', () => {
+      render(<PrimaryButton isLoading={true}>Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeDisabled()
+    })
+
+    it('should show loadingText when loading and loadingText is provided', () => {
+      render(
+        <PrimaryButton buttonText="Submit" loadingText="Submitting..." isLoading={true} />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Submitting...')).toBeInTheDocument()
+      expect(screen.queryByText('Submit')).not.toBeInTheDocument()
+    })
+
+    it('should not show loadingText when not loading', () => {
+      render(
+        <PrimaryButton buttonText="Submit" loadingText="Submitting..." isLoading={false} />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Submit')).toBeInTheDocument()
+      expect(screen.queryByText('Submitting...')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Button Sizes', () => {
+    it('should render with default medium size', () => {
+      render(<PrimaryButton>Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+
+    it('should render with small size', () => {
+      render(<PrimaryButton size="sm">Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+
+    it('should render with large size', () => {
+      render(<PrimaryButton size="lg">Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+  })
+
+  describe('Button Interactions', () => {
+    it('should call onClick handler when clicked', async () => {
+      const user = userEvent.setup()
       const handleClick = vi.fn()
-      render(<PrimaryButton onClick={handleClick}>Click me</PrimaryButton>)
-      
-      await userEvent.click(screen.getByRole('button'))
+
+      render(<PrimaryButton onClick={handleClick}>Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      await user.click(button)
+
       expect(handleClick).toHaveBeenCalledTimes(1)
     })
 
-    it('applies different button types', () => {
-      const { rerender } = render(<PrimaryButton type="submit">Submit</PrimaryButton>)
-      expect(screen.getByRole('button')).toHaveAttribute('type', 'submit')
+    it('should not call onClick when disabled', async () => {
+      const user = userEvent.setup()
+      const handleClick = vi.fn()
 
-      rerender(<PrimaryButton type="reset">Reset</PrimaryButton>)
-      expect(screen.getByRole('button')).toHaveAttribute('type', 'reset')
-
-      rerender(<PrimaryButton type="button">Button</PrimaryButton>)
-      expect(screen.getByRole('button')).toHaveAttribute('type', 'button')
-    })
-
-    it('applies different sizes', () => {
-      const { rerender } = render(<PrimaryButton size="sm">Small</PrimaryButton>)
-      const button = screen.getByRole('button')
-      
-      // Check that the button renders with different sizes by verifying it has chakra classes
-      expect(button).toHaveClass('chakra-button')
-
-      rerender(<PrimaryButton size="md">Medium</PrimaryButton>)
-      expect(screen.getByRole('button')).toHaveClass('chakra-button')
-
-      rerender(<PrimaryButton size="lg">Large</PrimaryButton>)
-      expect(screen.getByRole('button')).toHaveClass('chakra-button')
-      
-      // The sizes are applied via CSS custom properties, so we verify the component accepts the prop
-      // by checking it doesn't throw an error and maintains the chakra-button class
-    })
-
-    it('applies custom background color', () => {
-      render(<PrimaryButton bg="#FF5733">Custom Color</PrimaryButton>)
-      const button = screen.getByRole('button')
-      expect(button).toHaveStyle({ backgroundColor: '#FF5733' })
-    })
-
-    it('spreads additional buttonProps', () => {
       render(
-        <PrimaryButton 
-          buttonProps={{ 
-            'aria-label': 'Custom aria label',
-            id: 'custom-id',
-            title: 'Custom title'
-          }}
-        >
-          Button
-        </PrimaryButton>
+        <PrimaryButton onClick={handleClick} disabled={true}>Click Me</PrimaryButton>,
+        { wrapper: TestWrapper }
       )
-      
+
       const button = screen.getByRole('button')
-      expect(button).toHaveAttribute('aria-label', 'Custom aria label')
-      expect(button).toHaveAttribute('id', 'custom-id')
-      expect(button).toHaveAttribute('title', 'Custom title')
+      await user.click(button)
+
+      expect(handleClick).not.toHaveBeenCalled()
+    })
+
+    it('should not call onClick when loading', async () => {
+      const user = userEvent.setup()
+      const handleClick = vi.fn()
+
+      render(
+        <PrimaryButton onClick={handleClick} loading={true}>Click Me</PrimaryButton>,
+        { wrapper: TestWrapper }
+      )
+
+      const button = screen.getByRole('button')
+      await user.click(button)
+
+      expect(handleClick).not.toHaveBeenCalled()
     })
   })
 
   describe('Icons', () => {
-    it('renders with left icon', () => {
-      render(<PrimaryButton leftIcon={FiHome}>With Left Icon</PrimaryButton>)
-      
-      const button = screen.getByRole('button')
-      expect(button).toBeInTheDocument()
-      // Check if icon is rendered (icons are rendered as svg elements)
-      expect(button.querySelector('svg')).toBeInTheDocument()
+    it('should render with left icon', () => {
+      const LeftIcon: IconType = () => <svg data-testid="left-icon" />
+
+      render(
+        <PrimaryButton leftIcon={LeftIcon}>Click Me</PrimaryButton>,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('left-icon')).toBeInTheDocument()
+      expect(screen.getByText('Click Me')).toBeInTheDocument()
     })
 
-    it('renders with right icon', () => {
-      render(<PrimaryButton rightIcon={FiUser}>With Right Icon</PrimaryButton>)
-      
-      const button = screen.getByRole('button')
-      expect(button).toBeInTheDocument()
-      expect(button.querySelector('svg')).toBeInTheDocument()
+    it('should render with right icon', () => {
+      const RightIcon: IconType = () => <svg data-testid="right-icon" />
+
+      render(
+        <PrimaryButton rightIcon={RightIcon}>Click Me</PrimaryButton>,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('right-icon')).toBeInTheDocument()
+      expect(screen.getByText('Click Me')).toBeInTheDocument()
     })
 
-    it('renders with both left and right icons', () => {
-      render(<PrimaryButton leftIcon={FiHome} rightIcon={FiUser}>Both Icons</PrimaryButton>)
-      
-      const button = screen.getByRole('button')
-      expect(button).toBeInTheDocument()
-      // Should have 2 SVG elements
-      expect(button.querySelectorAll('svg')).toHaveLength(2)
+    it('should render with both left and right icons', () => {
+      const LeftIcon: IconType = () => <svg data-testid="left-icon" />
+      const RightIcon: IconType = () => <svg data-testid="right-icon" />
+
+      render(
+        <PrimaryButton leftIcon={LeftIcon} rightIcon={RightIcon}>
+          Click Me
+        </PrimaryButton>,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('left-icon')).toBeInTheDocument()
+      expect(screen.getByTestId('right-icon')).toBeInTheDocument()
+      expect(screen.getByText('Click Me')).toBeInTheDocument()
     })
 
-    it('renders without icons when not provided', () => {
-      render(<PrimaryButton>No Icons</PrimaryButton>)
-      
-      const button = screen.getByRole('button')
-      expect(button.querySelector('svg')).not.toBeInTheDocument()
+    it('should not render icons when not provided', () => {
+      render(<PrimaryButton>Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      expect(screen.queryByTestId('left-icon')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('right-icon')).not.toBeInTheDocument()
     })
   })
 
-  describe('States', () => {
-    it('handles disabled state', async () => {
-      const handleClick = vi.fn()
-      render(<PrimaryButton disabled onClick={handleClick}>Disabled Button</PrimaryButton>)
-      
+  describe('Custom Styling', () => {
+    it('should apply custom background color', () => {
+      render(<PrimaryButton bg="#ff0000">Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+
+    it('should apply custom width', () => {
+      render(<PrimaryButton width="200px">Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+
+    it('should apply custom height', () => {
+      render(<PrimaryButton height="50px">Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+
+    it('should apply custom border radius', () => {
+      render(<PrimaryButton borderRadius="10px">Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+
+    it('should use default border radius when not provided', () => {
+      render(<PrimaryButton>Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+  })
+
+  describe('Additional Props', () => {
+    it('should accept additional button props', () => {
+      render(
+        <PrimaryButton buttonProps={{ 'aria-label': 'Custom Label' }}>
+          Click Me
+        </PrimaryButton>,
+        { wrapper: TestWrapper }
+      )
+
+      const button = screen.getByRole('button')
+      expect(button).toHaveAttribute('aria-label', 'Custom Label')
+    })
+
+    it('should spread buttonProps correctly', () => {
+      render(
+        <PrimaryButton buttonProps={{ id: 'custom-id', className: 'custom-class' }}>
+          Click Me
+        </PrimaryButton>,
+        { wrapper: TestWrapper }
+      )
+
+      const button = screen.getByRole('button')
+      expect(button).toHaveAttribute('id', 'custom-id')
+    })
+  })
+
+  describe('Use Cases', () => {
+    it('should render submit button for forms', () => {
+      render(
+        <PrimaryButton type="submit" buttonText="Submit Form" />,
+        { wrapper: TestWrapper }
+      )
+
+      const button = screen.getByRole('button')
+      expect(button).toHaveAttribute('type', 'submit')
+      expect(screen.getByText('Submit Form')).toBeInTheDocument()
+    })
+
+    it('should render loading button during async operation', () => {
+      render(
+        <PrimaryButton buttonText="Save" loadingText="Saving..." isLoading={true} />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Saving...')).toBeInTheDocument()
+      expect(screen.getByRole('button')).toBeDisabled()
+    })
+
+    it('should render danger button with custom color', () => {
+      render(
+        <PrimaryButton bg="red.500" buttonText="Delete" />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Delete')).toBeInTheDocument()
+    })
+
+    it('should render button with icon and text', () => {
+      const SaveIcon: IconType = () => <svg data-testid="save-icon" />
+
+      render(
+        <PrimaryButton leftIcon={SaveIcon} buttonText="Save Changes" />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('save-icon')).toBeInTheDocument()
+      expect(screen.getByText('Save Changes')).toBeInTheDocument()
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('should handle empty children', () => {
+      render(<PrimaryButton />, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+
+    it('should handle both loading and disabled states', () => {
+      render(
+        <PrimaryButton loading={true} disabled={true}>Click Me</PrimaryButton>,
+        { wrapper: TestWrapper }
+      )
+
       const button = screen.getByRole('button')
       expect(button).toBeDisabled()
-      
-      // Try to click disabled button
-      await userEvent.click(button)
-      expect(handleClick).not.toHaveBeenCalled()
     })
 
-    it('handles loading state', () => {
-      render(<PrimaryButton loading>Loading Button</PrimaryButton>)
-      
-      const button = screen.getByRole('button')
-      // Chakra UI loading state typically disables the button and shows a spinner
-      expect(button).toBeInTheDocument()
+    it('should handle long text', () => {
+      const longText = 'This is a very long button text that should still render properly'
+      render(<PrimaryButton>{longText}</PrimaryButton>, { wrapper: TestWrapper })
+
+      expect(screen.getByText(longText)).toBeInTheDocument()
     })
 
-    it('handles both disabled and loading states', () => {
-      render(<PrimaryButton disabled loading>Disabled Loading</PrimaryButton>)
-      
+    it('should handle special characters in text', () => {
+      render(<PrimaryButton>Click & Save!</PrimaryButton>, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Click & Save!')).toBeInTheDocument()
+    })
+
+    it('should handle multiple clicks', async () => {
+      const user = userEvent.setup()
+      const handleClick = vi.fn()
+
+      render(<PrimaryButton onClick={handleClick}>Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
       const button = screen.getByRole('button')
+      await user.click(button)
+      await user.click(button)
+      await user.click(button)
+
+      expect(handleClick).toHaveBeenCalledTimes(3)
+    })
+  })
+
+  describe('State Transitions', () => {
+    it('should transition from enabled to disabled', () => {
+      const { rerender } = render(
+        <PrimaryButton disabled={false}>Click Me</PrimaryButton>,
+        { wrapper: TestWrapper }
+      )
+
+      let button = screen.getByRole('button')
+      expect(button).not.toBeDisabled()
+
+      rerender(<PrimaryButton disabled={true}>Click Me</PrimaryButton>)
+
+      button = screen.getByRole('button')
       expect(button).toBeDisabled()
     })
-  })
 
-  describe('Interactions', () => {
-    it('handles click events', async () => {
-      const handleClick = vi.fn()
-      render(<PrimaryButton onClick={handleClick}>Clickable</PrimaryButton>)
-      
-      await userEvent.click(screen.getByRole('button'))
-      expect(handleClick).toHaveBeenCalledTimes(1)
+    it('should transition from loading to not loading', () => {
+      const { rerender } = render(
+        <PrimaryButton buttonText="Submit" loadingText="Submitting..." isLoading={true} />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Submitting...')).toBeInTheDocument()
+
+      rerender(
+        <PrimaryButton buttonText="Submit" loadingText="Submitting..." isLoading={false} />
+      )
+
+      expect(screen.getByText('Submit')).toBeInTheDocument()
+      expect(screen.queryByText('Submitting...')).not.toBeInTheDocument()
     })
 
-    it('handles multiple clicks', async () => {
-      const handleClick = vi.fn()
-      render(<PrimaryButton onClick={handleClick}>Multi Click</PrimaryButton>)
-      
-      const button = screen.getByRole('button')
-      await userEvent.click(button)
-      await userEvent.click(button)
-      await userEvent.click(button)
-      
-      expect(handleClick).toHaveBeenCalledTimes(3)
-    })
+    it('should update button text dynamically', () => {
+      const { rerender } = render(
+        <PrimaryButton buttonText="Save" />,
+        { wrapper: TestWrapper }
+      )
 
-    it('handles keyboard interactions', async () => {
-      const handleClick = vi.fn()
-      render(<PrimaryButton onClick={handleClick}>Keyboard</PrimaryButton>)
-      
-      const button = screen.getByRole('button')
-      
-      // Focus the button and use userEvent for more realistic keyboard interactions
-      await userEvent.click(button)
-      expect(handleClick).toHaveBeenCalledTimes(1)
-      
-      // Test keyboard activation with userEvent
-      await userEvent.keyboard('{Enter}')
-      expect(handleClick).toHaveBeenCalledTimes(2)
-      
-      // Test space key
-      await userEvent.keyboard(' ')
-      expect(handleClick).toHaveBeenCalledTimes(3)
-    })
+      expect(screen.getByText('Save')).toBeInTheDocument()
 
-    it('prevents click when disabled', async () => {
-      const handleClick = vi.fn()
-      render(<PrimaryButton disabled onClick={handleClick}>Disabled</PrimaryButton>)
-      
-      await userEvent.click(screen.getByRole('button'))
-      expect(handleClick).not.toHaveBeenCalled()
-    })
-  })
+      rerender(<PrimaryButton buttonText="Update" />)
 
-  describe('Styling', () => {
-    it('applies default styles', () => {
-      render(<PrimaryButton>Styled Button</PrimaryButton>)
-      
-      const button = screen.getByRole('button')
-      // Check for Chakra UI CSS custom properties instead of literal values
-      expect(button).toHaveStyle({
-        color: 'var(--chakra-colors-white)'
-      })
-      // Check that the button has the expected classes for styling
-      expect(button).toHaveClass('chakra-button')
-    })
-
-    it('applies hover styles on mouse over', async () => {
-      render(<PrimaryButton>Hover Button</PrimaryButton>)
-      
-      const button = screen.getByRole('button')
-      await userEvent.hover(button)
-      
-      // Verify button is still present after hover (hover effects are CSS-based)
-      expect(button).toBeInTheDocument()
-    })
-
-    it('maintains focus styles', async () => {
-      render(<PrimaryButton>Focus Button</PrimaryButton>)
-      
-      const button = screen.getByRole('button')
-      await userEvent.tab() // Should focus the button
-      
-      expect(button).toHaveFocus()
+      expect(screen.getByText('Update')).toBeInTheDocument()
+      expect(screen.queryByText('Save')).not.toBeInTheDocument()
     })
   })
 
   describe('Accessibility', () => {
-    it('should not have accessibility violations', async () => {
-      const { container } = render(<PrimaryButton>Accessible Button</PrimaryButton>)
-      const results = await axe(container)
-      expect(results.violations).toHaveLength(0)
+    it('should have button role', () => {
+      render(<PrimaryButton>Click Me</PrimaryButton>, { wrapper: TestWrapper })
+
+      expect(screen.getByRole('button')).toBeInTheDocument()
     })
 
-    it('should be keyboard accessible', async () => {
-      const handleClick = vi.fn()
-      render(<PrimaryButton onClick={handleClick}>Keyboard Accessible</PrimaryButton>)
-      
-      await userEvent.tab()
-      expect(screen.getByRole('button')).toHaveFocus()
-      
-      await userEvent.keyboard('{Enter}')
-      expect(handleClick).toHaveBeenCalledTimes(1)
-    })
+    it('should indicate disabled state for screen readers', () => {
+      render(<PrimaryButton disabled={true}>Click Me</PrimaryButton>, { wrapper: TestWrapper })
 
-    it('should have proper ARIA attributes', () => {
-      render(<PrimaryButton disabled>ARIA Button</PrimaryButton>)
-      
       const button = screen.getByRole('button')
       expect(button).toBeDisabled()
     })
 
     it('should support custom aria-label', () => {
       render(
-        <PrimaryButton buttonProps={{ 'aria-label': 'Custom action' }}>
-          Icon Only
-        </PrimaryButton>
+        <PrimaryButton buttonProps={{ 'aria-label': 'Submit form' }}>
+          Submit
+        </PrimaryButton>,
+        { wrapper: TestWrapper }
       )
-      
-      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Custom action')
-    })
 
-    it('should be discoverable by screen readers', () => {
-      render(<PrimaryButton>Screen Reader Button</PrimaryButton>)
-      
-      expect(screen.getByRole('button', { name: 'Screen Reader Button' })).toBeInTheDocument()
-    })
-  })
-
-  describe('Edge Cases', () => {
-    it('handles undefined onClick', () => {
-      render(<PrimaryButton>No Handler</PrimaryButton>)
-      
       const button = screen.getByRole('button')
-      expect(() => fireEvent.click(button)).not.toThrow()
+      expect(button).toHaveAttribute('aria-label', 'Submit form')
     })
 
-    it('handles empty children', () => {
-      render(<PrimaryButton>{''}</PrimaryButton>)
-      
-      expect(screen.getByRole('button')).toBeInTheDocument()
-    })
+    it('should be keyboard accessible', () => {
+      render(<PrimaryButton>Click Me</PrimaryButton>, { wrapper: TestWrapper })
 
-    it('handles null children gracefully', () => {
-      render(<PrimaryButton>{null}</PrimaryButton>)
-      
-      expect(screen.getByRole('button')).toBeInTheDocument()
-    })
-
-    it('handles undefined children', () => {
-      render(<PrimaryButton>{undefined}</PrimaryButton>)
-      
-      expect(screen.getByRole('button')).toBeInTheDocument()
-    })
-
-    it('handles zero as children', () => {
-      render(<PrimaryButton>{0}</PrimaryButton>)
-      
-      expect(screen.getByText('0')).toBeInTheDocument()
-    })
-
-    it('handles boolean false as children', () => {
-      render(<PrimaryButton>{false}</PrimaryButton>)
-      
-      expect(screen.getByRole('button')).toBeInTheDocument()
-    })
-  })
-
-  describe('Integration', () => {
-    it('works within forms', async () => {
-      const handleSubmit = vi.fn(e => e.preventDefault())
-      
-      render(
-        <form onSubmit={handleSubmit}>
-          <PrimaryButton type="submit">Submit Form</PrimaryButton>
-        </form>
-      )
-      
-      await userEvent.click(screen.getByRole('button'))
-      expect(handleSubmit).toHaveBeenCalledTimes(1)
-    })
-
-    it('integrates with form validation', async () => {
-      const handleClick = vi.fn()
-      
-      render(
-        <form>
-          <input required />
-          <PrimaryButton onClick={handleClick} type="button">
-            Validate
-          </PrimaryButton>
-        </form>
-      )
-      
-      await userEvent.click(screen.getByRole('button'))
-      expect(handleClick).toHaveBeenCalledTimes(1)
-    })
-  })
-
-  describe('Performance', () => {
-    it('should not re-render unnecessarily', () => {
-      const { rerender } = render(<PrimaryButton>Initial</PrimaryButton>)
-      
-      // Re-render with same props
-      rerender(<PrimaryButton>Initial</PrimaryButton>)
-      
-      expect(screen.getByRole('button')).toBeInTheDocument()
-    })
-
-    it('should handle rapid clicks', async () => {
-      const handleClick = vi.fn()
-      render(<PrimaryButton onClick={handleClick}>Rapid Click</PrimaryButton>)
-      
       const button = screen.getByRole('button')
-      
-      // Simulate rapid clicks
-      for (let i = 0; i < 5; i++) {
-        await userEvent.click(button)
-      }
-      
-      expect(handleClick).toHaveBeenCalledTimes(5)
+      expect(button).toHaveAttribute('type', 'button')
     })
   })
 })

@@ -1,421 +1,559 @@
+/* Libraries imports */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+
+/* Shared module imports */
 import { Provider } from '@/components/ui/provider'
+
+/* Component imports */
 import HeaderSection from '../header'
-import * as breadcrumbsModule from '@shared/components/common/bread-crumbs'
 
-// Mock Next.js usePathname hook
-const mockPathname = vi.fn()
-vi.mock('next/navigation', () => ({
-  usePathname: () => mockPathname()
+/* Mock dependencies */
+vi.mock('@/i18n/navigation', () => ({
+  usePathname: vi.fn(),
+  useRouter: vi.fn()
 }))
 
-// Mock config imports
-vi.mock('@shared/config', () => ({
-  PRIMARY_COLOR: '#885CF7',
-  GRAY_COLOR: '#6B7280'
+vi.mock('next-intl', () => ({
+  useTranslations: vi.fn(),
+  useLocale: vi.fn()
 }))
 
-// Mock polished functions
 vi.mock('polished', () => ({
   lighten: vi.fn((amount: number, color: string) => color)
 }))
 
-// Mock the generateBreadcrumbs function from breadcrumbs
-vi.mock('@shared/components/common/bread-crumbs', () => ({
-  generateBreadcrumbs: vi.fn((pathname: string) => {
-    // Handle undefined or null pathname
-    if (!pathname || pathname === '/') return []
-    const segments = pathname.split('/').filter(Boolean)
-    return segments.map((segment, index) => ({
-      name: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '),
-      path: '/' + segments.slice(0, index + 1).join('/')
-    }))
-  })
+vi.mock('@shared/config', () => ({
+  PRIMARY_COLOR: '#3182ce',
+  GRAY_COLOR: '#718096'
 }))
 
-// Test wrapper
+vi.mock('@shared/components/common/bread-crumbs', () => ({
+  generateBreadcrumbs: vi.fn()
+}))
+
+import { usePathname, useRouter } from '@/i18n/navigation'
+import { useTranslations, useLocale } from 'next-intl'
+import { generateBreadcrumbs } from '@shared/components/common/bread-crumbs'
+
+/* Test wrapper with Chakra Provider */
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <Provider>{children}</Provider>
 )
 
-interface AdminHeaderProps {
-  loading: boolean
-  handleAdd: () => void
-  handleRefresh: () => void
-}
+describe('HeaderSection Component', () => {
+  const mockHandleAdd = vi.fn()
+  const mockHandleRefresh = vi.fn()
+  const mockPush = vi.fn()
+  const mockTranslations = vi.fn((key: string) => {
+    const translations: Record<string, string> = {
+      'title': 'Test Title',
+      'buttons.refresh': 'Refresh',
+      'buttons.add': 'Add New'
+    }
+    return translations[key] || key
+  })
 
-const defaultProps: AdminHeaderProps = {
-  loading: false,
-  handleAdd: vi.fn(),
-  handleRefresh: vi.fn()
-}
-
-const renderHeader = (props: Partial<AdminHeaderProps> = {}) => {
-  const mergedProps = { ...defaultProps, ...props }
-  return render(
-    <HeaderSection {...mergedProps} />,
-    { wrapper: TestWrapper }
-  )
-}
-
-describe('HeaderSection', () => {
-  const mockGenerateBreadcrumbs = vi.mocked(breadcrumbsModule.generateBreadcrumbs)
+  const defaultProps = {
+    translation: 'testModule',
+    loading: false,
+    handleAdd: mockHandleAdd,
+    handleRefresh: mockHandleRefresh
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockPathname.mockReturnValue('/plan-management')
+
+    vi.mocked(usePathname).mockReturnValue('/admin/users')
+    vi.mocked(useRouter).mockReturnValue({ push: mockPush } as unknown as ReturnType<typeof useRouter>)
+    vi.mocked(useLocale).mockReturnValue('en')
+    vi.mocked(useTranslations).mockReturnValue(mockTranslations as unknown as ReturnType<typeof useTranslations>)
+    vi.mocked(generateBreadcrumbs).mockReturnValue([
+      { name: 'Admin', path: '/admin' },
+      { name: 'Users', path: '/admin/users' }
+    ])
   })
 
   describe('Basic Rendering', () => {
-    it('should render without crashing', () => {
-      renderHeader()
-      
-      expect(screen.getByText('Plan Management')).toBeInTheDocument()
+    it('should render header with title', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Test Title')).toBeInTheDocument()
     })
 
-    it('should render main heading', () => {
-      renderHeader()
-      
-      const heading = screen.getByRole('heading', { level: 1 })
-      expect(heading).toBeInTheDocument()
-      expect(heading).toHaveTextContent('Plan Management')
+    it('should render breadcrumbs', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Admin')).toBeInTheDocument()
+      expect(screen.getByText('Users')).toBeInTheDocument()
     })
 
     it('should render refresh button', () => {
-      renderHeader()
-      
-      expect(screen.getByText('Refresh')).toBeInTheDocument()
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
       expect(screen.getByTitle('Refresh')).toBeInTheDocument()
     })
 
-    it('should render add plan button', () => {
-      renderHeader()
-      
-      expect(screen.getByText('Add Plan')).toBeInTheDocument()
-      expect(screen.getByTitle('Add Plan')).toBeInTheDocument()
+    it('should render add button by default', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByTitle('Add New')).toBeInTheDocument()
+    })
+
+    it('should render language switcher', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByTitle('Switch Language')).toBeInTheDocument()
     })
   })
 
-  describe('Breadcrumbs Integration', () => {
-    it('should render breadcrumbs based on current pathname', () => {
-      mockPathname.mockReturnValue('/plan-management/create')
-      
-      renderHeader()
-      
-      expect(screen.getByRole('link', { name: 'Plan management' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Create' })).toBeInTheDocument()
+  describe('Add Button', () => {
+    it('should show add button when showAddButton is true', () => {
+      render(<HeaderSection {...defaultProps} showAddButton={true} />, { wrapper: TestWrapper })
+
+      expect(screen.getByTitle('Add New')).toBeInTheDocument()
     })
 
-    it('should render breadcrumbs with correct hrefs', () => {
-      mockPathname.mockReturnValue('/plan-management/edit/123')
-      
-      renderHeader()
-      
-      const planManagementLink = screen.getByRole('link', { name: 'Plan management' })
-      const editLink = screen.getByRole('link', { name: 'Edit' })
-      const idLink = screen.getByRole('link', { name: '123' })
-      
-      expect(planManagementLink).toHaveAttribute('href', '/plan-management')
-      expect(editLink).toHaveAttribute('href', '/plan-management/edit')
-      expect(idLink).toHaveAttribute('href', '/plan-management/edit/123')
+    it('should hide add button when showAddButton is false', () => {
+      render(<HeaderSection {...defaultProps} showAddButton={false} />, { wrapper: TestWrapper })
+
+      expect(screen.queryByTitle('Add New')).not.toBeInTheDocument()
     })
 
-    it('should handle root path with no breadcrumbs', () => {
-      mockPathname.mockReturnValue('/')
-      
-      renderHeader()
-      
-      // Should still render the header but no breadcrumb links
-      expect(screen.getByText('Plan Management')).toBeInTheDocument()
-      expect(screen.queryAllByRole('link')).toHaveLength(0)
-    })
+    it('should hide add button when handleAdd is not provided', () => {
+      const { handleAdd, ...propsWithoutAdd } = defaultProps
 
-    it('should update breadcrumbs when pathname changes', () => {
-      mockPathname.mockReturnValue('/plan-management')
-      
-      const { rerender } = renderHeader()
-      
-      // Check for the breadcrumb link generated from the pathname
-      expect(screen.getByRole('link', { name: 'Plan management' })).toBeInTheDocument()
-      
-      mockPathname.mockReturnValue('/user-management/create')
-      
-      rerender(
-        <TestWrapper>
-          <HeaderSection {...defaultProps} />
-        </TestWrapper>
-      )
-      
-      expect(screen.getByRole('link', { name: 'User management' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Create' })).toBeInTheDocument()
-      expect(screen.queryByRole('link', { name: 'Plan management' })).not.toBeInTheDocument()
-    })
-  })
+      render(<HeaderSection {...propsWithoutAdd} />, { wrapper: TestWrapper })
 
-  describe('Button Interactions', () => {
-    it('should call handleRefresh when refresh button is clicked', async () => {
-      const mockHandleRefresh = vi.fn()
-      
-      renderHeader({ handleRefresh: mockHandleRefresh })
-      
-      const refreshButton = screen.getByTitle('Refresh')
-      await userEvent.click(refreshButton)
-      
-      expect(mockHandleRefresh).toHaveBeenCalledTimes(1)
+      expect(screen.queryByTitle('Add New')).not.toBeInTheDocument()
     })
 
     it('should call handleAdd when add button is clicked', async () => {
-      const mockHandleAdd = vi.fn()
-      
-      renderHeader({ handleAdd: mockHandleAdd })
-      
-      const addButton = screen.getByText('Add Plan')
-      await userEvent.click(addButton)
-      
+      const user = userEvent.setup()
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      const addButton = screen.getByTitle('Add New')
+      await user.click(addButton)
+
       expect(mockHandleAdd).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('Refresh Button', () => {
+    it('should render refresh button', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByTitle('Refresh')).toBeInTheDocument()
+    })
+
+    it('should call handleRefresh when clicked', async () => {
+      const user = userEvent.setup()
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      const refreshButton = screen.getByTitle('Refresh')
+      await user.click(refreshButton)
+
+      expect(mockHandleRefresh).toHaveBeenCalledTimes(1)
     })
 
     it('should disable refresh button when loading', () => {
-      renderHeader({ loading: true })
-      
+      render(<HeaderSection {...defaultProps} loading={true} />, { wrapper: TestWrapper })
+
       const refreshButton = screen.getByTitle('Refresh')
       expect(refreshButton).toBeDisabled()
     })
 
-    it('should not disable add button when loading', () => {
-      renderHeader({ loading: true })
-      
-      const addButton = screen.getByText('Add Plan')
-      expect(addButton).not.toBeDisabled()
+    it('should enable refresh button when not loading', () => {
+      render(<HeaderSection {...defaultProps} loading={false} />, { wrapper: TestWrapper })
+
+      const refreshButton = screen.getByTitle('Refresh')
+      expect(refreshButton).not.toBeDisabled()
     })
   })
 
   describe('Loading State', () => {
-    it('should show loading animation on refresh button when loading', () => {
-      renderHeader({ loading: true })
-      
+    it('should disable refresh button during loading', () => {
+      render(<HeaderSection {...defaultProps} loading={true} />, { wrapper: TestWrapper })
+
       const refreshButton = screen.getByTitle('Refresh')
-      
-      // Button should be disabled during loading
       expect(refreshButton).toBeDisabled()
     })
 
-    it('should not show loading animation when not loading', () => {
-      renderHeader({ loading: false })
-      
-      const refreshButton = screen.getByTitle('Refresh')
-      expect(refreshButton).not.toBeDisabled()
-    })
+    it('should not call handleRefresh when disabled', async () => {
+      const user = userEvent.setup()
 
-    it('should handle loading state changes', () => {
-      const { rerender } = renderHeader({ loading: false })
-      
-      let refreshButton = screen.getByTitle('Refresh')
-      expect(refreshButton).not.toBeDisabled()
-      
-      rerender(
-        <TestWrapper>
-          <HeaderSection {...defaultProps} loading={true} />
-        </TestWrapper>
-      )
-      
-      refreshButton = screen.getByTitle('Refresh')
-      expect(refreshButton).toBeDisabled()
+      render(<HeaderSection {...defaultProps} loading={true} />, { wrapper: TestWrapper })
+
+      const refreshButton = screen.getByTitle('Refresh')
+      await user.click(refreshButton)
+
+      expect(mockHandleRefresh).not.toHaveBeenCalled()
     })
   })
 
-  describe('Responsive Design', () => {
-    it('should render button text on larger screens', () => {
-      renderHeader()
-      
-      // Text should be present for larger screens (even if hidden on small screens via CSS)
-      expect(screen.getByText('Refresh')).toBeInTheDocument()
-      expect(screen.getByText('Add Plan')).toBeInTheDocument()
+  describe('Breadcrumbs', () => {
+    it('should generate breadcrumbs from pathname', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(generateBreadcrumbs).toHaveBeenCalledWith('/admin/users')
     })
 
-    it('should have proper button titles for accessibility', () => {
-      renderHeader()
-      
-      expect(screen.getByTitle('Refresh')).toBeInTheDocument()
-      expect(screen.getByTitle('Add Plan')).toBeInTheDocument()
+    it('should render multiple breadcrumb items', () => {
+      vi.mocked(generateBreadcrumbs).mockReturnValue([
+        { name: 'Admin', path: '/admin' },
+        { name: 'Users', path: '/admin/users' },
+        { name: 'Create', path: '/admin/users/create' }
+      ])
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Admin')).toBeInTheDocument()
+      expect(screen.getByText('Users')).toBeInTheDocument()
+      expect(screen.getByText('Create')).toBeInTheDocument()
+    })
+
+    it('should render single breadcrumb item', () => {
+      vi.mocked(generateBreadcrumbs).mockReturnValue([
+        { name: 'Dashboard', path: '/dashboard' }
+      ])
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Dashboard')).toBeInTheDocument()
+    })
+
+    it('should render empty breadcrumbs', () => {
+      vi.mocked(generateBreadcrumbs).mockReturnValue([])
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Test Title')).toBeInTheDocument()
+    })
+
+    it('should have correct href for breadcrumb links', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      const adminLink = screen.getByText('Admin').closest('a')
+      const usersLink = screen.getByText('Users').closest('a')
+
+      expect(adminLink).toHaveAttribute('href', '/admin')
+      expect(usersLink).toHaveAttribute('href', '/admin/users')
+    })
+  })
+
+  describe('Language Switcher', () => {
+    it('should render language switcher button', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByTitle('Switch Language')).toBeInTheDocument()
+    })
+
+    it('should display current language name', () => {
+      vi.mocked(useLocale).mockReturnValue('en')
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('English')).toBeInTheDocument()
+    })
+
+    it('should display Chinese language', () => {
+      vi.mocked(useLocale).mockReturnValue('zh')
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('中文')).toBeInTheDocument()
+    })
+
+    it('should display Spanish language', () => {
+      vi.mocked(useLocale).mockReturnValue('es')
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Español')).toBeInTheDocument()
+    })
+
+    it('should default to English for unknown locale', () => {
+      vi.mocked(useLocale).mockReturnValue('unknown')
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('English')).toBeInTheDocument()
+    })
+
+    it('should render language menu trigger', async () => {
+      const user = userEvent.setup()
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      const languageButton = screen.getByTitle('Switch Language')
+      await user.click(languageButton)
+
+      /* Menu should open */
+      expect(languageButton).toBeInTheDocument()
+    })
+  })
+
+  describe('Translations', () => {
+    it('should use correct translation namespace', () => {
+      render(<HeaderSection {...defaultProps} translation="userModule" />, { wrapper: TestWrapper })
+
+      expect(useTranslations).toHaveBeenCalledWith('userModule')
+    })
+
+    it('should translate title', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(mockTranslations).toHaveBeenCalledWith('title')
+      expect(screen.getByText('Test Title')).toBeInTheDocument()
+    })
+
+    it('should translate refresh button', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(mockTranslations).toHaveBeenCalledWith('buttons.refresh')
+    })
+
+    it('should translate add button', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(mockTranslations).toHaveBeenCalledWith('buttons.add')
+    })
+  })
+
+  describe('Use Cases', () => {
+    it('should render for user management page', () => {
+      vi.mocked(usePathname).mockReturnValue('/admin/user-management')
+      vi.mocked(generateBreadcrumbs).mockReturnValue([
+        { name: 'Admin', path: '/admin' },
+        { name: 'User Management', path: '/admin/user-management' }
+      ])
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('User Management')).toBeInTheDocument()
+    })
+
+    it('should render for role management page', () => {
+      vi.mocked(usePathname).mockReturnValue('/admin/role-management')
+      vi.mocked(generateBreadcrumbs).mockReturnValue([
+        { name: 'Admin', path: '/admin' },
+        { name: 'Role Management', path: '/admin/role-management' }
+      ])
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Role Management')).toBeInTheDocument()
+    })
+
+    it('should render view page without add button', () => {
+      vi.mocked(usePathname).mockReturnValue('/admin/users/view/123')
+      vi.mocked(generateBreadcrumbs).mockReturnValue([
+        { name: 'Admin', path: '/admin' },
+        { name: 'Users', path: '/admin/users' },
+        { name: 'View', path: '/admin/users/view' }
+      ])
+
+      render(<HeaderSection {...defaultProps} showAddButton={false} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('View')).toBeInTheDocument()
+      expect(screen.queryByTitle('Add New')).not.toBeInTheDocument()
+    })
+
+    it('should render during loading state', () => {
+      render(<HeaderSection {...defaultProps} loading={true} />, { wrapper: TestWrapper })
+
+      expect(screen.getByTitle('Refresh')).toBeDisabled()
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('should handle empty translation key', () => {
+      vi.mocked(mockTranslations).mockImplementation(() => '')
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      /* Component should still render */
+      expect(screen.getByTitle('Switch Language')).toBeInTheDocument()
+    })
+
+    it('should handle very long title', () => {
+      vi.mocked(mockTranslations).mockImplementation((key: string) => {
+        if (key === 'title') return 'This is a very long title that should still render properly'
+        return key
+      })
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('This is a very long title that should still render properly')).toBeInTheDocument()
+    })
+
+    it('should handle deep nested breadcrumbs', () => {
+      vi.mocked(generateBreadcrumbs).mockReturnValue([
+        { name: 'Admin', path: '/admin' },
+        { name: 'Users', path: '/admin/users' },
+        { name: 'Edit', path: '/admin/users/edit' },
+        { name: '123', path: '/admin/users/edit/123' },
+        { name: 'Details', path: '/admin/users/edit/123/details' }
+      ])
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Details')).toBeInTheDocument()
+    })
+
+    it('should handle multiple rapid refresh clicks', async () => {
+      const user = userEvent.setup()
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      const refreshButton = screen.getByTitle('Refresh')
+      await user.click(refreshButton)
+      await user.click(refreshButton)
+      await user.click(refreshButton)
+
+      expect(mockHandleRefresh).toHaveBeenCalledTimes(3)
+    })
+
+    it('should handle multiple rapid add clicks', async () => {
+      const user = userEvent.setup()
+
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      const addButton = screen.getByTitle('Add New')
+      await user.click(addButton)
+      await user.click(addButton)
+
+      expect(mockHandleAdd).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('State Management', () => {
+    it('should update when loading state changes', () => {
+      const { rerender } = render(
+        <HeaderSection {...defaultProps} loading={false} />,
+        { wrapper: TestWrapper }
+      )
+
+      const refreshButton = screen.getByTitle('Refresh')
+      expect(refreshButton).not.toBeDisabled()
+
+      rerender(<HeaderSection {...defaultProps} loading={true} />)
+
+      expect(refreshButton).toBeDisabled()
+    })
+
+    it('should update when pathname changes', () => {
+      const { rerender } = render(
+        <HeaderSection {...defaultProps} />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Users')).toBeInTheDocument()
+
+      vi.mocked(usePathname).mockReturnValue('/admin/roles')
+      vi.mocked(generateBreadcrumbs).mockReturnValue([
+        { name: 'Admin', path: '/admin' },
+        { name: 'Roles', path: '/admin/roles' }
+      ])
+
+      rerender(<HeaderSection {...defaultProps} />)
+
+      expect(screen.getByText('Roles')).toBeInTheDocument()
+    })
+
+    it('should update when locale changes', () => {
+      const { rerender } = render(
+        <HeaderSection {...defaultProps} />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('English')).toBeInTheDocument()
+
+      vi.mocked(useLocale).mockReturnValue('es')
+
+      rerender(<HeaderSection {...defaultProps} />)
+
+      expect(screen.getByText('Español')).toBeInTheDocument()
     })
   })
 
   describe('Accessibility', () => {
-    it('should have proper heading hierarchy', () => {
-      renderHeader()
-      
-      const heading = screen.getByRole('heading', { level: 1 })
-      expect(heading).toHaveTextContent('Plan Management')
-    })
+    it('should have accessible refresh button title', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
 
-    it('should have keyboard accessible buttons', () => {
-      renderHeader()
-      
       const refreshButton = screen.getByTitle('Refresh')
-      const addButton = screen.getByTitle('Add Plan')
-      
-      expect(refreshButton).not.toHaveAttribute('tabindex', '-1')
-      expect(addButton).not.toHaveAttribute('tabindex', '-1')
-    })
-
-    it('should have descriptive button titles', () => {
-      renderHeader()
-      
-      expect(screen.getByTitle('Refresh')).toBeInTheDocument()
-      expect(screen.getByTitle('Add Plan')).toBeInTheDocument()
-    })
-
-    it('should maintain focus management during loading states', () => {
-      renderHeader({ loading: true })
-      
-      // Find the refresh button by its title attribute or role
-      const refreshButton = screen.getByTitle('Refresh')
-      
-      // Should be disabled but still focusable for screen readers
-      expect(refreshButton).toBeDisabled()
-    })
-  })
-
-  describe('Layout and Styling', () => {
-    it('should render with proper layout structure', () => {
-      renderHeader()
-      
-      // Should contain heading and action buttons
-      expect(screen.getByRole('heading')).toBeInTheDocument()
-      expect(screen.getByText('Refresh')).toBeInTheDocument()
-      expect(screen.getByText('Add Plan')).toBeInTheDocument()
-    })
-
-    it('should maintain consistent layout across different paths', () => {
-      mockPathname.mockReturnValue('/complex/nested/path/structure')
-      
-      renderHeader()
-      
-      // Layout should remain consistent regardless of breadcrumb complexity
-      expect(screen.getByRole('heading')).toBeInTheDocument()
-      expect(screen.getByText('Refresh')).toBeInTheDocument()
-      expect(screen.getByText('Add Plan')).toBeInTheDocument()
-    })
-  })
-
-  describe('Breadcrumb Separators', () => {
-    it('should render separators between breadcrumb items', () => {
-      mockPathname.mockReturnValue('/level1/level2/level3')
-      
-      renderHeader()
-      
-      const breadcrumbItems = screen.getAllByRole('listitem')
-      expect(breadcrumbItems.length).toBeGreaterThan(1)
-    })
-
-    it('should not render separator after last breadcrumb item', () => {
-      mockPathname.mockReturnValue('/single-level')
-      
-      renderHeader()
-      
-      const breadcrumbItems = screen.getAllByRole('listitem')
-      expect(breadcrumbItems).toHaveLength(1)
-    })
-  })
-
-  describe('Error Handling', () => {
-    it('should handle missing callback functions gracefully', () => {
-      expect(() => {
-        renderHeader({
-          handleAdd: undefined as any,
-          handleRefresh: undefined as any
-        })
-      }).not.toThrow()
-    })
-
-    it('should handle invalid pathname gracefully', () => {
-      mockPathname.mockReturnValue(null as any)
-      
-      expect(() => renderHeader()).not.toThrow()
-    })
-
-    it('should handle undefined pathname gracefully', () => {
-      mockPathname.mockReturnValue(undefined as any)
-      
-      expect(() => renderHeader()).not.toThrow()
-    })
-  })
-
-  describe('Button Styling States', () => {
-    it('should apply hover effects to buttons', async () => {
-      renderHeader()
-      
-      const refreshButton = screen.getByText('Refresh')
-      const addButton = screen.getByText('Add Plan')
-      
-      // Buttons should be interactive
       expect(refreshButton).toBeInTheDocument()
-      expect(addButton).toBeInTheDocument()
-      
-      // Should be able to hover (tested through event handling)
-      await userEvent.hover(refreshButton)
-      await userEvent.hover(addButton)
     })
 
-    it('should handle active states correctly', async () => {
-      const mockHandleRefresh = vi.fn()
-      const mockHandleAdd = vi.fn()
-      
-      renderHeader({ 
-        handleRefresh: mockHandleRefresh,
-        handleAdd: mockHandleAdd 
-      })
-      
-      const refreshButton = screen.getByTitle('Refresh')
-      const addButton = screen.getByTitle('Add Plan')
-      
-      // Should handle mouse down/up events
-      fireEvent.mouseDown(refreshButton)
-      fireEvent.mouseUp(refreshButton)
-      
-      fireEvent.mouseDown(addButton)
-      fireEvent.mouseUp(addButton)
+    it('should have accessible add button title', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      const addButton = screen.getByTitle('Add New')
+      expect(addButton).toBeInTheDocument()
+    })
+
+    it('should have accessible language switcher title', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      const languageButton = screen.getByTitle('Switch Language')
+      expect(languageButton).toBeInTheDocument()
+    })
+
+    it('should have proper heading hierarchy', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      const heading = screen.getByRole('heading', { level: 1 })
+      expect(heading).toBeInTheDocument()
+      expect(heading).toHaveTextContent('Test Title')
+    })
+
+    it('should have accessible breadcrumb links', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      const adminLink = screen.getByText('Admin').closest('a')
+      expect(adminLink).toHaveAttribute('href')
     })
   })
 
-  describe('Integration with Router', () => {
-    it('should integrate with Next.js usePathname hook', () => {
-      // Use the mocked function directly
-      
-      mockPathname.mockReturnValue('/integration/test')
-      
-      renderHeader()
-      
-      expect(screen.getByRole('link', { name: 'Integration' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Test' })).toBeInTheDocument()
-      
-      // Verify the hook was called
-      expect(mockPathname).toHaveBeenCalled()
-      // Verify generateBreadcrumbs was called with the pathname
-      expect(mockGenerateBreadcrumbs).toHaveBeenCalledWith('/integration/test')
+  describe('Responsive Design', () => {
+    it('should render all buttons on desktop', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByTitle('Switch Language')).toBeInTheDocument()
+      expect(screen.getByTitle('Refresh')).toBeInTheDocument()
+      expect(screen.getByTitle('Add New')).toBeInTheDocument()
     })
 
-    it('should handle complex routing scenarios', () => {
-      // Use the mocked function directly
-      
-      mockPathname.mockReturnValue('/admin/users/edit/123/permissions')
-      
-      renderHeader()
-      
-      const links = screen.getAllByRole('link')
-      expect(links).toHaveLength(5) // Admin, Users, Edit, 123, Permissions
-      
-      expect(screen.getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin')
-      expect(screen.getByRole('link', { name: 'Users' })).toHaveAttribute('href', '/admin/users')
-      expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/admin/users/edit')
-      expect(screen.getByRole('link', { name: '123' })).toHaveAttribute('href', '/admin/users/edit/123')
-      expect(screen.getByRole('link', { name: 'Permissions' })).toHaveAttribute('href', '/admin/users/edit/123/permissions')
-      
-      // Verify generateBreadcrumbs was called
-      expect(mockGenerateBreadcrumbs).toHaveBeenCalledWith('/admin/users/edit/123/permissions')
+    it('should render with responsive sizes', () => {
+      const { container } = render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      /* Component should render successfully with responsive design */
+      expect(container.firstChild).toBeInTheDocument()
+    })
+  })
+
+  describe('Integration', () => {
+    it('should integrate with routing', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(usePathname).toHaveBeenCalled()
+      expect(useRouter).toHaveBeenCalled()
+    })
+
+    it('should integrate with i18n', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(useTranslations).toHaveBeenCalledWith('testModule')
+      expect(useLocale).toHaveBeenCalled()
+    })
+
+    it('should integrate with breadcrumb generation', () => {
+      render(<HeaderSection {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(generateBreadcrumbs).toHaveBeenCalledWith('/admin/users')
     })
   })
 })

@@ -154,9 +154,8 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                       onClick={onCancel}
                       leftIcon={cancelIcon}
                       size="md"
-                    >
-                      {cancelText}
-                    </SecondaryButton>
+                      buttonText={cancelText}
+                    />
                   )}
 
                   {/* Conditional confirm button based on variant */}
@@ -168,9 +167,8 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                       leftIcon={confirmIcon || FiAlertTriangle}
                       loading={isLoading}
                       disabled={isLoading || isConfirmDisabled}
-                    >
-                      {confirmText}
-                    </PrimaryButton>
+                      buttonText={confirmText}
+                    />
                   ) : (
                     <PrimaryButton
                       onClick={handleConfirm}
@@ -178,9 +176,8 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                       leftIcon={confirmIcon || FiCheck} /* Success icon */
                       loading={isLoading}
                       disabled={isLoading || isConfirmDisabled}
-                    >
-                      {confirmText}
-                    </PrimaryButton>
+                      buttonText={confirmText}
+                    />
                   )}
                 </HStack>
               </Dialog.Footer>

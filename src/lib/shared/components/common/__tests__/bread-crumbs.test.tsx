@@ -1,349 +1,312 @@
+/* Libraries imports */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+
+/* Shared module imports */
 import { Provider } from '@/components/ui/provider'
+
+/* Component imports */
 import Breadcrumbs, { generateBreadcrumbs } from '../bread-crumbs'
 
-// Mock Next.js usePathname hook
-const mockPathname = vi.fn()
+/* Mock dependencies */
 vi.mock('next/navigation', () => ({
-  usePathname: () => mockPathname()
+  usePathname: vi.fn()
 }))
 
-// Mock is no longer needed since generateBreadcrumbs is now in the same file
-
-// Mock config imports
-vi.mock('@shared/config', () => ({
-  PRIMARY_COLOR: '#885CF7',
-  GRAY_COLOR: '#6B7280'
-}))
-
-// Mock polished functions
 vi.mock('polished', () => ({
   lighten: vi.fn((amount: number, color: string) => color)
 }))
 
-// Test wrapper component
+vi.mock('@shared/config', () => ({
+  PRIMARY_COLOR: '#3182ce',
+  GRAY_COLOR: '#718096'
+}))
+
+import { usePathname } from 'next/navigation'
+
+/* Test wrapper with Chakra Provider */
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <Provider>{children}</Provider>
 )
 
-const renderBreadcrumbs = () => {
-  return render(
-    <Breadcrumbs />, 
-    { wrapper: TestWrapper }
-  )
-}
-
 describe('generateBreadcrumbs', () => {
   describe('Basic Functionality', () => {
-    it('should return empty array for root path', () => {
+    it('should generate breadcrumbs from simple path', () => {
+      const result = generateBreadcrumbs('/admin/users')
+
+      expect(result).toHaveLength(2)
+      expect(result[0]).toEqual({ name: 'Admin', path: '/admin' })
+      expect(result[1]).toEqual({ name: 'Users', path: '/admin/users' })
+    })
+
+    it('should handle root path', () => {
       const result = generateBreadcrumbs('/')
-      expect(result).toEqual([])
+
+      expect(result).toHaveLength(0)
     })
 
-    it('should generate breadcrumbs for single level path', () => {
+    it('should handle single segment path', () => {
       const result = generateBreadcrumbs('/dashboard')
-      expect(result).toEqual([
-        { name: 'Dashboard', path: '/dashboard' }
-      ])
+
+      expect(result).toHaveLength(1)
+      expect(result[0]).toEqual({ name: 'Dashboard', path: '/dashboard' })
     })
 
-    it('should generate breadcrumbs for multi-level path', () => {
-      const result = generateBreadcrumbs('/plan-management/create')
-      expect(result).toEqual([
-        { name: 'Plan Management', path: '/plan-management' },
-        { name: 'Create', path: '/plan-management/create' }
-      ])
+    it('should handle deep nested paths', () => {
+      const result = generateBreadcrumbs('/admin/users/edit/123')
+
+      expect(result).toHaveLength(4)
+      expect(result[0]).toEqual({ name: 'Admin', path: '/admin' })
+      expect(result[1]).toEqual({ name: 'Users', path: '/admin/users' })
+      expect(result[2]).toEqual({ name: 'Edit', path: '/admin/users/edit' })
+      expect(result[3]).toEqual({ name: '123', path: '/admin/users/edit/123' })
+    })
+  })
+
+  describe('Path Formatting', () => {
+    it('should capitalize first letter of each word', () => {
+      const result = generateBreadcrumbs('/admin/user-management')
+
+      expect(result[1].name).toBe('User Management')
     })
 
-    it('should handle hyphenated segments', () => {
-      const result = generateBreadcrumbs('/user-management/create-user')
-      expect(result).toEqual([
-        { name: 'User Management', path: '/user-management' },
-        { name: 'Create User', path: '/user-management/create-user' }
-      ])
+    it('should convert dashes to spaces', () => {
+      const result = generateBreadcrumbs('/admin/role-management')
+
+      expect(result[1].name).toBe('Role Management')
     })
 
-    it('should capitalize each word correctly', () => {
-      const result = generateBreadcrumbs('/admin/settings/user-preferences')
-      expect(result).toEqual([
-        { name: 'Admin', path: '/admin' },
-        { name: 'Settings', path: '/admin/settings' },
-        { name: 'User Preferences', path: '/admin/settings/user-preferences' }
-      ])
+    it('should handle multiple dashes', () => {
+      const result = generateBreadcrumbs('/admin/support-ticket-management')
+
+      expect(result[1].name).toBe('Support Ticket Management')
+    })
+
+    it('should capitalize each word after dash', () => {
+      const result = generateBreadcrumbs('/admin/plan-management/create')
+
+      expect(result[1].name).toBe('Plan Management')
+      expect(result[2].name).toBe('Create')
+    })
+
+    it('should handle numeric segments', () => {
+      const result = generateBreadcrumbs('/admin/users/123')
+
+      expect(result[2].name).toBe('123')
+    })
+
+    it('should handle mixed case segments', () => {
+      const result = generateBreadcrumbs('/admin/userManagement')
+
+      /* No dashes means treated as single word - capitalizes first letter, preserves rest */
+      expect(result[1].name).toBe('UserManagement')
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('should handle trailing slash', () => {
+      const result = generateBreadcrumbs('/admin/users/')
+
+      expect(result).toHaveLength(2)
+      expect(result[1]).toEqual({ name: 'Users', path: '/admin/users' })
+    })
+
+    it('should handle multiple slashes', () => {
+      const result = generateBreadcrumbs('//admin//users')
+
+      expect(result).toHaveLength(2)
+      expect(result[0]).toEqual({ name: 'Admin', path: '/admin' })
+      expect(result[1]).toEqual({ name: 'Users', path: '/admin/users' })
     })
 
     it('should handle empty string', () => {
       const result = generateBreadcrumbs('')
-      expect(result).toEqual([])
+
+      expect(result).toHaveLength(0)
     })
 
-    it('should filter out empty segments', () => {
-      const result = generateBreadcrumbs('//double//slash//path//')
-      expect(result).toEqual([
-        { name: 'Double', path: '/double' },
-        { name: 'Slash', path: '/double/slash' },
-        { name: 'Path', path: '/double/slash/path' }
-      ])
+    it('should handle path with special characters', () => {
+      const result = generateBreadcrumbs('/admin/users_list')
+
+      /* Underscores are not replaced, only dashes */
+      expect(result[1].name).toBe('Users_list')
     })
 
-    it('should handle numeric segments', () => {
-      const result = generateBreadcrumbs('/users/123/profile')
-      expect(result).toEqual([
-        { name: 'Users', path: '/users' },
-        { name: '123', path: '/users/123' },
-        { name: 'Profile', path: '/users/123/profile' }
-      ])
+    it('should handle very long paths', () => {
+      const result = generateBreadcrumbs('/a/b/c/d/e/f/g/h/i/j')
+
+      expect(result).toHaveLength(10)
+      expect(result[0]).toEqual({ name: 'A', path: '/a' })
+      expect(result[9]).toEqual({ name: 'J', path: '/a/b/c/d/e/f/g/h/i/j' })
     })
 
-    it('should handle special characters in segments', () => {
-      const result = generateBreadcrumbs('/api-docs/v2.1/endpoints')
-      expect(result).toEqual([
-        { name: 'Api Docs', path: '/api-docs' },
-        { name: 'V2.1', path: '/api-docs/v2.1' },
-        { name: 'Endpoints', path: '/api-docs/v2.1/endpoints' }
-      ])
+    it('should handle single character segments', () => {
+      const result = generateBreadcrumbs('/a/b/c')
+
+      expect(result[0]).toEqual({ name: 'A', path: '/a' })
+      expect(result[1]).toEqual({ name: 'B', path: '/a/b' })
+      expect(result[2]).toEqual({ name: 'C', path: '/a/b/c' })
+    })
+  })
+
+  describe('Path Building', () => {
+    it('should build cumulative paths correctly', () => {
+      const result = generateBreadcrumbs('/admin/users/edit')
+
+      expect(result[0].path).toBe('/admin')
+      expect(result[1].path).toBe('/admin/users')
+      expect(result[2].path).toBe('/admin/users/edit')
+    })
+
+    it('should maintain path structure for nested routes', () => {
+      const result = generateBreadcrumbs('/admin/tenant-management/view/123')
+
+      expect(result[0].path).toBe('/admin')
+      expect(result[1].path).toBe('/admin/tenant-management')
+      expect(result[2].path).toBe('/admin/tenant-management/view')
+      expect(result[3].path).toBe('/admin/tenant-management/view/123')
     })
   })
 })
 
-describe('Breadcrumbs', () => {
+describe('Breadcrumbs Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   describe('Rendering', () => {
-    it('should render without crashing', () => {
-      mockPathname.mockReturnValue('/')
-      
-      renderBreadcrumbs()
-      
-      // Should render breadcrumb root
-      const breadcrumbRoot = screen.getByRole('navigation')
-      expect(breadcrumbRoot).toBeInTheDocument()
+    it('should render breadcrumbs for simple path', () => {
+      vi.mocked(usePathname).mockReturnValue('/admin/users')
+
+      render(<Breadcrumbs />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Admin')).toBeInTheDocument()
+      expect(screen.getByText('Users')).toBeInTheDocument()
     })
 
-    it('should render empty breadcrumbs for root path', () => {
-      mockPathname.mockReturnValue('/')
-      
-      renderBreadcrumbs()
-      
-      const breadcrumbRoot = screen.getByRole('navigation')
-      expect(breadcrumbRoot).toBeInTheDocument()
-      
-      // Should not have any breadcrumb links for root
-      const breadcrumbLinks = screen.queryAllByRole('link')
-      expect(breadcrumbLinks).toHaveLength(0)
+    it('should render breadcrumbs with proper links', () => {
+      vi.mocked(usePathname).mockReturnValue('/admin/users/create')
+
+      render(<Breadcrumbs />, { wrapper: TestWrapper })
+
+      const adminLink = screen.getByText('Admin').closest('a')
+      const usersLink = screen.getByText('Users').closest('a')
+      const createLink = screen.getByText('Create').closest('a')
+
+      expect(adminLink).toHaveAttribute('href', '/admin')
+      expect(usersLink).toHaveAttribute('href', '/admin/users')
+      expect(createLink).toHaveAttribute('href', '/admin/users/create')
     })
 
-    it('should render breadcrumbs for single level path', () => {
-      mockPathname.mockReturnValue('/dashboard')
-      
-      renderBreadcrumbs()
-      
-      expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument()
+    it('should render nothing for root path', () => {
+      vi.mocked(usePathname).mockReturnValue('/')
+
+      const { container } = render(<Breadcrumbs />, { wrapper: TestWrapper })
+
+      /* Should render breadcrumb structure but with no items */
+      expect(container.querySelector('nav')).toBeInTheDocument()
     })
 
-    it('should render breadcrumbs for multi-level path', () => {
-      mockPathname.mockReturnValue('/plan-management/create')
-      
-      renderBreadcrumbs()
-      
-      expect(screen.getByRole('link', { name: 'Plan Management' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Create' })).toBeInTheDocument()
+    it('should render single breadcrumb for single segment', () => {
+      vi.mocked(usePathname).mockReturnValue('/dashboard')
+
+      render(<Breadcrumbs />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Dashboard')).toBeInTheDocument()
     })
 
-    it('should render breadcrumbs for deeply nested path', () => {
-      mockPathname.mockReturnValue('/admin/users/profile/settings')
-      
-      renderBreadcrumbs()
-      
-      expect(screen.getByRole('link', { name: 'Admin' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Users' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Profile' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument()
-    })
-  })
+    it('should render multiple breadcrumbs for nested path', () => {
+      vi.mocked(usePathname).mockReturnValue('/admin/users/edit/123')
 
-  describe('Breadcrumb Links', () => {
-    it('should generate correct href attributes', () => {
-      mockPathname.mockReturnValue('/plan-management/create')
-      
-      renderBreadcrumbs()
-      
-      const planManagementLink = screen.getByRole('link', { name: 'Plan Management' })
-      const createLink = screen.getByRole('link', { name: 'Create' })
-      
-      expect(planManagementLink).toHaveAttribute('href', '/plan-management')
-      expect(createLink).toHaveAttribute('href', '/plan-management/create')
-    })
+      render(<Breadcrumbs />, { wrapper: TestWrapper })
 
-    it('should handle hyphenated paths correctly', () => {
-      mockPathname.mockReturnValue('/tenant-management/user-profiles')
-      
-      renderBreadcrumbs()
-      
-      expect(screen.getByRole('link', { name: 'Tenant Management' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'User Profiles' })).toBeInTheDocument()
-    })
-
-    it('should handle numeric segments', () => {
-      mockPathname.mockReturnValue('/users/123/edit')
-      
-      renderBreadcrumbs()
-      
-      expect(screen.getByRole('link', { name: 'Users' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: '123' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Edit' })).toBeInTheDocument()
+      expect(screen.getByText('Admin')).toBeInTheDocument()
+      expect(screen.getByText('Users')).toBeInTheDocument()
+      expect(screen.getByText('Edit')).toBeInTheDocument()
+      expect(screen.getByText('123')).toBeInTheDocument()
     })
   })
 
-  describe('Breadcrumb Separators', () => {
-    it('should render separators between breadcrumb items', () => {
-      mockPathname.mockReturnValue('/plan-management/create')
-      
-      renderBreadcrumbs()
-      
-      // Chakra UI breadcrumb separators are typically rendered as spans or divs
-      const breadcrumbItems = screen.getAllByRole('listitem')
-      
-      // Should have 2 breadcrumb items for this path
-      expect(breadcrumbItems).toHaveLength(2)
+  describe('Formatting', () => {
+    it('should format path segments with dashes', () => {
+      vi.mocked(usePathname).mockReturnValue('/admin/user-management')
+
+      render(<Breadcrumbs />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('User Management')).toBeInTheDocument()
     })
 
-    it('should not render separator after last breadcrumb', () => {
-      mockPathname.mockReturnValue('/single-level')
-      
-      renderBreadcrumbs()
-      
-      const breadcrumbItems = screen.getAllByRole('listitem')
-      expect(breadcrumbItems).toHaveLength(1)
-    })
-  })
+    it('should format path segments with multiple dashes', () => {
+      vi.mocked(usePathname).mockReturnValue('/admin/support-ticket-management')
 
-  describe('Path Changes', () => {
-    it('should update breadcrumbs when pathname changes', () => {
-      mockPathname.mockReturnValue('/initial-path')
-      
-      const { rerender } = renderBreadcrumbs()
-      
-      expect(screen.getByRole('link', { name: 'Initial Path' })).toBeInTheDocument()
-      
-      // Change pathname
-      mockPathname.mockReturnValue('/new-path')
-      
-      rerender(
-        <TestWrapper>
-          <Breadcrumbs />
-        </TestWrapper>
-      )
-      
-      expect(screen.getByRole('link', { name: 'New Path' })).toBeInTheDocument()
-      expect(screen.queryByRole('link', { name: 'Initial Path' })).not.toBeInTheDocument()
+      render(<Breadcrumbs />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Support Ticket Management')).toBeInTheDocument()
     })
 
-    it('should handle dynamic route parameters', () => {
-      mockPathname.mockReturnValue('/users/[id]/profile')
-      
-      renderBreadcrumbs()
-      
-      expect(screen.getByRole('link', { name: 'Users' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: '[id]' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Profile' })).toBeInTheDocument()
+    it('should capitalize all words', () => {
+      vi.mocked(usePathname).mockReturnValue('/admin/plan-management/create')
+
+      render(<Breadcrumbs />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Plan Management')).toBeInTheDocument()
+      expect(screen.getByText('Create')).toBeInTheDocument()
     })
   })
 
-  describe('Styling and Accessibility', () => {
-    it('should apply different colors to active and inactive breadcrumbs', () => {
-      mockPathname.mockReturnValue('/level1/level2')
-      
-      renderBreadcrumbs()
-      
-      const breadcrumbLinks = screen.getAllByRole('link')
-      
-      // All links should be rendered
-      expect(breadcrumbLinks).toHaveLength(2)
-      expect(breadcrumbLinks[0]).toHaveTextContent('Level1')
-      expect(breadcrumbLinks[1]).toHaveTextContent('Level2')
+  describe('Navigation Structure', () => {
+    it('should use pathname from usePathname hook', () => {
+      const mockPathname = '/admin/settings'
+      vi.mocked(usePathname).mockReturnValue(mockPathname)
+
+      render(<Breadcrumbs />, { wrapper: TestWrapper })
+
+      expect(usePathname).toHaveBeenCalled()
+      expect(screen.getByText('Settings')).toBeInTheDocument()
     })
 
-    it('should be keyboard accessible', () => {
-      mockPathname.mockReturnValue('/accessible/navigation')
-      
-      renderBreadcrumbs()
-      
-      const breadcrumbLinks = screen.getAllByRole('link')
-      
-      breadcrumbLinks.forEach(link => {
-        // Each link should be focusable
-        expect(link).not.toHaveAttribute('tabindex', '-1')
-        expect(link).toHaveAttribute('href')
-      })
-    })
+    it('should update when pathname changes', () => {
+      vi.mocked(usePathname).mockReturnValue('/admin/users')
 
-    it('should have proper ARIA navigation role', () => {
-      mockPathname.mockReturnValue('/test/path')
-      
-      renderBreadcrumbs()
-      
-      const navigation = screen.getByRole('navigation')
-      expect(navigation).toBeInTheDocument()
+      const { rerender } = render(<Breadcrumbs />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Users')).toBeInTheDocument()
+
+      vi.mocked(usePathname).mockReturnValue('/admin/roles')
+
+      rerender(<Breadcrumbs />)
+
+      expect(screen.getByText('Roles')).toBeInTheDocument()
     })
   })
 
   describe('Edge Cases', () => {
-    it('should handle empty pathname gracefully', () => {
-      mockPathname.mockReturnValue('')
-      
-      expect(() => renderBreadcrumbs()).not.toThrow()
+    it('should handle very long paths', () => {
+      vi.mocked(usePathname).mockReturnValue('/admin/tenant-management/view/123/details/subscription')
+
+      render(<Breadcrumbs />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Tenant Management')).toBeInTheDocument()
+      expect(screen.getByText('View')).toBeInTheDocument()
+      expect(screen.getByText('123')).toBeInTheDocument()
+      expect(screen.getByText('Details')).toBeInTheDocument()
+      expect(screen.getByText('Subscription')).toBeInTheDocument()
     })
 
-    it('should handle pathname with trailing slash', () => {
-      mockPathname.mockReturnValue('/test-path/')
-      
-      renderBreadcrumbs()
-      
-      expect(screen.getByRole('link', { name: 'Test Path' })).toBeInTheDocument()
+    it('should handle numeric segments', () => {
+      vi.mocked(usePathname).mockReturnValue('/admin/users/123')
+
+      render(<Breadcrumbs />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('123')).toBeInTheDocument()
     })
 
-    it('should handle pathname with multiple consecutive slashes', () => {
-      mockPathname.mockReturnValue('//double//slash//path//')
-      
-      renderBreadcrumbs()
-      
-      expect(screen.getByRole('link', { name: 'Double' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Slash' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Path' })).toBeInTheDocument()
-    })
+    it('should handle empty pathname', () => {
+      vi.mocked(usePathname).mockReturnValue('')
 
-    it('should handle very long breadcrumb names', () => {
-      mockPathname.mockReturnValue('/very-long-breadcrumb-name-that-exceeds-normal-length/another-extremely-long-segment')
-      
-      renderBreadcrumbs()
-      
-      expect(screen.getByRole('link', { name: /Very Long Breadcrumb Name/ })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: /Another Extremely Long Segment/ })).toBeInTheDocument()
-    })
-  })
+      const { container } = render(<Breadcrumbs />, { wrapper: TestWrapper })
 
-  describe('Integration with generateBreadcrumbs', () => {
-    it('should use generateBreadcrumbs function with current pathname', () => {
-      mockPathname.mockReturnValue('/test-integration')
-      
-      renderBreadcrumbs()
-      
-      // Should render the breadcrumb for test-integration
-      expect(screen.getByRole('link', { name: 'Test Integration' })).toBeInTheDocument()
-    })
-
-    it('should render breadcrumbs based on generateBreadcrumbs logic', () => {
-      mockPathname.mockReturnValue('/custom/generated/breadcrumbs')
-      
-      renderBreadcrumbs()
-      
-      expect(screen.getByRole('link', { name: 'Custom' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Generated' })).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: 'Breadcrumbs' })).toBeInTheDocument()
+      expect(container.querySelector('nav')).toBeInTheDocument()
     })
   })
 })

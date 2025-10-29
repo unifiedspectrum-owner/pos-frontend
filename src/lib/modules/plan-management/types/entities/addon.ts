@@ -74,5 +74,5 @@ export interface CreateAddonApiResponse {
     name: string;
     status: boolean;
   };
-  validation_errors: ValidationError[];
+  validation_errors?: ValidationError[];
 }

@@ -1,485 +1,358 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { Provider } from '@/components/ui/provider';
-import PlanManagement from '../home';
-import { planService } from '@plan-management/api';
-import { useRouter } from 'next/navigation';
-import { LOADING_DELAY, LOADING_DELAY_ENABLED } from '@shared/config';
+/* Comprehensive test suite for PlanManagement home page */
 
-// Mock dependencies
-vi.mock('@plan-management/api', () => ({
-  planService: {
-    getAllSubscriptionPlans: vi.fn(),
-    createSubscriptionPlan: vi.fn(),
-    getSubscriptionPlanDetails: vi.fn(),
-    updateSubscriptionPlan: vi.fn(),
-    deleteSubscriptionPlan: vi.fn(),
-    getAllFeatures: vi.fn(),
-    getAllAddOns: vi.fn(),
-    getAllSLAs: vi.fn(),
-    createFeature: vi.fn(),
-    createAddOn: vi.fn(),
-    createSLA: vi.fn(),
-  }
-}));
-vi.mock('next/navigation');
-vi.mock('@shared/config', () => ({
-  BACKEND_BASE_URL: 'http://localhost:3001',
-  LOADING_DELAY: 100,
-  LOADING_DELAY_ENABLED: false
-}));
+/* Libraries imports */
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { ChakraProvider, defaultSystem } from '@chakra-ui/react'
 
-// Mock child components
+/* Plan module imports */
+import PlanManagement from '@plan-management/pages/home'
+import * as usePlansHook from '@plan-management/hooks/use-plans'
+import * as permissionsContext from '@shared/contexts'
+import { PLAN_PAGE_ROUTES } from '@plan-management/constants'
+import { Plan } from '@plan-management/types'
+
+/* Mock next-intl */
+vi.mock('next-intl', () => ({
+  useTranslations: vi.fn(() => (key: string) => key)
+}))
+
+/* Mock navigation */
+const mockPush = vi.fn()
+vi.mock('@/i18n/navigation', () => ({
+  useRouter: vi.fn(() => ({
+    push: mockPush
+  }))
+}))
+
+/* Mock permissions context */
+vi.mock('@shared/contexts', () => ({
+  usePermissions: vi.fn(() => ({
+    hasSpecificPermission: vi.fn(() => true)
+  }))
+}))
+
+/* Mock HeaderSection component */
 vi.mock('@shared/components', () => ({
-  HeaderSection: ({ loading, handleAdd, handleRefresh }: any) => (
+  HeaderSection: vi.fn(({ loading, handleAdd, handleRefresh, showAddButton }) => (
     <div data-testid="header-section">
-      <button onClick={handleAdd} disabled={loading}>Add Plan</button>
-      <button onClick={handleRefresh} disabled={loading}>Refresh</button>
+      {showAddButton && (
+        <button data-testid="add-button" onClick={handleAdd}>
+          Add Plan
+        </button>
+      )}
+      <button data-testid="refresh-button" onClick={handleRefresh} disabled={loading}>
+        Refresh
+      </button>
     </div>
-  ),
-  ErrorMessageContainer: ({ error, title, onRetry, isRetrying }: any) => (
-    <div data-testid="plan-management-error">
-      <h2>{title}</h2>
-      <p>{typeof error === 'object' ? String(error) : error}</p>
-      <button onClick={onRetry} disabled={isRetrying}>Retry</button>
+  )),
+  ErrorMessageContainer: vi.fn(({ error, title, onRetry, isRetrying, testId }) => (
+    <div data-testid={testId}>
+      <div data-testid="error-title">{title}</div>
+      <div data-testid="error-message">{error}</div>
+      <button data-testid="retry-button" onClick={onRetry} disabled={isRetrying}>
+        Retry
+      </button>
     </div>
-  )
-}));
+  ))
+}))
 
+/* Mock PlanTable component */
 vi.mock('@plan-management/tables/plans', () => ({
-  default: ({ plans, lastUpdated, onPlanDeleted, loading }: any) => (
+  default: vi.fn(({ plans, lastUpdated, onRefresh, loading }) => (
     <div data-testid="plan-table">
       <div data-testid="plans-count">{plans.length}</div>
       <div data-testid="last-updated">{lastUpdated}</div>
-      <div data-testid="loading-state">{loading.toString()}</div>
-      <button onClick={onPlanDeleted}>Delete Plan</button>
+      <button data-testid="table-refresh" onClick={onRefresh} disabled={loading}>
+        Table Refresh
+      </button>
     </div>
-  )
-}));
+  ))
+}))
 
-const mockPush = vi.fn();
-const mockPlanService = vi.mocked(planService);
-const mockUseRouter = vi.mocked(useRouter);
+/* Helper function to render with ChakraProvider */
+const renderWithChakra = (component: React.ReactElement) => {
+  return render(<ChakraProvider value={defaultSystem}>{component}</ChakraProvider>)
+}
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <Provider>{children}</Provider>
-);
+describe('PlanManagement Page', () => {
+  /* Mock data */
+  const mockPlans: Plan[] = [
+    {
+      id: 1,
+      name: 'Basic Plan',
+      description: 'Basic subscription',
+      features: [],
+      is_featured: false,
+      is_active: true,
+      is_custom: false,
+      display_order: 1,
+      monthly_price: 29.99,
+      included_branches_count: 1,
+      annual_discount_percentage: 10,
+      add_ons: []
+    },
+    {
+      id: 2,
+      name: 'Premium Plan',
+      description: 'Premium subscription',
+      features: [],
+      is_featured: true,
+      is_active: true,
+      is_custom: false,
+      display_order: 2,
+      monthly_price: 99.99,
+      included_branches_count: 3,
+      annual_discount_percentage: 15,
+      add_ons: []
+    }
+  ]
 
-describe('PlanManagement (Home)', () => {
-  const mockPlans = [
-    { id: 1, name: 'Basic Plan', description: 'Basic plan description' },
-    { id: 2, name: 'Premium Plan', description: 'Premium plan description' }
-  ];
+  const mockRefetch = vi.fn()
+
+  const defaultHookReturn = {
+    plans: mockPlans,
+    loading: false,
+    error: null,
+    lastUpdated: '2024-01-01T12:00:00Z',
+    refetch: mockRefetch,
+    fetchPlans: vi.fn()
+  }
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockUseRouter.mockReturnValue({
-      push: mockPush,
-    } as any);
-  });
+    vi.clearAllMocks()
+    vi.spyOn(usePlansHook, 'usePlans').mockReturnValue(defaultHookReturn)
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+  })
 
-  describe('successful data loading', () => {
-    it('should render and fetch plans on mount', async () => {
-      const mockResponse = {
-        data: {
-          success: true,
-          data: mockPlans,
-          timestamp: '2024-01-01T00:00:00Z'
-        }
-      };
-      mockPlanService.getAllSubscriptionPlans.mockResolvedValue(mockResponse);
+  describe('Rendering States', () => {
+    it('should render header section', () => {
+      renderWithChakra(<PlanManagement />)
 
-      render(<PlanManagement />, { wrapper: TestWrapper });
+      expect(screen.getByTestId('header-section')).toBeInTheDocument()
+    })
 
-      // Should show loading initially
-      expect(screen.getByTestId('header-section')).toBeInTheDocument();
+    it('should render plan table when no errors', () => {
+      renderWithChakra(<PlanManagement />)
 
-      await waitFor(() => {
-        expect(mockPlanService.getAllSubscriptionPlans).toHaveBeenCalled();
-      });
+      expect(screen.getByTestId('plan-table')).toBeInTheDocument()
+      expect(screen.getByTestId('plans-count')).toHaveTextContent('2')
+      expect(screen.queryByTestId('plan-management-error')).not.toBeInTheDocument()
+    })
 
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-table')).toBeInTheDocument();
-        expect(screen.getByTestId('plans-count')).toHaveTextContent('2');
-        expect(screen.getByTestId('last-updated')).toHaveTextContent('2024-01-01T00:00:00Z');
-        expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
-      });
-    });
+    it('should render error message when error exists', () => {
+      vi.spyOn(usePlansHook, 'usePlans').mockReturnValue({
+        ...defaultHookReturn,
+        error: 'Failed to load plans',
+        plans: []
+      })
 
-    it('should handle successful response with empty data', async () => {
-      const mockResponse = {
-        data: {
-          success: true,
-          data: [],
-          timestamp: '2024-01-01T00:00:00Z'
-        }
-      };
-      mockPlanService.getAllSubscriptionPlans.mockResolvedValue(mockResponse);
+      renderWithChakra(<PlanManagement />)
 
-      render(<PlanManagement />, { wrapper: TestWrapper });
+      expect(screen.getByTestId('plan-management-error')).toBeInTheDocument()
+      expect(screen.getByTestId('error-message')).toHaveTextContent('Failed to load plans')
+      expect(screen.queryByTestId('plan-table')).not.toBeInTheDocument()
+    })
 
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-table')).toBeInTheDocument();
-        expect(screen.getByTestId('plans-count')).toHaveTextContent('0');
-      });
-    });
-  });
+    it('should show loading state in header', () => {
+      vi.spyOn(usePlansHook, 'usePlans').mockReturnValue({
+        ...defaultHookReturn,
+        loading: true
+      })
 
-  describe('mock verification', () => {
-    it('should verify mock setup works', async () => {
-      // Set up mock for this test
-      mockPlanService.getAllSubscriptionPlans.mockResolvedValue({
-        data: {
-          success: true,
-          data: mockPlans,
-          timestamp: '2024-01-01T00:00:00Z'
-        }
-      });
+      renderWithChakra(<PlanManagement />)
 
-      render(<PlanManagement />, { wrapper: TestWrapper });
-      
-      // Should call the service
-      await waitFor(() => {
-        expect(mockPlanService.getAllSubscriptionPlans).toHaveBeenCalled();
-      });
-      
-      // Should render the table with default mock data
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-table')).toBeInTheDocument();
-      });
-    });
-  });
+      const refreshButton = screen.getByTestId('refresh-button')
+      expect(refreshButton).toBeDisabled()
+    })
 
+    it('should display last updated timestamp', () => {
+      renderWithChakra(<PlanManagement />)
 
-  describe('error handling', () => {
-    it('should display error message when API returns error response', async () => {
-      const mockResponse = {
-        data: {
-          success: false,
-          message: 'Failed to load plans'
-        }
-      };
-      mockPlanService.getAllSubscriptionPlans.mockResolvedValue(mockResponse);
+      expect(screen.getByTestId('last-updated')).toHaveTextContent('2024-01-01T12:00:00Z')
+    })
+  })
 
-      render(<PlanManagement />, { wrapper: TestWrapper });
+  describe('User Interactions', () => {
+    it('should handle add plan button click', async () => {
+      const user = userEvent.setup()
+      renderWithChakra(<PlanManagement />)
 
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-management-error')).toBeInTheDocument();
-        expect(screen.getByText('Error Loading Subscription Plans')).toBeInTheDocument();
-        expect(screen.getByText('Failed to load plans')).toBeInTheDocument();
-      });
+      const addButton = screen.getByTestId('add-button')
+      await user.click(addButton)
 
-      // Should not show plan table when there's an error
-      expect(screen.queryByTestId('plan-table')).not.toBeInTheDocument();
-    });
+      expect(mockPush).toHaveBeenCalledWith(PLAN_PAGE_ROUTES.CREATE)
+    })
 
-    it('should display default error message when API returns no message', async () => {
-      const mockResponse = {
-        data: {
-          success: false
-        }
-      };
-      mockPlanService.getAllSubscriptionPlans.mockResolvedValue(mockResponse);
+    it('should handle refresh button click', async () => {
+      const user = userEvent.setup()
+      renderWithChakra(<PlanManagement />)
 
-      render(<PlanManagement />, { wrapper: TestWrapper });
+      const refreshButton = screen.getByTestId('refresh-button')
+      await user.click(refreshButton)
 
-      await waitFor(() => {
-        expect(screen.getByText('Failed to fetch subscription plans')).toBeInTheDocument();
-      });
-    });
+      expect(mockRefetch).toHaveBeenCalled()
+    })
 
-    it('should handle network errors', async () => {
-      const networkError = new Error('Network error');
-      mockPlanService.getAllSubscriptionPlans.mockRejectedValue(networkError);
+    it('should handle retry button click on error', async () => {
+      const user = userEvent.setup()
+      vi.spyOn(usePlansHook, 'usePlans').mockReturnValue({
+        ...defaultHookReturn,
+        error: 'Network error',
+        plans: []
+      })
 
-      render(<PlanManagement />, { wrapper: TestWrapper });
+      renderWithChakra(<PlanManagement />)
 
-      // First verify the service is called
-      await waitFor(() => {
-        expect(mockPlanService.getAllSubscriptionPlans).toHaveBeenCalled();
-      }, { timeout: 5000 });
+      const retryButton = screen.getByTestId('retry-button')
+      await user.click(retryButton)
 
-      // Then wait for the error component to appear
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-management-error')).toBeInTheDocument();
-        expect(screen.getByText('Error Loading Subscription Plans')).toBeInTheDocument();
-        // The error object is converted to string with String(), showing the error message
-        expect(screen.getByText('Error: Network error')).toBeInTheDocument();
-      }, { timeout: 5000 });
-    }, 15000);
+      expect(mockRefetch).toHaveBeenCalled()
+    })
 
-    it('should allow retry after error', async () => {
-      // Set up specific sequence for this test
-      mockPlanService.getAllSubscriptionPlans
-        .mockRejectedValueOnce(new Error('Network error'))
-        .mockResolvedValueOnce({
-          data: {
-            success: true,
-            data: mockPlans,
-            timestamp: '2024-01-01T00:00:00Z'
-          }
-        });
+    it('should log message on refresh', async () => {
+      const user = userEvent.setup()
+      const consoleSpy = vi.spyOn(console, 'log')
 
-      render(<PlanManagement />, { wrapper: TestWrapper });
+      renderWithChakra(<PlanManagement />)
 
-      // Wait for error to appear
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-management-error')).toBeInTheDocument();
-      }, { timeout: 5000 });
+      const refreshButton = screen.getByTestId('refresh-button')
+      await user.click(refreshButton)
 
-      // Click retry button
-      const retryButton = screen.getByText('Retry');
-      fireEvent.click(retryButton);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[PlanManagement]')
+      )
+    })
+  })
 
-      // Should show success after retry
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-table')).toBeInTheDocument();
-        expect(screen.queryByTestId('plan-management-error')).not.toBeInTheDocument();
-      }, { timeout: 5000 });
+  describe('Permission Handling', () => {
+    it('should show add button when user has create permission', () => {
+      renderWithChakra(<PlanManagement />)
 
-      expect(mockPlanService.getAllSubscriptionPlans).toHaveBeenCalledTimes(2);
-    }, 15000);
-    
-    // Simple test to document expected behavior
-    it('should handle error states (integration test required)', () => {
-      // This test documents that error handling functionality exists in the component
-      // but requires proper component rendering to test effectively
-      expect(true).toBe(true);
-    });
-  });
+      expect(screen.getByTestId('add-button')).toBeInTheDocument()
+    })
 
-  describe('user interactions', () => {
-    beforeEach(async () => {
-      const mockResponse = {
-        data: {
-          success: true,
-          data: mockPlans,
-          timestamp: '2024-01-01T00:00:00Z'
-        }
-      };
-      mockPlanService.getAllSubscriptionPlans.mockResolvedValue(mockResponse);
-    });
+    it('should hide add button when user lacks create permission', () => {
+      const mockHasPermission = vi.fn(() => false)
+      vi.spyOn(permissionsContext, 'usePermissions').mockReturnValue({
+        hasSpecificPermission: mockHasPermission
+      })
 
-    it('should navigate to create page when add button is clicked', async () => {
-      render(<PlanManagement />, { wrapper: TestWrapper });
+      renderWithChakra(<PlanManagement />)
 
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-table')).toBeInTheDocument();
-      });
+      expect(screen.queryByTestId('add-button')).not.toBeInTheDocument()
+    })
+  })
 
-      fireEvent.click(screen.getByText('Add Plan'));
+  describe('Data Loading', () => {
+    it('should display empty table when no plans', () => {
+      vi.spyOn(usePlansHook, 'usePlans').mockReturnValue({
+        ...defaultHookReturn,
+        plans: []
+      })
 
-      expect(mockPush).toHaveBeenCalledWith('/admin/plan-management/create');
-    });
+      renderWithChakra(<PlanManagement />)
 
-    it('should refresh data when refresh button is clicked', async () => {
-      render(<PlanManagement />, { wrapper: TestWrapper });
+      expect(screen.getByTestId('plans-count')).toHaveTextContent('0')
+    })
 
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-table')).toBeInTheDocument();
-      });
+    it('should pass correct props to plan table', () => {
+      renderWithChakra(<PlanManagement />)
 
-      expect(mockPlanService.getAllSubscriptionPlans).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('plan-table')).toBeInTheDocument()
+      expect(screen.getByTestId('plans-count')).toHaveTextContent('2')
+      expect(screen.getByTestId('last-updated')).toHaveTextContent('2024-01-01T12:00:00Z')
+    })
 
-      fireEvent.click(screen.getByText('Refresh'));
+    it('should handle loading state correctly', () => {
+      vi.spyOn(usePlansHook, 'usePlans').mockReturnValue({
+        ...defaultHookReturn,
+        loading: true
+      })
 
-      await waitFor(() => {
-        expect(mockPlanService.getAllSubscriptionPlans).toHaveBeenCalledTimes(2);
-      });
-    });
+      renderWithChakra(<PlanManagement />)
 
-    it('should refresh data when plan is deleted', async () => {
-      render(<PlanManagement />, { wrapper: TestWrapper });
+      expect(screen.getByTestId('refresh-button')).toBeDisabled()
+      expect(screen.getByTestId('table-refresh')).toBeDisabled()
+    })
+  })
 
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-table')).toBeInTheDocument();
-      });
+  describe('Error Handling', () => {
+    it('should display error with retry option', () => {
+      vi.spyOn(usePlansHook, 'usePlans').mockReturnValue({
+        ...defaultHookReturn,
+        error: 'Database connection failed',
+        plans: []
+      })
 
-      expect(mockPlanService.getAllSubscriptionPlans).toHaveBeenCalledTimes(1);
+      renderWithChakra(<PlanManagement />)
 
-      fireEvent.click(screen.getByText('Delete Plan'));
+      expect(screen.getByTestId('error-message')).toHaveTextContent('Database connection failed')
+      expect(screen.getByTestId('retry-button')).toBeInTheDocument()
+    })
 
-      await waitFor(() => {
-        expect(mockPlanService.getAllSubscriptionPlans).toHaveBeenCalledTimes(2);
-      });
-    });
-  });
+    it('should disable retry button while loading', () => {
+      vi.spyOn(usePlansHook, 'usePlans').mockReturnValue({
+        ...defaultHookReturn,
+        error: 'Network error',
+        loading: true,
+        plans: []
+      })
 
-  describe('loading states', () => {
-    it('should show loading state during initial fetch', async () => {
-      const mockResponse = {
-        data: {
-          success: true,
-          data: mockPlans,
-          timestamp: '2024-01-01T00:00:00Z'
-        }
-      };
-      mockPlanService.getAllSubscriptionPlans.mockResolvedValue(mockResponse);
+      renderWithChakra(<PlanManagement />)
 
-      render(<PlanManagement />, { wrapper: TestWrapper });
+      expect(screen.getByTestId('retry-button')).toBeDisabled()
+    })
 
-      // Initially loading should be true
-      expect(screen.getByTestId('header-section')).toBeInTheDocument();
+    it('should show error title from translations', () => {
+      vi.spyOn(usePlansHook, 'usePlans').mockReturnValue({
+        ...defaultHookReturn,
+        error: 'API error',
+        plans: []
+      })
+
+      renderWithChakra(<PlanManagement />)
+
+      expect(screen.getByTestId('error-title')).toHaveTextContent('errors.loadingPlans')
+    })
+  })
+
+  describe('Hook Integration', () => {
+    it('should call usePlans hook on mount', () => {
+      const spy = vi.spyOn(usePlansHook, 'usePlans')
+
+      renderWithChakra(<PlanManagement />)
+
+      expect(spy).toHaveBeenCalled()
+    })
+
+    it('should handle hook state updates', async () => {
+      const { rerender } = renderWithChakra(<PlanManagement />)
+
+      vi.spyOn(usePlansHook, 'usePlans').mockReturnValue({
+        ...defaultHookReturn,
+        plans: [...mockPlans, {
+          id: 3,
+          name: 'Enterprise Plan',
+          description: 'Enterprise subscription',
+          features: [],
+          is_featured: false,
+          is_active: true,
+          is_custom: false,
+          display_order: 3,
+          monthly_price: 199.99,
+          included_branches_count: 10,
+          annual_discount_percentage: 20,
+          add_ons: []
+        }]
+      })
+
+      rerender(<ChakraProvider value={defaultSystem}><PlanManagement /></ChakraProvider>)
 
       await waitFor(() => {
-        expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
-      });
-    });
-
-    it('should show loading state during refresh', async () => {
-      let resolvePromise: (value: any) => void;
-      const promise = new Promise(resolve => {
-        resolvePromise = resolve;
-      });
-
-      mockPlanService.getAllSubscriptionPlans
-        .mockResolvedValueOnce({
-          data: {
-            success: true,
-            data: mockPlans,
-            timestamp: '2024-01-01T00:00:00Z'
-          }
-        })
-        .mockReturnValueOnce(promise);
-
-      render(<PlanManagement />, { wrapper: TestWrapper });
-
-      // Wait for initial load to complete
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-table')).toBeInTheDocument();
-      });
-
-      // Click refresh
-      fireEvent.click(screen.getByText('Refresh'));
-
-      // Should show loading state
-      await waitFor(() => {
-        expect(screen.getByTestId('loading-state')).toHaveTextContent('true');
-      });
-
-      // Resolve the promise
-      resolvePromise!({
-        data: {
-          success: true,
-          data: mockPlans,
-          timestamp: '2024-01-01T00:00:00Z'
-        }
-      });
-
-      await waitFor(() => {
-        expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
-      });
-    });
-  });
-
-  describe('loading delay functionality', () => {
-    it('should handle loading delay when enabled', async () => {
-      const mockResponse = {
-        data: {
-          success: true,
-          data: mockPlans,
-          timestamp: '2024-01-01T00:00:00Z'
-        }
-      };
-      mockPlanService.getAllSubscriptionPlans.mockResolvedValue(mockResponse);
-
-      render(<PlanManagement />, { wrapper: TestWrapper });
-
-      // Should eventually load successfully even with delay
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-table')).toBeInTheDocument();
-      });
-    });
-  });
-
-  describe('console logging', () => {
-    it('should log success message on successful fetch', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      const mockResponse = {
-        data: {
-          success: true,
-          data: mockPlans,
-          timestamp: '2024-01-01T00:00:00Z'
-        }
-      };
-      mockPlanService.getAllSubscriptionPlans.mockResolvedValue(mockResponse);
-
-      render(<PlanManagement />, { wrapper: TestWrapper });
-
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('[PlanManagement] Plan data fetched successfully');
-      });
-
-      consoleSpy.mockRestore();
-    });
-
-    it('should log refresh message on manual refresh', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      const mockResponse = {
-        data: {
-          success: true,
-          data: mockPlans,
-          timestamp: '2024-01-01T00:00:00Z'
-        }
-      };
-      mockPlanService.getAllSubscriptionPlans.mockResolvedValue(mockResponse);
-
-      render(<PlanManagement />, { wrapper: TestWrapper });
-
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-table')).toBeInTheDocument();
-      });
-
-      fireEvent.click(screen.getByText('Refresh'));
-
-      expect(consoleSpy).toHaveBeenCalledWith('[PlanManagement] Plan data refreshed successfully');
-
-      consoleSpy.mockRestore();
-    });
-
-    it('should log error message on fetch failure', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      const error = new Error('Network error');
-      mockPlanService.getAllSubscriptionPlans.mockRejectedValue(error);
-
-      render(<PlanManagement />, { wrapper: TestWrapper });
-
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('[PlanManagement] Error fetching plans:', error);
-      });
-
-      consoleSpy.mockRestore();
-    });
-  });
-
-  describe('component structure', () => {
-    it('should render with correct layout structure', async () => {
-      const mockResponse = {
-        data: {
-          success: true,
-          data: mockPlans,
-          timestamp: '2024-01-01T00:00:00Z'
-        }
-      };
-      mockPlanService.getAllSubscriptionPlans.mockResolvedValue(mockResponse);
-
-      render(<PlanManagement />, { wrapper: TestWrapper });
-
-      await waitFor(() => {
-        expect(screen.getByTestId('plan-table')).toBeInTheDocument();
-      });
-
-      // Should have header section
-      expect(screen.getByTestId('header-section')).toBeInTheDocument();
-      
-      // Should have plan table when no errors
-      expect(screen.getByTestId('plan-table')).toBeInTheDocument();
-      
-      // Should not have error container when successful
-      expect(screen.queryByTestId('plan-management-error')).not.toBeInTheDocument();
-    });
-  });
-});
+        expect(screen.getByTestId('plans-count')).toHaveTextContent('3')
+      })
+    })
+  })
+})

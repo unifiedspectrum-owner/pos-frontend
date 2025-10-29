@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest src",
+    "test:plan": "vitest src/lib/modules/plan-management/forms/__tests__/ --run",
+    "test:shared": "vitest src/lib/shared --run",
     "test:dashboard": "vitest src/lib/modules/dashboard --run",
     "test:public": "vitest src/lib/modules/public --run",
     "test:tenant": "vitest src/lib/modules/tenant-management --run",

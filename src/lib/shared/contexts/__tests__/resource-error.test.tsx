@@ -1,754 +1,698 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, act } from '@testing-library/react'
-import { ResourceErrorProvider, useResourceErrors } from '../resource-error'
+/* Libraries imports */
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, renderHook, act, waitFor } from '@testing-library/react'
+import React from 'react'
 
-// Test component to interact with the context
-const TestComponent = () => {
-  const { error, addError, removeError, clearAllErrors } = useResourceErrors()
-  
-  return (
-    <div>
-      <div data-testid="error-display">
-        {error ? (
-          <div>
-            <span data-testid="error-id">{error.id}</span>
-            <span data-testid="error-title">{error.title}</span>
-            <span data-testid="error-message">{error.error?.message || error.error}</span>
-            <span data-testid="error-retrying">{error.isRetrying.toString()}</span>
-          </div>
-        ) : (
-          'No error'
-        )}
-      </div>
-      
-      <button
-        data-testid="add-error-btn"
-        onClick={() => addError({
-          id: 'test-error-1',
-          error: new Error('Test error message'),
-          title: 'Test Error Title',
-          onRetry: vi.fn(),
-          isRetrying: false
-        })}
-      >
-        Add Error
-      </button>
-      
-      <button
-        data-testid="add-string-error-btn"
-        onClick={() => addError({
-          id: 'string-error',
-          error: 'String error message',
-          title: 'String Error',
-          onRetry: vi.fn(),
-          isRetrying: true
-        })}
-      >
-        Add String Error
-      </button>
-      
-      <button
-        data-testid="remove-error-btn"
-        onClick={() => removeError('test-error-1')}
-      >
-        Remove Error
-      </button>
-      
-      <button
-        data-testid="clear-all-btn"
-        onClick={() => clearAllErrors()}
-      >
-        Clear All
-      </button>
-    </div>
-  )
-}
+/* Shared module imports */
+import { ResourceErrorProvider, useResourceErrors } from '@shared/contexts/resource-error'
 
-// Component to test hook outside provider
-const ComponentWithoutProvider = () => {
-  const context = useResourceErrors()
-  return <div>{context.error?.title}</div>
-}
-
-describe('ResourceErrorProvider', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  describe('Provider Setup', () => {
-    it('should render children correctly', () => {
+describe('resource-error context', () => {
+  describe('ResourceErrorProvider', () => {
+    it('should render children', () => {
       render(
         <ResourceErrorProvider>
           <div data-testid="test-child">Test Child</div>
         </ResourceErrorProvider>
       )
-      
+
       expect(screen.getByTestId('test-child')).toBeInTheDocument()
       expect(screen.getByText('Test Child')).toBeInTheDocument()
     })
 
     it('should provide context value to children', () => {
-      render(
-        <ResourceErrorProvider>
-          <TestComponent />
-        </ResourceErrorProvider>
-      )
-      
-      expect(screen.getByTestId('error-display')).toBeInTheDocument()
-      expect(screen.getByText('No error')).toBeInTheDocument()
-    })
-
-    it('should handle multiple children', () => {
-      render(
-        <ResourceErrorProvider>
-          <div data-testid="child-1">Child 1</div>
-          <div data-testid="child-2">Child 2</div>
-          <TestComponent />
-        </ResourceErrorProvider>
-      )
-      
-      expect(screen.getByTestId('child-1')).toBeInTheDocument()
-      expect(screen.getByTestId('child-2')).toBeInTheDocument()
-      expect(screen.getByTestId('error-display')).toBeInTheDocument()
-    })
-  })
-
-  describe('Error State Management', () => {
-    it('should start with no error', () => {
-      render(
-        <ResourceErrorProvider>
-          <TestComponent />
-        </ResourceErrorProvider>
-      )
-      
-      expect(screen.getByText('No error')).toBeInTheDocument()
-    })
-
-    it('should add error with Error object', () => {
-      render(
-        <ResourceErrorProvider>
-          <TestComponent />
-        </ResourceErrorProvider>
-      )
-      
-      act(() => {
-        screen.getByTestId('add-error-btn').click()
-      })
-      
-      expect(screen.getByTestId('error-id')).toHaveTextContent('test-error-1')
-      expect(screen.getByTestId('error-title')).toHaveTextContent('Test Error Title')
-      expect(screen.getByTestId('error-message')).toHaveTextContent('Test error message')
-      expect(screen.getByTestId('error-retrying')).toHaveTextContent('false')
-    })
-
-    it('should add error with string message', () => {
-      render(
-        <ResourceErrorProvider>
-          <TestComponent />
-        </ResourceErrorProvider>
-      )
-      
-      act(() => {
-        screen.getByTestId('add-string-error-btn').click()
-      })
-      
-      expect(screen.getByTestId('error-id')).toHaveTextContent('string-error')
-      expect(screen.getByTestId('error-title')).toHaveTextContent('String Error')
-      expect(screen.getByTestId('error-message')).toHaveTextContent('String error message')
-      expect(screen.getByTestId('error-retrying')).toHaveTextContent('true')
-    })
-
-    it('should replace existing error when adding new error', () => {
-      const TestMultipleErrors = () => {
-        const { addError, error } = useResourceErrors()
-        
-        return (
-          <div>
-            <div data-testid="current-error">
-              {error?.id || 'no-error'}
-            </div>
-            <button
-              data-testid="add-first-error"
-              onClick={() => addError({
-                id: 'first-error',
-                error: 'First error',
-                title: 'First',
-                onRetry: vi.fn(),
-                isRetrying: false
-              })}
-            >
-              Add First
-            </button>
-            <button
-              data-testid="add-second-error"
-              onClick={() => addError({
-                id: 'second-error',
-                error: 'Second error',
-                title: 'Second',
-                onRetry: vi.fn(),
-                isRetrying: false
-              })}
-            >
-              Add Second
-            </button>
-          </div>
-        )
+      const TestComponent = () => {
+        const context = useResourceErrors()
+        return <div data-testid="context-check">{context ? 'Context Available' : 'No Context'}</div>
       }
 
       render(
         <ResourceErrorProvider>
-          <TestMultipleErrors />
-        </ResourceErrorProvider>
-      )
-      
-      expect(screen.getByTestId('current-error')).toHaveTextContent('no-error')
-      
-      act(() => {
-        screen.getByTestId('add-first-error').click()
-      })
-      
-      expect(screen.getByTestId('current-error')).toHaveTextContent('first-error')
-      
-      act(() => {
-        screen.getByTestId('add-second-error').click()
-      })
-      
-      expect(screen.getByTestId('current-error')).toHaveTextContent('second-error')
-    })
-  })
-
-  describe('Error Removal', () => {
-    it('should remove error by matching ID', () => {
-      render(
-        <ResourceErrorProvider>
           <TestComponent />
         </ResourceErrorProvider>
       )
-      
-      // Add error first
-      act(() => {
-        screen.getByTestId('add-error-btn').click()
-      })
-      
-      expect(screen.getByTestId('error-id')).toHaveTextContent('test-error-1')
-      
-      // Remove the error
-      act(() => {
-        screen.getByTestId('remove-error-btn').click()
-      })
-      
-      expect(screen.getByText('No error')).toBeInTheDocument()
+
+      expect(screen.getByText('Context Available')).toBeInTheDocument()
     })
 
-    it('should not remove error if ID does not match', () => {
-      const TestRemoveWrongId = () => {
-        const { addError, removeError, error } = useResourceErrors()
-        
-        return (
-          <div>
-            <div data-testid="error-state">
-              {error?.id || 'no-error'}
-            </div>
-            <button
-              data-testid="add-error"
-              onClick={() => addError({
-                id: 'correct-id',
-                error: 'Test error',
-                title: 'Test',
-                onRetry: vi.fn(),
-                isRetrying: false
-              })}
-            >
-              Add Error
-            </button>
-            <button
-              data-testid="remove-wrong-id"
-              onClick={() => removeError('wrong-id')}
-            >
-              Remove Wrong ID
-            </button>
-          </div>
-        )
+    it('should initialize with null error', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      expect(result.current.error).toBeNull()
+    })
+
+    it('should provide all required context methods', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      expect(result.current.error).toBeDefined()
+      expect(result.current.addError).toBeTypeOf('function')
+      expect(result.current.removeError).toBeTypeOf('function')
+      expect(result.current.clearAllErrors).toBeTypeOf('function')
+    })
+  })
+
+  describe('useResourceErrors hook', () => {
+    it('should throw error when used outside provider', () => {
+      /* Suppress console.error for this test */
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      expect(() => {
+        renderHook(() => useResourceErrors())
+      }).toThrow('useResourceErrors must be used within ResourceErrorProvider')
+
+      consoleSpy.mockRestore()
+    })
+
+    it('should return context when used inside provider', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      expect(result.current).toBeDefined()
+      expect(result.current.error).toBeNull()
+    })
+
+    it('should provide function references that work correctly', () => {
+      const { result, rerender } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const firstAddError = result.current.addError
+      const firstRemoveError = result.current.removeError
+      const firstClearAllErrors = result.current.clearAllErrors
+
+      /* Functions should be defined and callable */
+      expect(typeof firstAddError).toBe('function')
+      expect(typeof firstRemoveError).toBe('function')
+      expect(typeof firstClearAllErrors).toBe('function')
+
+      rerender()
+
+      /* Functions should still be defined and callable after rerender */
+      expect(typeof result.current.addError).toBe('function')
+      expect(typeof result.current.removeError).toBe('function')
+      expect(typeof result.current.clearAllErrors).toBe('function')
+    })
+  })
+
+  describe('addError functionality', () => {
+    it('should add error to context', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const testError = {
+        id: 'error-1',
+        error: new Error('Test error'),
+        title: 'Test Error Title',
+        onRetry: vi.fn(),
+        isRetrying: false
       }
 
-      render(
-        <ResourceErrorProvider>
-          <TestRemoveWrongId />
-        </ResourceErrorProvider>
-      )
-      
       act(() => {
-        screen.getByTestId('add-error').click()
+        result.current.addError(testError)
       })
-      
-      expect(screen.getByTestId('error-state')).toHaveTextContent('correct-id')
-      
+
+      expect(result.current.error).toEqual(testError)
+      expect(result.current.error?.id).toBe('error-1')
+      expect(result.current.error?.title).toBe('Test Error Title')
+    })
+
+    it('should replace existing error when adding new one', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const firstError = {
+        id: 'error-1',
+        error: new Error('First error'),
+        title: 'First Error',
+        onRetry: vi.fn(),
+        isRetrying: false
+      }
+
+      const secondError = {
+        id: 'error-2',
+        error: new Error('Second error'),
+        title: 'Second Error',
+        onRetry: vi.fn(),
+        isRetrying: false
+      }
+
       act(() => {
-        screen.getByTestId('remove-wrong-id').click()
+        result.current.addError(firstError)
       })
-      
-      // Error should still be present
-      expect(screen.getByTestId('error-state')).toHaveTextContent('correct-id')
+
+      expect(result.current.error?.id).toBe('error-1')
+
+      act(() => {
+        result.current.addError(secondError)
+      })
+
+      expect(result.current.error?.id).toBe('error-2')
+      expect(result.current.error?.title).toBe('Second Error')
+    })
+
+    it('should handle error with retry function', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const retryFn = vi.fn()
+      const testError = {
+        id: 'error-1',
+        error: new Error('Test error'),
+        title: 'Test Error',
+        onRetry: retryFn,
+        isRetrying: false
+      }
+
+      act(() => {
+        result.current.addError(testError)
+      })
+
+      expect(result.current.error?.onRetry).toBe(retryFn)
+
+      result.current.error?.onRetry()
+      expect(retryFn).toHaveBeenCalledOnce()
+    })
+
+    it('should handle error with isRetrying state', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const testError = {
+        id: 'error-1',
+        error: new Error('Test error'),
+        title: 'Test Error',
+        onRetry: vi.fn(),
+        isRetrying: true
+      }
+
+      act(() => {
+        result.current.addError(testError)
+      })
+
+      expect(result.current.error?.isRetrying).toBe(true)
+    })
+
+    it('should handle error object with any type', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const errorWithString = {
+        id: 'error-1',
+        error: 'String error',
+        title: 'String Error',
+        onRetry: vi.fn(),
+        isRetrying: false
+      }
+
+      act(() => {
+        result.current.addError(errorWithString)
+      })
+
+      expect(result.current.error?.error).toBe('String error')
+
+      const errorWithObject = {
+        id: 'error-2',
+        error: { message: 'Object error' },
+        title: 'Object Error',
+        onRetry: vi.fn(),
+        isRetrying: false
+      }
+
+      act(() => {
+        result.current.addError(errorWithObject)
+      })
+
+      expect(result.current.error?.error).toEqual({ message: 'Object error' })
+    })
+  })
+
+  describe('removeError functionality', () => {
+    it('should remove error by id when it matches current error', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const testError = {
+        id: 'error-1',
+        error: new Error('Test error'),
+        title: 'Test Error',
+        onRetry: vi.fn(),
+        isRetrying: false
+      }
+
+      act(() => {
+        result.current.addError(testError)
+      })
+
+      expect(result.current.error).not.toBeNull()
+
+      act(() => {
+        result.current.removeError('error-1')
+      })
+
+      expect(result.current.error).toBeNull()
+    })
+
+    it('should not remove error when id does not match', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const testError = {
+        id: 'error-1',
+        error: new Error('Test error'),
+        title: 'Test Error',
+        onRetry: vi.fn(),
+        isRetrying: false
+      }
+
+      act(() => {
+        result.current.addError(testError)
+      })
+
+      act(() => {
+        result.current.removeError('error-2')
+      })
+
+      expect(result.current.error).not.toBeNull()
+      expect(result.current.error?.id).toBe('error-1')
     })
 
     it('should handle removing error when no error exists', () => {
-      render(
-        <ResourceErrorProvider>
-          <TestComponent />
-        </ResourceErrorProvider>
-      )
-      
-      expect(screen.getByText('No error')).toBeInTheDocument()
-      
-      act(() => {
-        screen.getByTestId('remove-error-btn').click()
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
       })
-      
-      expect(screen.getByText('No error')).toBeInTheDocument()
+
+      expect(result.current.error).toBeNull()
+
+      act(() => {
+        result.current.removeError('non-existent')
+      })
+
+      expect(result.current.error).toBeNull()
+    })
+
+    it('should handle multiple remove attempts', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const testError = {
+        id: 'error-1',
+        error: new Error('Test error'),
+        title: 'Test Error',
+        onRetry: vi.fn(),
+        isRetrying: false
+      }
+
+      act(() => {
+        result.current.addError(testError)
+      })
+
+      act(() => {
+        result.current.removeError('error-1')
+        result.current.removeError('error-1')
+      })
+
+      expect(result.current.error).toBeNull()
     })
   })
 
-  describe('Clear All Errors', () => {
+  describe('clearAllErrors functionality', () => {
     it('should clear all errors', () => {
-      render(
-        <ResourceErrorProvider>
-          <TestComponent />
-        </ResourceErrorProvider>
-      )
-      
-      // Add error first
-      act(() => {
-        screen.getByTestId('add-error-btn').click()
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
       })
-      
-      expect(screen.getByTestId('error-id')).toHaveTextContent('test-error-1')
-      
-      // Clear all errors
+
+      const testError = {
+        id: 'error-1',
+        error: new Error('Test error'),
+        title: 'Test Error',
+        onRetry: vi.fn(),
+        isRetrying: false
+      }
+
       act(() => {
-        screen.getByTestId('clear-all-btn').click()
+        result.current.addError(testError)
       })
-      
-      expect(screen.getByText('No error')).toBeInTheDocument()
+
+      expect(result.current.error).not.toBeNull()
+
+      act(() => {
+        result.current.clearAllErrors()
+      })
+
+      expect(result.current.error).toBeNull()
     })
 
     it('should handle clearing when no errors exist', () => {
-      render(
-        <ResourceErrorProvider>
-          <TestComponent />
-        </ResourceErrorProvider>
-      )
-      
-      expect(screen.getByText('No error')).toBeInTheDocument()
-      
-      act(() => {
-        screen.getByTestId('clear-all-btn').click()
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
       })
-      
-      expect(screen.getByText('No error')).toBeInTheDocument()
+
+      expect(result.current.error).toBeNull()
+
+      act(() => {
+        result.current.clearAllErrors()
+      })
+
+      expect(result.current.error).toBeNull()
+    })
+
+    it('should clear error regardless of id', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const testError = {
+        id: 'any-error-id',
+        error: new Error('Test error'),
+        title: 'Test Error',
+        onRetry: vi.fn(),
+        isRetrying: false
+      }
+
+      act(() => {
+        result.current.addError(testError)
+      })
+
+      act(() => {
+        result.current.clearAllErrors()
+      })
+
+      expect(result.current.error).toBeNull()
+    })
+
+    it('should allow adding new error after clearing', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const firstError = {
+        id: 'error-1',
+        error: new Error('First error'),
+        title: 'First Error',
+        onRetry: vi.fn(),
+        isRetrying: false
+      }
+
+      const secondError = {
+        id: 'error-2',
+        error: new Error('Second error'),
+        title: 'Second Error',
+        onRetry: vi.fn(),
+        isRetrying: false
+      }
+
+      act(() => {
+        result.current.addError(firstError)
+      })
+
+      act(() => {
+        result.current.clearAllErrors()
+      })
+
+      act(() => {
+        result.current.addError(secondError)
+      })
+
+      expect(result.current.error?.id).toBe('error-2')
     })
   })
 
-  describe('Hook Usage', () => {
-    it('should throw error when used outside provider', () => {
-      const originalError = console.error
-      console.error = vi.fn()
-      
-      expect(() => {
-        render(<ComponentWithoutProvider />)
-      }).toThrow('useResourceErrors must be used within ResourceErrorProvider')
-      
-      console.error = originalError
-    })
+  describe('Error state management', () => {
+    it('should maintain error state across renders', () => {
+      const { result, rerender } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
 
-    it('should provide correct context interface', () => {
-      const TestContextInterface = () => {
-        const context = useResourceErrors()
-        
-        return (
-          <div>
-            <div data-testid="has-error">{typeof context.error}</div>
-            <div data-testid="has-addError">{typeof context.addError}</div>
-            <div data-testid="has-removeError">{typeof context.removeError}</div>
-            <div data-testid="has-clearAllErrors">{typeof context.clearAllErrors}</div>
-          </div>
-        )
+      const testError = {
+        id: 'error-1',
+        error: new Error('Test error'),
+        title: 'Test Error',
+        onRetry: vi.fn(),
+        isRetrying: false
       }
 
-      render(
-        <ResourceErrorProvider>
-          <TestContextInterface />
-        </ResourceErrorProvider>
-      )
-      
-      expect(screen.getByTestId('has-error')).toHaveTextContent('object')
-      expect(screen.getByTestId('has-addError')).toHaveTextContent('function')
-      expect(screen.getByTestId('has-removeError')).toHaveTextContent('function')
-      expect(screen.getByTestId('has-clearAllErrors')).toHaveTextContent('function')
-    })
-  })
-
-  describe('Error Object Handling', () => {
-    it('should handle complex error objects', () => {
-      const TestComplexError = () => {
-        const { addError, error } = useResourceErrors()
-        
-        const complexError = {
-          message: 'Network request failed',
-          code: 500,
-          details: { endpoint: '/api/users', method: 'GET' }
-        }
-        
-        return (
-          <div>
-            <div data-testid="error-details">
-              {error ? JSON.stringify(error.error) : 'no-error'}
-            </div>
-            <button
-              data-testid="add-complex-error"
-              onClick={() => addError({
-                id: 'complex-error',
-                error: complexError,
-                title: 'Complex Error',
-                onRetry: vi.fn(),
-                isRetrying: false
-              })}
-            >
-              Add Complex Error
-            </button>
-          </div>
-        )
-      }
-
-      render(
-        <ResourceErrorProvider>
-          <TestComplexError />
-        </ResourceErrorProvider>
-      )
-      
       act(() => {
-        screen.getByTestId('add-complex-error').click()
+        result.current.addError(testError)
       })
-      
-      const errorDetails = screen.getByTestId('error-details')
-      expect(errorDetails.textContent).toContain('Network request failed')
-      expect(errorDetails.textContent).toContain('500')
-      expect(errorDetails.textContent).toContain('/api/users')
+
+      rerender()
+
+      expect(result.current.error?.id).toBe('error-1')
     })
 
-    it('should handle null/undefined error values', () => {
-      const TestNullError = () => {
-        const { addError, error } = useResourceErrors()
-        
-        return (
-          <div>
-            <div data-testid="error-value">
-              {error ? String(error.error) : 'no-error'}
-            </div>
-            <button
-              data-testid="add-null-error"
-              onClick={() => addError({
-                id: 'null-error',
-                error: null,
-                title: 'Null Error',
-                onRetry: vi.fn(),
-                isRetrying: false
-              })}
-            >
-              Add Null Error
-            </button>
-            <button
-              data-testid="add-undefined-error"
-              onClick={() => addError({
-                id: 'undefined-error',
-                error: undefined,
-                title: 'Undefined Error',
-                onRetry: vi.fn(),
-                isRetrying: false
-              })}
-            >
-              Add Undefined Error
-            </button>
-          </div>
-        )
-      }
-
-      render(
-        <ResourceErrorProvider>
-          <TestNullError />
-        </ResourceErrorProvider>
-      )
-      
-      act(() => {
-        screen.getByTestId('add-null-error').click()
+    it('should handle rapid error updates', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
       })
-      
-      expect(screen.getByTestId('error-value')).toHaveTextContent('null')
-      
-      act(() => {
-        screen.getByTestId('add-undefined-error').click()
-      })
-      
-      expect(screen.getByTestId('error-value')).toHaveTextContent('undefined')
-    })
-  })
 
-  describe('Retry Functionality', () => {
-    it('should store and access retry function', () => {
-      const mockRetryFn = vi.fn()
-      
-      const TestRetryFunction = () => {
-        const { addError, error } = useResourceErrors()
-        
-        return (
-          <div>
-            <div data-testid="retry-status">
-              {error ? `Can retry: ${typeof error.onRetry === 'function'}` : 'no-error'}
-            </div>
-            <button
-              data-testid="add-error-with-retry"
-              onClick={() => addError({
-                id: 'retry-error',
-                error: 'Retryable error',
-                title: 'Retry Test',
-                onRetry: mockRetryFn,
-                isRetrying: false
-              })}
-            >
-              Add Error with Retry
-            </button>
-            <button
-              data-testid="trigger-retry"
-              onClick={() => error?.onRetry()}
-            >
-              Trigger Retry
-            </button>
-          </div>
-        )
-      }
-
-      render(
-        <ResourceErrorProvider>
-          <TestRetryFunction />
-        </ResourceErrorProvider>
-      )
-      
       act(() => {
-        screen.getByTestId('add-error-with-retry').click()
-      })
-      
-      expect(screen.getByTestId('retry-status')).toHaveTextContent('Can retry: true')
-      
-      act(() => {
-        screen.getByTestId('trigger-retry').click()
-      })
-      
-      expect(mockRetryFn).toHaveBeenCalledTimes(1)
-    })
-
-    it('should track retry state correctly', () => {
-      const TestRetryState = () => {
-        const { addError, error } = useResourceErrors()
-        
-        return (
-          <div>
-            <div data-testid="retry-state">
-              {error ? `Retrying: ${error.isRetrying}` : 'no-error'}
-            </div>
-            <button
-              data-testid="add-retrying-error"
-              onClick={() => addError({
-                id: 'retrying-error',
-                error: 'Error in retry',
-                title: 'Retrying Error',
-                onRetry: vi.fn(),
-                isRetrying: true
-              })}
-            >
-              Add Retrying Error
-            </button>
-            <button
-              data-testid="add-not-retrying-error"
-              onClick={() => addError({
-                id: 'not-retrying-error',
-                error: 'Error not retrying',
-                title: 'Not Retrying Error',
-                onRetry: vi.fn(),
-                isRetrying: false
-              })}
-            >
-              Add Not Retrying Error
-            </button>
-          </div>
-        )
-      }
-
-      render(
-        <ResourceErrorProvider>
-          <TestRetryState />
-        </ResourceErrorProvider>
-      )
-      
-      act(() => {
-        screen.getByTestId('add-retrying-error').click()
-      })
-      
-      expect(screen.getByTestId('retry-state')).toHaveTextContent('Retrying: true')
-      
-      act(() => {
-        screen.getByTestId('add-not-retrying-error').click()
-      })
-      
-      expect(screen.getByTestId('retry-state')).toHaveTextContent('Retrying: false')
-    })
-  })
-
-  describe('Component Re-renders and State Updates', () => {
-    it('should trigger re-renders when error state changes', () => {
-      let renderCount = 0
-      
-      const TestRenderCount = () => {
-        const { error, addError, clearAllErrors } = useResourceErrors()
-        renderCount++
-        
-        return (
-          <div>
-            <div data-testid="render-count">{renderCount}</div>
-            <div data-testid="error-status">{error ? 'has-error' : 'no-error'}</div>
-            <button
-              data-testid="add-error"
-              onClick={() => addError({
-                id: 'test',
-                error: 'Test',
-                title: 'Test',
-                onRetry: vi.fn(),
-                isRetrying: false
-              })}
-            >
-              Add Error
-            </button>
-            <button
-              data-testid="clear-error"
-              onClick={() => clearAllErrors()}
-            >
-              Clear Error
-            </button>
-          </div>
-        )
-      }
-
-      render(
-        <ResourceErrorProvider>
-          <TestRenderCount />
-        </ResourceErrorProvider>
-      )
-      
-      const initialRenderCount = parseInt(screen.getByTestId('render-count').textContent || '0')
-      
-      act(() => {
-        screen.getByTestId('add-error').click()
-      })
-      
-      const afterAddRenderCount = parseInt(screen.getByTestId('render-count').textContent || '0')
-      expect(afterAddRenderCount).toBeGreaterThan(initialRenderCount)
-      
-      act(() => {
-        screen.getByTestId('clear-error').click()
-      })
-      
-      const afterClearRenderCount = parseInt(screen.getByTestId('render-count').textContent || '0')
-      expect(afterClearRenderCount).toBeGreaterThan(afterAddRenderCount)
-    })
-
-    it('should maintain functional context methods across re-renders', () => {
-      const functionRefs = new Set()
-      
-      const TestContextFunctionStability = () => {
-        const { addError, removeError, clearAllErrors, error } = useResourceErrors()
-        
-        // Track function references to ensure they remain stable
-        functionRefs.add(`${addError.toString()}-${removeError.toString()}-${clearAllErrors.toString()}`)
-        
-        return (
-          <div>
-            <div data-testid="function-signature-count">{functionRefs.size}</div>
-            <div data-testid="error-state">{error ? 'has-error' : 'no-error'}</div>
-            <button
-              data-testid="add-error"
-              onClick={() => addError({
-                id: 'test',
-                error: 'Test',
-                title: 'Test',
-                onRetry: vi.fn(),
-                isRetrying: false
-              })}
-            >
-              Add Error
-            </button>
-            <button
-              data-testid="clear-error"
-              onClick={() => clearAllErrors()}
-            >
-              Clear Error
-            </button>
-          </div>
-        )
-      }
-
-      render(
-        <ResourceErrorProvider>
-          <TestContextFunctionStability />
-        </ResourceErrorProvider>
-      )
-      
-      // Functions should remain stable across state changes
-      act(() => {
-        screen.getByTestId('add-error').click()
-      })
-      
-      expect(screen.getByTestId('error-state')).toHaveTextContent('has-error')
-      
-      act(() => {
-        screen.getByTestId('clear-error').click()
-      })
-      
-      expect(screen.getByTestId('error-state')).toHaveTextContent('no-error')
-      
-      // Function signatures should remain the same (functions are stable)
-      expect(screen.getByTestId('function-signature-count')).toHaveTextContent('1')
-    })
-  })
-
-  describe('TypeScript Type Safety', () => {
-    it('should enforce ResourceError interface', () => {
-      const TestTypeEnforcement = () => {
-        const { addError } = useResourceErrors()
-        
-        // This test validates that the component accepts proper ResourceError objects
-        const validError = {
-          id: 'valid-error',
-          error: new Error('Valid error'),
-          title: 'Valid Error Title',
+        result.current.addError({
+          id: 'error-1',
+          error: new Error('Error 1'),
+          title: 'Error 1',
           onRetry: vi.fn(),
           isRetrying: false
-        }
-        
+        })
+
+        result.current.addError({
+          id: 'error-2',
+          error: new Error('Error 2'),
+          title: 'Error 2',
+          onRetry: vi.fn(),
+          isRetrying: false
+        })
+
+        result.current.addError({
+          id: 'error-3',
+          error: new Error('Error 3'),
+          title: 'Error 3',
+          onRetry: vi.fn(),
+          isRetrying: false
+        })
+      })
+
+      expect(result.current.error?.id).toBe('error-3')
+    })
+
+    it('should handle error lifecycle', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      /* Initial state */
+      expect(result.current.error).toBeNull()
+
+      /* Add error */
+      act(() => {
+        result.current.addError({
+          id: 'error-1',
+          error: new Error('Test error'),
+          title: 'Test Error',
+          onRetry: vi.fn(),
+          isRetrying: false
+        })
+      })
+
+      expect(result.current.error).not.toBeNull()
+
+      /* Update error state */
+      act(() => {
+        result.current.addError({
+          id: 'error-1',
+          error: new Error('Test error'),
+          title: 'Test Error',
+          onRetry: vi.fn(),
+          isRetrying: true
+        })
+      })
+
+      expect(result.current.error?.isRetrying).toBe(true)
+
+      /* Remove error */
+      act(() => {
+        result.current.removeError('error-1')
+      })
+
+      expect(result.current.error).toBeNull()
+    })
+  })
+
+  describe('Multiple consumers', () => {
+    it('should share state between multiple consumers', () => {
+      const Consumer1 = () => {
+        const { error } = useResourceErrors()
+        return <div data-testid="consumer-1">{error?.id || 'no-error'}</div>
+      }
+
+      const Consumer2 = () => {
+        const { error } = useResourceErrors()
+        return <div data-testid="consumer-2">{error?.id || 'no-error'}</div>
+      }
+
+      const Consumer3 = () => {
+        const { addError } = useResourceErrors()
         return (
           <button
-            data-testid="add-valid-error"
-            onClick={() => addError(validError)}
+            onClick={() =>
+              addError({
+                id: 'shared-error',
+                error: new Error('Shared error'),
+                title: 'Shared Error',
+                onRetry: vi.fn(),
+                isRetrying: false
+              })
+            }
+            data-testid="add-error-btn"
           >
-            Add Valid Error
+            Add Error
           </button>
         )
       }
 
-      expect(() => {
-        render(
-          <ResourceErrorProvider>
-            <TestTypeEnforcement />
-          </ResourceErrorProvider>
-        )
-      }).not.toThrow()
+      render(
+        <ResourceErrorProvider>
+          <Consumer1 />
+          <Consumer2 />
+          <Consumer3 />
+        </ResourceErrorProvider>
+      )
+
+      expect(screen.getByTestId('consumer-1')).toHaveTextContent('no-error')
+      expect(screen.getByTestId('consumer-2')).toHaveTextContent('no-error')
+
+      act(() => {
+        screen.getByTestId('add-error-btn').click()
+      })
+
+      waitFor(() => {
+        expect(screen.getByTestId('consumer-1')).toHaveTextContent('shared-error')
+        expect(screen.getByTestId('consumer-2')).toHaveTextContent('shared-error')
+      })
+    })
+  })
+
+  describe('Type safety', () => {
+    it('should enforce ResourceError interface', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const validError = {
+        id: 'error-1',
+        error: new Error('Test'),
+        title: 'Test',
+        onRetry: vi.fn(),
+        isRetrying: false
+      }
+
+      act(() => {
+        result.current.addError(validError)
+      })
+
+      expect(result.current.error).toEqual(validError)
+    })
+
+    it('should handle error field as any type', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const errors = [
+        { id: '1', error: 'string', title: 'T', onRetry: vi.fn(), isRetrying: false },
+        { id: '2', error: 123, title: 'T', onRetry: vi.fn(), isRetrying: false },
+        { id: '3', error: { code: 500 }, title: 'T', onRetry: vi.fn(), isRetrying: false },
+        { id: '4', error: null, title: 'T', onRetry: vi.fn(), isRetrying: false },
+        { id: '5', error: undefined, title: 'T', onRetry: vi.fn(), isRetrying: false }
+      ]
+
+      errors.forEach(error => {
+        act(() => {
+          result.current.addError(error)
+        })
+        expect(result.current.error?.error).toBe(error.error)
+      })
+    })
+  })
+
+  describe('Integration scenarios', () => {
+    it('should support retry workflow', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      const retryFn = vi.fn()
+
+      act(() => {
+        result.current.addError({
+          id: 'retry-error',
+          error: new Error('Network error'),
+          title: 'Network Error',
+          onRetry: retryFn,
+          isRetrying: false
+        })
+      })
+
+      /* Simulate retry */
+      act(() => {
+        result.current.addError({
+          id: 'retry-error',
+          error: new Error('Network error'),
+          title: 'Network Error',
+          onRetry: retryFn,
+          isRetrying: true
+        })
+      })
+
+      expect(result.current.error?.isRetrying).toBe(true)
+
+      /* Simulate success after retry */
+      act(() => {
+        result.current.removeError('retry-error')
+      })
+
+      expect(result.current.error).toBeNull()
+    })
+
+    it('should handle error replacement pattern', () => {
+      const { result } = renderHook(() => useResourceErrors(), {
+        wrapper: ResourceErrorProvider
+      })
+
+      /* Add initial error */
+      act(() => {
+        result.current.addError({
+          id: 'initial-error',
+          error: new Error('Initial'),
+          title: 'Initial',
+          onRetry: vi.fn(),
+          isRetrying: false
+        })
+      })
+
+      /* Replace with new error */
+      act(() => {
+        result.current.addError({
+          id: 'replacement-error',
+          error: new Error('Replacement'),
+          title: 'Replacement',
+          onRetry: vi.fn(),
+          isRetrying: false
+        })
+      })
+
+      expect(result.current.error?.id).toBe('replacement-error')
     })
   })
 })

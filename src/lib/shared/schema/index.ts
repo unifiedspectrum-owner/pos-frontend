@@ -1,4 +1,4 @@
-/* Shared schema module exports */
+/* Shared validation schema exports */
 
-/* Validation schemas for form and data validation */
-export * from './validation';
+/* Phone number validation schema with dial code and number */
+export * from './phone';

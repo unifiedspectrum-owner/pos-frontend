@@ -1,254 +1,456 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { Provider } from '@/components/ui/provider';
-import EditPlanPage from '../edit';
-import { PLAN_FORM_MODES } from '@plan-management/config';
+/* Comprehensive test suite for EditPlan page */
 
-// Mock dependencies
-vi.mock('@plan-management/config', () => ({
-  PLAN_FORM_MODES: {
-    CREATE: 'create',
-    EDIT: 'edit',
-    VIEW: 'view'
-  }
-}));
+/* Libraries imports */
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 
-// Mock the PlanFormContainer component
-vi.mock('@plan-management/forms/form-container', () => ({
-  default: ({ mode, planId }: { mode: string; planId?: number }) => (
-    <div data-testid="plan-form-container">
-      <div data-testid="form-mode">{mode}</div>
-      <div data-testid="form-plan-id">{planId}</div>
-      <div data-testid="form-content">Plan Form Container</div>
+/* Plan module imports */
+import EditPlanPage from '@plan-management/pages/edit'
+import * as usePlanOperationsHook from '@plan-management/hooks/use-plan-operations'
+import * as toastUtils from '@shared/utils/ui/notifications'
+import * as formUtils from '@plan-management/utils/forms'
+import { PLAN_PAGE_ROUTES, PLAN_FORM_DEFAULT_VALUES } from '@plan-management/constants'
+import { CreatePlanFormData } from '@plan-management/schemas'
+
+/* Mock next/navigation */
+const mockPush = vi.fn()
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => ({
+    push: mockPush
+  }))
+}))
+
+/* Mock ResourceErrorProvider */
+vi.mock('@shared/contexts', () => ({
+  ResourceErrorProvider: vi.fn(({ children }) => <div data-testid="error-provider">{children}</div>)
+}))
+
+/* Mock PlanFormModeProvider */
+vi.mock('@plan-management/contexts', () => ({
+  PlanFormModeProvider: vi.fn(({ children, mode, planId }) => (
+    <div data-testid="form-mode-provider" data-mode={mode} data-plan-id={planId}>
+      {children}
     </div>
-  )
-}));
+  ))
+}))
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <Provider>{children}</Provider>
-);
+/* Mock PlanFormContainer */
+const mockFormSubmit = vi.fn()
+vi.mock('@plan-management/forms/form-container', () => ({
+  default: vi.fn(({ onSubmit, isSubmitting }) => {
+    mockFormSubmit.mockImplementation(onSubmit)
+    return (
+      <div data-testid="plan-form-container">
+        <button
+          data-testid="submit-button"
+          onClick={() => {
+            const formData: CreatePlanFormData = {
+              ...PLAN_FORM_DEFAULT_VALUES,
+              name: 'Updated Plan',
+              description: 'Updated Description'
+            }
+            onSubmit(formData)
+          }}
+          disabled={isSubmitting}
+        >
+          Update
+        </button>
+        <div data-testid="submitting-state">{isSubmitting ? 'true' : 'false'}</div>
+      </div>
+    )
+  })
+}))
+
+/* Mock utils */
+vi.mock('@shared/utils/ui/notifications', () => ({
+  createToastNotification: vi.fn()
+}))
+
+vi.mock('@plan-management/utils/forms', () => ({
+  formatFormDataToApiData: vi.fn((data) => data)
+}))
 
 describe('EditPlanPage', () => {
+  const mockPlanId = 123
+  const mockUpdatePlan = vi.fn()
+
+  const defaultHookReturn = {
+    createPlan: vi.fn(),
+    isCreating: false,
+    createError: null,
+    fetchPlanDetails: vi.fn(),
+    isFetching: false,
+    fetchError: null,
+    updatePlan: mockUpdatePlan,
+    isUpdating: false,
+    updateError: null,
+    deletePlan: vi.fn(),
+    isDeleting: false,
+    deleteError: null
+  }
+
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+    vi.spyOn(usePlanOperationsHook, 'usePlanOperations').mockReturnValue(defaultHookReturn)
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+  })
 
-  describe('rendering', () => {
-    it('should render EditPlanPage component correctly', () => {
-      const planId = 123;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
-      expect(screen.getByTestId('plan-form-container')).toBeInTheDocument();
-      expect(screen.getByTestId('form-content')).toHaveTextContent('Plan Form Container');
-    });
+  describe('Rendering States', () => {
+    it('should render all required providers', () => {
+      render(<EditPlanPage planId={mockPlanId} />)
 
-    it('should pass EDIT mode to PlanFormContainer', () => {
-      const planId = 456;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      expect(screen.getByTestId('error-provider')).toBeInTheDocument()
+      expect(screen.getByTestId('form-mode-provider')).toBeInTheDocument()
+    })
 
-      expect(screen.getByTestId('form-mode')).toHaveTextContent(PLAN_FORM_MODES.EDIT);
-    });
+    it('should set form mode to EDIT', () => {
+      render(<EditPlanPage planId={mockPlanId} />)
 
-    it('should pass planId prop to PlanFormContainer', () => {
-      const planId = 789;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      const formModeProvider = screen.getByTestId('form-mode-provider')
+      expect(formModeProvider).toHaveAttribute('data-mode', 'EDIT')
+    })
 
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent(planId.toString());
-    });
-  });
+    it('should pass planId to form mode provider', () => {
+      render(<EditPlanPage planId={mockPlanId} />)
 
-  describe('props handling', () => {
-    it('should handle numeric planId correctly', () => {
-      const planId = 42;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      const formModeProvider = screen.getByTestId('form-mode-provider')
+      expect(formModeProvider).toHaveAttribute('data-plan-id', String(mockPlanId))
+    })
 
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent('42');
-      expect(screen.getByTestId('form-mode')).toHaveTextContent('edit');
-    });
+    it('should render plan form container', () => {
+      render(<EditPlanPage planId={mockPlanId} />)
 
-    it('should handle zero planId correctly', () => {
-      const planId = 0;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      expect(screen.getByTestId('plan-form-container')).toBeInTheDocument()
+    })
 
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent('0');
-      expect(screen.getByTestId('form-mode')).toHaveTextContent('edit');
-    });
+    it('should show submitting state when updating', () => {
+      vi.spyOn(usePlanOperationsHook, 'usePlanOperations').mockReturnValue({
+        ...defaultHookReturn,
+        isUpdating: true
+      })
 
-    it('should handle large planId correctly', () => {
-      const planId = 999999;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      render(<EditPlanPage planId={mockPlanId} />)
 
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent('999999');
-    });
+      expect(screen.getByTestId('submitting-state')).toHaveTextContent('true')
+    })
 
-    it('should handle negative planId correctly', () => {
-      const planId = -1;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+    it('should not show submitting state initially', () => {
+      render(<EditPlanPage planId={mockPlanId} />)
 
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent('-1');
-    });
-  });
+      expect(screen.getByTestId('submitting-state')).toHaveTextContent('false')
+    })
+  })
 
-  describe('component structure', () => {
-    it('should be a functional component', () => {
-      expect(typeof EditPlanPage).toBe('function');
-    });
+  describe('Form Submission', () => {
+    it('should call updatePlan with planId on form submit', async () => {
+      mockUpdatePlan.mockResolvedValue(true)
+      const user = userEvent.setup()
 
-    it('should require planId prop', () => {
-      const planId = 123;
-      expect(() => render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper })).not.toThrow();
-    });
+      render(<EditPlanPage planId={mockPlanId} />)
 
-    it('should have a single child component', () => {
-      const planId = 123;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
-      
-      const container = screen.getByTestId('plan-form-container');
-      expect(container).toBeInTheDocument();
-    });
-  });
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
 
-  describe('integration with PlanFormContainer', () => {
-    it('should render PlanFormContainer with correct props', () => {
-      const planId = 123;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      await waitFor(() => {
+        expect(mockUpdatePlan).toHaveBeenCalledWith(
+          mockPlanId,
+          expect.any(Object)
+        )
+      })
+    })
 
-      // Verify the form container is rendered with correct props
-      expect(screen.getByTestId('plan-form-container')).toBeInTheDocument();
-      expect(screen.getByTestId('form-mode')).toHaveTextContent(PLAN_FORM_MODES.EDIT);
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent('123');
-      expect(screen.getByTestId('form-content')).toHaveTextContent('Plan Form Container');
-    });
-  });
+    it('should format form data before submission', async () => {
+      mockUpdatePlan.mockResolvedValue(true)
+      const user = userEvent.setup()
+      const formatSpy = vi.spyOn(formUtils, 'formatFormDataToApiData')
 
-  describe('TypeScript interface compliance', () => {
-    it('should satisfy EditPlanPageProps interface', () => {
-      const validProps = { planId: 123 };
-      
-      expect(() => render(<EditPlanPage {...validProps} />, { wrapper: TestWrapper })).not.toThrow();
-    });
+      render(<EditPlanPage planId={mockPlanId} />)
 
-    it('should require planId in props', () => {
-      // TypeScript compilation should catch this, but we can test runtime behavior
-      const planId = 456;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
-      
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent('456');
-    });
-  });
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
 
-  describe('accessibility', () => {
-    it('should be accessible', () => {
-      const planId = 123;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      await waitFor(() => {
+        expect(formatSpy).toHaveBeenCalled()
+      })
+    })
 
-      // Component should render without accessibility violations
-      expect(screen.getByTestId('plan-form-container')).toBeInTheDocument();
-    });
-  });
+    it('should disable submit button while updating', () => {
+      vi.spyOn(usePlanOperationsHook, 'usePlanOperations').mockReturnValue({
+        ...defaultHookReturn,
+        isUpdating: true
+      })
 
-  describe('error handling', () => {
-    it('should handle rendering errors gracefully', () => {
-      // This test documents that error handling would be tested at integration level
-      // since mocking the form container to throw errors requires complex setup
-      expect(() => {
-        render(<EditPlanPage planId={123} />, { wrapper: TestWrapper });
-      }).not.toThrow();
-    });
+      render(<EditPlanPage planId={mockPlanId} />)
 
-    it('should handle undefined planId gracefully in development', () => {
-      // In a real scenario, TypeScript would prevent this, but test runtime behavior
-      const planId = undefined as any;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      const submitButton = screen.getByTestId('submit-button')
+      expect(submitButton).toBeDisabled()
+    })
+  })
 
-      expect(screen.getByTestId('plan-form-container')).toBeInTheDocument();
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent('');
-    });
-  });
+  describe('Success Handling', () => {
+    it('should show success toast on successful update', async () => {
+      mockUpdatePlan.mockResolvedValue(true)
+      const user = userEvent.setup()
 
-  describe('constants usage', () => {
-    it('should use PLAN_FORM_MODES.EDIT constant', () => {
-      const planId = 123;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      render(<EditPlanPage planId={mockPlanId} />)
 
-      expect(screen.getByTestId('form-mode')).toHaveTextContent('edit');
-    });
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
 
-    it('should handle missing PLAN_FORM_MODES constant gracefully', () => {
-      // This test documents that constants are validated at build/compile time
-      // The component relies on the constant being properly defined
-      const planId = 123;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      await waitFor(() => {
+        expect(toastUtils.createToastNotification).toHaveBeenCalledWith({
+          title: 'Plan Updated Successfully',
+          description: expect.stringContaining('Updated Plan')
+        })
+      })
+    })
 
-      // Should render with the defined constant
-      expect(screen.getByTestId('plan-form-container')).toBeInTheDocument();
-      expect(screen.getByTestId('form-mode')).toHaveTextContent('edit');
-    });
-  });
+    it('should navigate to home page on success', async () => {
+      mockUpdatePlan.mockResolvedValue(true)
+      const user = userEvent.setup()
 
-  describe('component exports', () => {
-    it('should export EditPlanPage as default', () => {
-      expect(EditPlanPage).toBeDefined();
-      expect(typeof EditPlanPage).toBe('function');
-    });
+      render(<EditPlanPage planId={mockPlanId} />)
 
-    it('should be a React functional component', () => {
-      // Check that it returns valid React element
-      const result = EditPlanPage({ planId: 123 });
-      expect(result).toBeDefined();
-      expect(typeof result).toBe('object');
-    });
-  });
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
 
-  describe('memoization and performance', () => {
-    it('should render consistently with same props', () => {
-      const planId = 123;
-      const { rerender } = render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith(PLAN_PAGE_ROUTES.HOME)
+      })
+    })
 
-      expect(screen.getByTestId('plan-form-container')).toBeInTheDocument();
+    it('should log success message', async () => {
+      mockUpdatePlan.mockResolvedValue(true)
+      const user = userEvent.setup()
+      const consoleSpy = vi.spyOn(console, 'log')
 
-      rerender(<EditPlanPage planId={planId} />);
+      render(<EditPlanPage planId={mockPlanId} />)
 
-      expect(screen.getByTestId('plan-form-container')).toBeInTheDocument();
-      expect(screen.getByTestId('form-mode')).toHaveTextContent('edit');
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent('123');
-    });
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
 
-    it('should update when planId changes', () => {
-      const { rerender } = render(<EditPlanPage planId={123} />, { wrapper: TestWrapper });
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith('[EditPlan] Plan updated successfully')
+      })
+    })
 
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent('123');
+    it('should include updated plan name in toast', async () => {
+      mockUpdatePlan.mockResolvedValue(true)
+      const user = userEvent.setup()
 
-      rerender(<EditPlanPage planId={456} />);
+      render(<EditPlanPage planId={mockPlanId} />)
 
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent('456');
-    });
-  });
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
 
-  describe('edge cases', () => {
-    it('should handle float planId by truncating', () => {
-      const planId = 123.456 as any; // Type assertion to bypass TypeScript
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      await waitFor(() => {
+        expect(toastUtils.createToastNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            description: expect.stringContaining('Updated Plan')
+          })
+        )
+      })
+    })
+  })
 
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent('123.456');
-    });
+  describe('Error Handling', () => {
+    it('should not navigate on update failure', async () => {
+      mockUpdatePlan.mockResolvedValue(false)
+      const user = userEvent.setup()
 
-    it('should handle string planId in runtime', () => {
-      const planId = '789' as any; // Type assertion to bypass TypeScript
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      render(<EditPlanPage planId={mockPlanId} />)
 
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent('789');
-    });
-  });
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
 
-  describe('component comparison with other pages', () => {
-    it('should have similar structure to ViewPlanPage but different mode', () => {
-      const planId = 123;
-      render(<EditPlanPage planId={planId} />, { wrapper: TestWrapper });
+      await waitFor(() => {
+        expect(mockUpdatePlan).toHaveBeenCalled()
+      })
 
-      expect(screen.getByTestId('form-mode')).toHaveTextContent('edit');
-      expect(screen.getByTestId('form-plan-id')).toHaveTextContent('123');
-      expect(screen.getByTestId('plan-form-container')).toBeInTheDocument();
-    });
-  });
-});
+      expect(mockPush).not.toHaveBeenCalled()
+    })
+
+    it('should not show success toast on failure', async () => {
+      mockUpdatePlan.mockResolvedValue(false)
+      const user = userEvent.setup()
+
+      render(<EditPlanPage planId={mockPlanId} />)
+
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
+
+      await waitFor(() => {
+        expect(mockUpdatePlan).toHaveBeenCalled()
+      })
+
+      expect(toastUtils.createToastNotification).not.toHaveBeenCalled()
+    })
+
+    it('should handle update errors from hook', async () => {
+      mockUpdatePlan.mockResolvedValue(false)
+      const user = userEvent.setup()
+
+      vi.spyOn(usePlanOperationsHook, 'usePlanOperations').mockReturnValue({
+        ...defaultHookReturn,
+        updateError: 'Update failed'
+      })
+
+      render(<EditPlanPage planId={mockPlanId} />)
+
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
+
+      await waitFor(() => {
+        expect(mockUpdatePlan).toHaveBeenCalled()
+      })
+
+      expect(mockPush).not.toHaveBeenCalled()
+      expect(toastUtils.createToastNotification).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Hook Integration', () => {
+    it('should call usePlanOperations hook', () => {
+      const spy = vi.spyOn(usePlanOperationsHook, 'usePlanOperations')
+
+      render(<EditPlanPage planId={mockPlanId} />)
+
+      expect(spy).toHaveBeenCalled()
+    })
+
+    it('should use updatePlan function from hook', async () => {
+      mockUpdatePlan.mockResolvedValue(true)
+      const user = userEvent.setup()
+
+      render(<EditPlanPage planId={mockPlanId} />)
+
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
+
+      await waitFor(() => {
+        expect(mockUpdatePlan).toHaveBeenCalled()
+      })
+    })
+
+    it('should use isUpdating state from hook', () => {
+      vi.spyOn(usePlanOperationsHook, 'usePlanOperations').mockReturnValue({
+        ...defaultHookReturn,
+        isUpdating: true
+      })
+
+      render(<EditPlanPage planId={mockPlanId} />)
+
+      expect(screen.getByTestId('submitting-state')).toHaveTextContent('true')
+    })
+  })
+
+  describe('Props Handling', () => {
+    it('should handle different planId values', async () => {
+      mockUpdatePlan.mockResolvedValue(true)
+      const user = userEvent.setup()
+      const differentPlanId = 456
+
+      render(<EditPlanPage planId={differentPlanId} />)
+
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
+
+      await waitFor(() => {
+        expect(mockUpdatePlan).toHaveBeenCalledWith(
+          differentPlanId,
+          expect.any(Object)
+        )
+      })
+    })
+
+    it('should handle planId of 0', async () => {
+      mockUpdatePlan.mockResolvedValue(true)
+      const user = userEvent.setup()
+
+      render(<EditPlanPage planId={0} />)
+
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
+
+      await waitFor(() => {
+        expect(mockUpdatePlan).toHaveBeenCalledWith(0, expect.any(Object))
+      })
+    })
+
+    it('should pass planId to form mode provider', () => {
+      const testPlanId = 789
+
+      render(<EditPlanPage planId={testPlanId} />)
+
+      const formModeProvider = screen.getByTestId('form-mode-provider')
+      expect(formModeProvider).toHaveAttribute('data-plan-id', String(testPlanId))
+    })
+  })
+
+  describe('Form Data Handling', () => {
+    it('should pass formatted data to updatePlan', async () => {
+      mockUpdatePlan.mockResolvedValue(true)
+      const user = userEvent.setup()
+
+      render(<EditPlanPage planId={mockPlanId} />)
+
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
+
+      await waitFor(() => {
+        expect(mockUpdatePlan).toHaveBeenCalledWith(
+          mockPlanId,
+          expect.objectContaining({
+            name: 'Updated Plan',
+            description: 'Updated Description'
+          })
+        )
+      })
+    })
+
+    it('should preserve planId during update', async () => {
+      mockUpdatePlan.mockResolvedValue(true)
+      const user = userEvent.setup()
+
+      render(<EditPlanPage planId={mockPlanId} />)
+
+      const submitButton = screen.getByTestId('submit-button')
+      await user.click(submitButton)
+
+      await waitFor(() => {
+        const [[planId]] = mockUpdatePlan.mock.calls
+        expect(planId).toBe(mockPlanId)
+      })
+    })
+  })
+
+  describe('Component Structure', () => {
+    it('should wrap form in FormProvider', () => {
+      render(<EditPlanPage planId={mockPlanId} />)
+
+      /* FormProvider is used internally, verify the form container renders */
+      expect(screen.getByTestId('plan-form-container')).toBeInTheDocument()
+    })
+
+    it('should provide correct props to form container', () => {
+      render(<EditPlanPage planId={mockPlanId} />)
+
+      expect(screen.getByTestId('plan-form-container')).toBeInTheDocument()
+      expect(screen.getByTestId('submit-button')).toBeInTheDocument()
+    })
+
+    it('should nest providers correctly', () => {
+      render(<EditPlanPage planId={mockPlanId} />)
+
+      const errorProvider = screen.getByTestId('error-provider')
+      const formModeProvider = screen.getByTestId('form-mode-provider')
+
+      expect(errorProvider).toContainElement(formModeProvider)
+    })
+  })
+})

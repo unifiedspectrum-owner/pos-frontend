@@ -1,670 +1,560 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useTabNavigation, useTabValidationNavigation } from '../use-tab-navigation';
-import { PlanManagementTabs, PlanFormMode } from '@plan-management/types/plans';
-import { PLAN_MANAGEMENT_FORM_TABS, PLAN_FORM_MODES } from '@plan-management/config';
-import React from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
-import { CreatePlanFormData } from '@plan-management/schemas/validation/plans';
+/* Comprehensive test suite for useTabNavigation hook */
 
-// Mock dependencies
-vi.mock('@plan-management/config', () => ({
-  PLAN_MANAGEMENT_FORM_TABS: [
-    { id: 'basic', name: 'Basic Details' },
-    { id: 'pricing', name: 'Pricing' },
-    { id: 'features', name: 'Features' },
-    { id: 'addons', name: 'Add-ons' },
-    { id: 'sla', name: 'SLA' }
-  ],
-  PLAN_FORM_MODES: {
-    CREATE: 'create',
-    EDIT: 'edit',
-    VIEW: 'view'
+/* Libraries imports */
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { renderHook, act } from '@testing-library/react'
+
+/* Plan module imports */
+import { useTabNavigation } from '@plan-management/hooks/use-tab-navigation'
+import { PlanFormTab, PlanFormMode } from '@plan-management/types'
+import { PLAN_FORM_MODES, PLAN_FORM_TAB } from '@plan-management/constants'
+
+describe('useTabNavigation Hook', () => {
+  /* Mock data */
+  const mockSetActiveTab = vi.fn()
+
+  const defaultValidationState = {
+    isBasicInfoValid: false,
+    isPricingInfoValid: false,
+    isFeaturesValid: false,
+    isAddonsValid: false
   }
-}));
-
-describe('useTabNavigation', () => {
-  const mockSetActiveTab = vi.fn();
-  
-  const mockValidationState = {
-    isBasicInfoValid: true,
-    isPricingInfoValid: true,
-    isFeaturesValid: true,
-    isAddonsValid: true
-  };
 
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
-  describe('initialization', () => {
-    it('should initialize with correct tab unlock states for CREATE mode', () => {
+  describe('Initialization', () => {
+    it('should return tab unlock state', () => {
       const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, mockValidationState)
-      );
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          defaultValidationState
+        )
+      )
 
-      expect(result.current.tabUnlockState).toEqual({
-        basic: true,
-        pricing: true,
-        features: true,
-        addons: true,
-        sla: true
-      });
-    });
+      expect(result.current.tabUnlockState).toBeDefined()
+      expect(typeof result.current.isTabUnlocked).toBe('function')
+      expect(typeof result.current.handleTabChange).toBe('function')
+      expect(typeof result.current.handleNextTab).toBe('function')
+      expect(typeof result.current.handlePreviousTab).toBe('function')
+    })
 
-    it('should initialize with validation-based unlock states for CREATE mode when validation fails', () => {
-      const invalidValidationState = {
-        isBasicInfoValid: false,
-        isPricingInfoValid: false,
-        isFeaturesValid: false,
-        isAddonsValid: false
-      };
+    it('should have Basic tab always unlocked', () => {
+      const { result } = renderHook(() =>
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          defaultValidationState
+        )
+      )
+
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.BASIC]).toBe(true)
+    })
+  })
+
+  describe('Tab Unlock Logic - Create Mode', () => {
+    it('should lock all tabs except Basic when validation states are false', () => {
+      const { result } = renderHook(() =>
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          defaultValidationState
+        )
+      )
+
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.BASIC]).toBe(true)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.PRICING]).toBe(false)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.FEATURES]).toBe(false)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.ADDONS]).toBe(false)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.SLA]).toBe(false)
+    })
+
+    it('should unlock Pricing tab when Basic info is valid', () => {
+      const validationState = {
+        ...defaultValidationState,
+        isBasicInfoValid: true
+      }
 
       const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, invalidValidationState)
-      );
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          validationState
+        )
+      )
 
-      expect(result.current.tabUnlockState).toEqual({
-        basic: true,
-        pricing: false,
-        features: false,
-        addons: false,
-        sla: false
-      });
-    });
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.PRICING]).toBe(true)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.FEATURES]).toBe(false)
+    })
 
-    it('should unlock all tabs in VIEW mode regardless of validation', () => {
-      const invalidValidationState = {
-        isBasicInfoValid: false,
-        isPricingInfoValid: false,
-        isFeaturesValid: false,
-        isAddonsValid: false
-      };
-
-      const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.VIEW, invalidValidationState)
-      );
-
-      expect(result.current.tabUnlockState).toEqual({
-        basic: true,
-        pricing: true,
-        features: true,
-        addons: true,
-        sla: true
-      });
-    });
-  });
-
-  describe('tab unlock logic', () => {
-    it('should unlock pricing tab when basic info is valid', () => {
-      const partialValidationState = {
+    it('should unlock Features tab when Basic and Pricing are valid', () => {
+      const validationState = {
+        ...defaultValidationState,
         isBasicInfoValid: true,
-        isPricingInfoValid: false,
-        isFeaturesValid: false,
-        isAddonsValid: false
-      };
+        isPricingInfoValid: true
+      }
 
       const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, partialValidationState)
-      );
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          validationState
+        )
+      )
 
-      expect(result.current.tabUnlockState.pricing).toBe(true);
-      expect(result.current.tabUnlockState.features).toBe(false);
-    });
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.FEATURES]).toBe(true)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.ADDONS]).toBe(false)
+    })
 
-    it('should unlock features tab when basic info and pricing are valid', () => {
-      const partialValidationState = {
+    it('should unlock Addons tab when Basic, Pricing, and Features are valid', () => {
+      const validationState = {
+        ...defaultValidationState,
         isBasicInfoValid: true,
         isPricingInfoValid: true,
-        isFeaturesValid: false,
-        isAddonsValid: false
-      };
+        isFeaturesValid: true
+      }
 
       const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, partialValidationState)
-      );
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          validationState
+        )
+      )
 
-      expect(result.current.tabUnlockState.features).toBe(true);
-      expect(result.current.tabUnlockState.addons).toBe(false);
-    });
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.ADDONS]).toBe(true)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.SLA]).toBe(false)
+    })
 
-    it('should unlock addons tab when basic info, pricing, and features are valid', () => {
-      const partialValidationState = {
+    it('should unlock SLA tab when all previous tabs are valid', () => {
+      const validationState = {
         isBasicInfoValid: true,
         isPricingInfoValid: true,
         isFeaturesValid: true,
+        isAddonsValid: true
+      }
+
+      const { result } = renderHook(() =>
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          validationState
+        )
+      )
+
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.SLA]).toBe(true)
+    })
+  })
+
+  describe('Tab Unlock Logic - View Mode', () => {
+    it('should unlock all tabs in view mode', () => {
+      const { result } = renderHook(() =>
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.VIEW,
+          defaultValidationState
+        )
+      )
+
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.BASIC]).toBe(true)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.PRICING]).toBe(true)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.FEATURES]).toBe(true)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.ADDONS]).toBe(true)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.SLA]).toBe(true)
+    })
+
+    it('should unlock all tabs in view mode regardless of validation state', () => {
+      const invalidState = {
+        isBasicInfoValid: false,
+        isPricingInfoValid: false,
+        isFeaturesValid: false,
         isAddonsValid: false
-      };
+      }
 
       const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, partialValidationState)
-      );
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.VIEW,
+          invalidState
+        )
+      )
 
-      expect(result.current.tabUnlockState.addons).toBe(true);
-      expect(result.current.tabUnlockState.sla).toBe(false);
-    });
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.PRICING]).toBe(true)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.FEATURES]).toBe(true)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.ADDONS]).toBe(true)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.SLA]).toBe(true)
+    })
+  })
 
-    it('should unlock SLA tab when all previous tabs are valid', () => {
+  describe('Tab Unlock Logic - Edit Mode', () => {
+    it('should behave like create mode in edit mode', () => {
+      const validationState = {
+        isBasicInfoValid: true,
+        isPricingInfoValid: false,
+        isFeaturesValid: false,
+        isAddonsValid: false
+      }
+
       const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, mockValidationState)
-      );
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.EDIT,
+          validationState
+        )
+      )
 
-      expect(result.current.tabUnlockState.sla).toBe(true);
-    });
-  });
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.BASIC]).toBe(true)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.PRICING]).toBe(true)
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.FEATURES]).toBe(false)
+    })
+  })
 
-  describe('isTabUnlocked', () => {
+  describe('isTabUnlocked Function', () => {
     it('should return true for unlocked tabs', () => {
-      const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, mockValidationState)
-      );
+      const validationState = {
+        isBasicInfoValid: true,
+        isPricingInfoValid: true,
+        isFeaturesValid: false,
+        isAddonsValid: false
+      }
 
-      expect(result.current.isTabUnlocked('basic')).toBe(true);
-      expect(result.current.isTabUnlocked('pricing')).toBe(true);
-      expect(result.current.isTabUnlocked('features')).toBe(true);
-      expect(result.current.isTabUnlocked('addons')).toBe(true);
-      expect(result.current.isTabUnlocked('sla')).toBe(true);
-    });
+      const { result } = renderHook(() =>
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          validationState
+        )
+      )
+
+      expect(result.current.isTabUnlocked(PLAN_FORM_TAB.BASIC)).toBe(true)
+      expect(result.current.isTabUnlocked(PLAN_FORM_TAB.PRICING)).toBe(true)
+      expect(result.current.isTabUnlocked(PLAN_FORM_TAB.FEATURES)).toBe(true)
+    })
 
     it('should return false for locked tabs', () => {
-      const invalidValidationState = {
-        isBasicInfoValid: false,
+      const { result } = renderHook(() =>
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          defaultValidationState
+        )
+      )
+
+      expect(result.current.isTabUnlocked(PLAN_FORM_TAB.PRICING)).toBe(false)
+      expect(result.current.isTabUnlocked(PLAN_FORM_TAB.FEATURES)).toBe(false)
+      expect(result.current.isTabUnlocked(PLAN_FORM_TAB.ADDONS)).toBe(false)
+      expect(result.current.isTabUnlocked(PLAN_FORM_TAB.SLA)).toBe(false)
+    })
+  })
+
+  describe('handleTabChange Function', () => {
+    it('should change tab when tab is unlocked', () => {
+      const validationState = {
+        isBasicInfoValid: true,
         isPricingInfoValid: false,
         isFeaturesValid: false,
         isAddonsValid: false
-      };
+      }
 
       const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, invalidValidationState)
-      );
-
-      expect(result.current.isTabUnlocked('basic')).toBe(true);
-      expect(result.current.isTabUnlocked('pricing')).toBe(false);
-      expect(result.current.isTabUnlocked('features')).toBe(false);
-      expect(result.current.isTabUnlocked('addons')).toBe(false);
-      expect(result.current.isTabUnlocked('sla')).toBe(false);
-    });
-
-    it('should handle invalid tab IDs gracefully', () => {
-      const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, mockValidationState)
-      );
-
-      expect(result.current.isTabUnlocked('invalid-tab' as PlanManagementTabs)).toBe(false);
-    });
-  });
-
-  describe('handleTabChange', () => {
-    it('should change to unlocked tab', () => {
-      const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, mockValidationState)
-      );
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          validationState
+        )
+      )
 
       act(() => {
-        result.current.handleTabChange('pricing');
-      });
+        result.current.handleTabChange(PLAN_FORM_TAB.PRICING)
+      })
 
-      expect(mockSetActiveTab).toHaveBeenCalledWith('pricing');
-    });
+      expect(mockSetActiveTab).toHaveBeenCalledWith(PLAN_FORM_TAB.PRICING)
+    })
 
-    it('should not change to locked tab', () => {
-      const invalidValidationState = {
-        isBasicInfoValid: false,
+    it('should not change tab when tab is locked', () => {
+      const { result } = renderHook(() =>
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          defaultValidationState
+        )
+      )
+
+      act(() => {
+        result.current.handleTabChange(PLAN_FORM_TAB.FEATURES)
+      })
+
+      expect(mockSetActiveTab).not.toHaveBeenCalled()
+    })
+
+    it('should always allow tab change in view mode', () => {
+      const { result } = renderHook(() =>
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.VIEW,
+          defaultValidationState
+        )
+      )
+
+      act(() => {
+        result.current.handleTabChange(PLAN_FORM_TAB.SLA)
+      })
+
+      expect(mockSetActiveTab).toHaveBeenCalledWith(PLAN_FORM_TAB.SLA)
+    })
+  })
+
+  describe('handleNextTab Function', () => {
+    it('should navigate to next tab when unlocked', () => {
+      const validationState = {
+        isBasicInfoValid: true,
         isPricingInfoValid: false,
         isFeaturesValid: false,
         isAddonsValid: false
-      };
+      }
 
       const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, invalidValidationState)
-      );
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          validationState
+        )
+      )
 
       act(() => {
-        result.current.handleTabChange('pricing');
-      });
+        result.current.handleNextTab()
+      })
 
-      expect(mockSetActiveTab).not.toHaveBeenCalled();
-    });
-  });
+      expect(mockSetActiveTab).toHaveBeenCalledWith(PLAN_FORM_TAB.PRICING)
+    })
 
-  describe('handleNextTab', () => {
-    it('should navigate to next unlocked tab', () => {
+    it('should not navigate to next tab when locked', () => {
       const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, mockValidationState)
-      );
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          defaultValidationState
+        )
+      )
 
       act(() => {
-        result.current.handleNextTab();
-      });
+        result.current.handleNextTab()
+      })
 
-      expect(mockSetActiveTab).toHaveBeenCalledWith('pricing');
-    });
-
-    it('should not navigate if next tab is locked', () => {
-      const partialValidationState = {
-        isBasicInfoValid: false,
-        isPricingInfoValid: false,
-        isFeaturesValid: false,
-        isAddonsValid: false
-      };
-
-      const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, partialValidationState)
-      );
-
-      act(() => {
-        result.current.handleNextTab();
-      });
-
-      expect(mockSetActiveTab).not.toHaveBeenCalled();
-    });
+      expect(mockSetActiveTab).not.toHaveBeenCalled()
+    })
 
     it('should not navigate beyond last tab', () => {
       const { result } = renderHook(() =>
-        useTabNavigation('sla', mockSetActiveTab, PLAN_FORM_MODES.CREATE, mockValidationState)
-      );
+        useTabNavigation(
+          PLAN_FORM_TAB.SLA,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.VIEW,
+          defaultValidationState
+        )
+      )
 
       act(() => {
-        result.current.handleNextTab();
-      });
+        result.current.handleNextTab()
+      })
 
-      expect(mockSetActiveTab).not.toHaveBeenCalled();
-    });
+      expect(mockSetActiveTab).not.toHaveBeenCalled()
+    })
 
-    it('should handle tab not found in config', () => {
-      vi.clearAllMocks(); // Clear previous calls
-      
-      const { result } = renderHook(() =>
-        useTabNavigation('invalid-tab' as PlanManagementTabs, mockSetActiveTab, PLAN_FORM_MODES.CREATE, mockValidationState)
-      );
+    it('should navigate through multiple tabs in sequence', () => {
+      const validationState = {
+        isBasicInfoValid: true,
+        isPricingInfoValid: true,
+        isFeaturesValid: true,
+        isAddonsValid: true
+      }
+
+      const { result, rerender } = renderHook(
+        ({ activeTab, mode, validation }) =>
+          useTabNavigation(activeTab, mockSetActiveTab, mode, validation),
+        {
+          initialProps: {
+            activeTab: PLAN_FORM_TAB.BASIC as PlanFormTab,
+            mode: PLAN_FORM_MODES.CREATE as PlanFormMode,
+            validation: validationState
+          }
+        }
+      )
 
       act(() => {
-        result.current.handleNextTab();
-      });
+        result.current.handleNextTab()
+      })
+      expect(mockSetActiveTab).toHaveBeenCalledWith(PLAN_FORM_TAB.PRICING)
 
-      // When activeTab is invalid (-1 index), currentIndex + 1 = 0, so it tries to navigate to first tab
-      // But the first tab (basic) should be unlocked, so it will call setActiveTab
-      expect(mockSetActiveTab).toHaveBeenCalledWith('basic');
-    });
-  });
+      rerender({
+        activeTab: PLAN_FORM_TAB.PRICING,
+        mode: PLAN_FORM_MODES.CREATE,
+        validation: validationState
+      })
 
-  describe('handlePreviousTab', () => {
+      act(() => {
+        result.current.handleNextTab()
+      })
+      expect(mockSetActiveTab).toHaveBeenCalledWith(PLAN_FORM_TAB.FEATURES)
+    })
+  })
+
+  describe('handlePreviousTab Function', () => {
     it('should navigate to previous tab', () => {
       const { result } = renderHook(() =>
-        useTabNavigation('pricing', mockSetActiveTab, PLAN_FORM_MODES.CREATE, mockValidationState)
-      );
+        useTabNavigation(
+          PLAN_FORM_TAB.PRICING,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          defaultValidationState
+        )
+      )
 
       act(() => {
-        result.current.handlePreviousTab();
-      });
+        result.current.handlePreviousTab()
+      })
 
-      expect(mockSetActiveTab).toHaveBeenCalledWith('basic');
-    });
+      expect(mockSetActiveTab).toHaveBeenCalledWith(PLAN_FORM_TAB.BASIC)
+    })
 
     it('should not navigate before first tab', () => {
       const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, mockValidationState)
-      );
+        useTabNavigation(
+          PLAN_FORM_TAB.BASIC,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          defaultValidationState
+        )
+      )
 
       act(() => {
-        result.current.handlePreviousTab();
-      });
+        result.current.handlePreviousTab()
+      })
 
-      expect(mockSetActiveTab).not.toHaveBeenCalled();
-    });
+      expect(mockSetActiveTab).not.toHaveBeenCalled()
+    })
 
-    it('should handle tab not found in config', () => {
+    it('should always allow navigation to previous tab', () => {
       const { result } = renderHook(() =>
-        useTabNavigation('invalid-tab' as PlanManagementTabs, mockSetActiveTab, PLAN_FORM_MODES.CREATE, mockValidationState)
-      );
+        useTabNavigation(
+          PLAN_FORM_TAB.FEATURES,
+          mockSetActiveTab,
+          PLAN_FORM_MODES.CREATE,
+          defaultValidationState
+        )
+      )
 
       act(() => {
-        result.current.handlePreviousTab();
-      });
+        result.current.handlePreviousTab()
+      })
 
-      expect(mockSetActiveTab).not.toHaveBeenCalled();
-    });
-  });
+      expect(mockSetActiveTab).toHaveBeenCalledWith(PLAN_FORM_TAB.PRICING)
+    })
 
-  describe('validation state changes', () => {
-    it('should update tab unlock state when validation changes', () => {
+    it('should navigate backward through multiple tabs', () => {
       const { result, rerender } = renderHook(
-        ({ validationState }) =>
-          useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.CREATE, validationState),
+        ({ activeTab, mode, validation }) =>
+          useTabNavigation(activeTab, mockSetActiveTab, mode, validation),
         {
           initialProps: {
-            validationState: {
-              isBasicInfoValid: false,
-              isPricingInfoValid: false,
-              isFeaturesValid: false,
-              isAddonsValid: false
-            }
+            activeTab: PLAN_FORM_TAB.SLA as PlanFormTab,
+            mode: PLAN_FORM_MODES.VIEW as PlanFormMode,
+            validation: defaultValidationState
           }
         }
-      );
+      )
 
-      expect(result.current.tabUnlockState.pricing).toBe(false);
+      act(() => {
+        result.current.handlePreviousTab()
+      })
+      expect(mockSetActiveTab).toHaveBeenCalledWith(PLAN_FORM_TAB.ADDONS)
 
-      // Update validation state
       rerender({
-        validationState: {
-          isBasicInfoValid: true,
-          isPricingInfoValid: false,
-          isFeaturesValid: false,
-          isAddonsValid: false
-        }
-      });
+        activeTab: PLAN_FORM_TAB.ADDONS,
+        mode: PLAN_FORM_MODES.VIEW,
+        validation: defaultValidationState
+      })
 
-      expect(result.current.tabUnlockState.pricing).toBe(true);
-    });
-  });
+      act(() => {
+        result.current.handlePreviousTab()
+      })
+      expect(mockSetActiveTab).toHaveBeenCalledWith(PLAN_FORM_TAB.FEATURES)
+    })
+  })
 
-  describe('different form modes', () => {
-    it('should handle EDIT mode correctly', () => {
-      const invalidValidationState = {
-        isBasicInfoValid: false,
-        isPricingInfoValid: false,
-        isFeaturesValid: false,
-        isAddonsValid: false
-      };
+  describe('Validation State Changes', () => {
+    it('should update tab unlock state when validation changes', () => {
+      const { result, rerender } = renderHook(
+        ({ validation }) =>
+          useTabNavigation(
+            PLAN_FORM_TAB.BASIC,
+            mockSetActiveTab,
+            PLAN_FORM_MODES.CREATE,
+            validation
+          ),
+        { initialProps: { validation: defaultValidationState } }
+      )
 
-      const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.EDIT, invalidValidationState)
-      );
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.PRICING]).toBe(false)
 
-      // In EDIT mode, validation should still apply
-      expect(result.current.tabUnlockState.pricing).toBe(false);
-    });
-
-    it('should handle VIEW mode with all tabs unlocked', () => {
-      const invalidValidationState = {
-        isBasicInfoValid: false,
-        isPricingInfoValid: false,
-        isFeaturesValid: false,
-        isAddonsValid: false
-      };
-
-      const { result } = renderHook(() =>
-        useTabNavigation('basic', mockSetActiveTab, PLAN_FORM_MODES.VIEW, invalidValidationState)
-      );
-
-      expect(result.current.tabUnlockState).toEqual({
-        basic: true,
-        pricing: true,
-        features: true,
-        addons: true,
-        sla: true
-      });
-    });
-  });
-});
-
-describe('useTabValidationNavigation', () => {
-  const mockOnNext = vi.fn();
-  const validationFields: Array<keyof CreatePlanFormData> = ['name', 'description'];
-
-  const TestWrapper = ({ children }: { children: React.ReactNode }) => {
-    const methods = useForm<CreatePlanFormData>({
-      defaultValues: {
-        name: 'Test Plan',
-        description: 'Test Description',
-        base_price: 10,
-        pricing_model: 'flat_rate',
-        features: [],
-        addons: [],
-        slas: [],
-        volume_discounts: []
+      const updatedValidation = {
+        ...defaultValidationState,
+        isBasicInfoValid: true
       }
-    });
 
-    return (
-      <FormProvider {...methods}>
-        {children}
-      </FormProvider>
-    );
-  };
+      rerender({ validation: updatedValidation })
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.PRICING]).toBe(true)
+    })
 
-  describe('read-only mode', () => {
-    it('should call onNext without validation in read-only mode', async () => {
-      const { result } = renderHook(
-        () => useTabValidationNavigation(validationFields, true, mockOnNext),
-        { wrapper: TestWrapper }
-      );
+    it('should lock tabs when validation becomes invalid', () => {
+      const validState = {
+        isBasicInfoValid: true,
+        isPricingInfoValid: true,
+        isFeaturesValid: true,
+        isAddonsValid: true
+      }
 
-      await act(async () => {
-        await result.current.handleNext();
-      });
-
-      expect(mockOnNext).toHaveBeenCalled();
-    });
-
-    it('should not call onNext when not provided in read-only mode', async () => {
-      const { result } = renderHook(
-        () => useTabValidationNavigation(validationFields, true),
-        { wrapper: TestWrapper }
-      );
-
-      await act(async () => {
-        await result.current.handleNext();
-      });
-
-      // Should not throw error
-      expect(mockOnNext).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('validation mode', () => {
-    it('should call onNext when validation passes', async () => {
-      const { result } = renderHook(
-        () => useTabValidationNavigation(validationFields, false, mockOnNext),
-        { wrapper: TestWrapper }
-      );
-
-      await act(async () => {
-        await result.current.handleNext();
-      });
-
-      expect(mockOnNext).toHaveBeenCalled();
-    });
-
-    it('should not call onNext when validation fails', async () => {
-      const TestWrapperWithInvalidData = ({ children }: { children: React.ReactNode }) => {
-        const methods = useForm<CreatePlanFormData>({
-          defaultValues: {
-            name: '', // Invalid - empty name
-            description: '',
-            base_price: 10,
-            pricing_model: 'flat_rate',
-            features: [],
-            addons: [],
-            slas: [],
-            volume_discounts: []
-          }
-        });
-
-        return (
-          <FormProvider {...methods}>
-            {children}
-          </FormProvider>
-        );
-      };
-
-      const { result } = renderHook(
-        () => useTabValidationNavigation(validationFields, false, mockOnNext),
-        { wrapper: TestWrapperWithInvalidData }
-      );
-
-      await act(async () => {
-        await result.current.handleNext();
-      });
-
-      // Assuming validation would fail for empty name
-      // Note: This depends on the actual validation schema implementation
-    });
-
-    it('should not call onNext when onNext is not provided and validation passes', async () => {
-      const { result } = renderHook(
-        () => useTabValidationNavigation(validationFields, false),
-        { wrapper: TestWrapper }
-      );
-
-      await act(async () => {
-        await result.current.handleNext();
-      });
-
-      expect(mockOnNext).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('validation fields', () => {
-    it('should trigger validation for specified fields', async () => {
-      let triggerMock: any;
-      
-      const TestWrapperWithMockTrigger = ({ children }: { children: React.ReactNode }) => {
-        const methods = useForm<CreatePlanFormData>({
-          defaultValues: {
-            name: 'Test',
-            description: 'Test',
-            base_price: 10,
-            pricing_model: 'flat_rate',
-            features: [],
-            addons: [],
-            slas: [],
-            volume_discounts: []
-          }
-        });
-
-        triggerMock = vi.spyOn(methods, 'trigger');
-        triggerMock.mockResolvedValue(true);
-
-        return (
-          <FormProvider {...methods}>
-            {children}
-          </FormProvider>
-        );
-      };
-
-      const { result } = renderHook(
-        () => useTabValidationNavigation(['name', 'base_price'], false, mockOnNext),
-        { wrapper: TestWrapperWithMockTrigger }
-      );
-
-      await act(async () => {
-        await result.current.handleNext();
-      });
-
-      expect(triggerMock).toHaveBeenCalledWith(['name', 'base_price']);
-      expect(mockOnNext).toHaveBeenCalled();
-    });
-
-    it('should handle empty validation fields array', async () => {
-      let triggerMock: any;
-      
-      const TestWrapperWithMockTrigger = ({ children }: { children: React.ReactNode }) => {
-        const methods = useForm<CreatePlanFormData>();
-
-        triggerMock = vi.spyOn(methods, 'trigger');
-        triggerMock.mockResolvedValue(true);
-
-        return (
-          <FormProvider {...methods}>
-            {children}
-          </FormProvider>
-        );
-      };
-
-      const { result } = renderHook(
-        () => useTabValidationNavigation([], false, mockOnNext),
-        { wrapper: TestWrapperWithMockTrigger }
-      );
-
-      await act(async () => {
-        await result.current.handleNext();
-      });
-
-      expect(triggerMock).toHaveBeenCalledWith([]);
-      expect(mockOnNext).toHaveBeenCalled();
-    });
-  });
-
-  describe('error handling', () => {
-    it('should handle validation errors gracefully', async () => {
-      const triggerMock = vi.fn();
-      
-      const TestWrapperWithFailingTrigger = ({ children }: { children: React.ReactNode }) => {
-        const methods = useForm<CreatePlanFormData>();
-        
-        // Override trigger method after form creation
-        methods.trigger = triggerMock;
-
-        return (
-          <FormProvider {...methods}>
-            {children}
-          </FormProvider>
-        );
-      };
-
-      const { result } = renderHook(
-        () => useTabValidationNavigation(validationFields, false, mockOnNext),
-        { wrapper: TestWrapperWithFailingTrigger }
-      );
-
-      // Set up the mock to reject after the hook is rendered
-      triggerMock.mockImplementation(() => Promise.reject(new Error('Validation error')));
-
-      // The hook doesn't have error handling, so we expect the error to be thrown
-      // We test that the error doesn't prevent the hook from working and onNext is not called
-      await act(async () => {
-        try {
-          await result.current.handleNext();
-        } catch (error) {
-          // Error is expected since the hook doesn't handle trigger rejections
-          expect(error).toBeInstanceOf(Error);
-          expect((error as Error).message).toBe('Validation error');
-        }
-      });
-
-      expect(mockOnNext).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('memoization', () => {
-    it('should memoize handleNext function', () => {
       const { result, rerender } = renderHook(
-        ({ isReadOnly, onNext }) => useTabValidationNavigation(validationFields, isReadOnly, onNext),
-        { 
-          wrapper: TestWrapper,
-          initialProps: { isReadOnly: false, onNext: mockOnNext }
-        }
-      );
+        ({ validation }) =>
+          useTabNavigation(
+            PLAN_FORM_TAB.FEATURES,
+            mockSetActiveTab,
+            PLAN_FORM_MODES.CREATE,
+            validation
+          ),
+        { initialProps: { validation: validState } }
+      )
 
-      const initialHandleNext = result.current.handleNext;
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.SLA]).toBe(true)
 
-      // Rerender with same props
-      rerender({ isReadOnly: false, onNext: mockOnNext });
+      const invalidatedState = {
+        ...validState,
+        isAddonsValid: false
+      }
 
-      expect(result.current.handleNext).toBe(initialHandleNext);
-    });
+      rerender({ validation: invalidatedState })
 
-    it('should update handleNext when dependencies change', () => {
-      const { result, rerender } = renderHook(
-        ({ isReadOnly, onNext }) => useTabValidationNavigation(validationFields, isReadOnly, onNext),
-        { 
-          wrapper: TestWrapper,
-          initialProps: { isReadOnly: false, onNext: mockOnNext }
-        }
-      );
-
-      const initialHandleNext = result.current.handleNext;
-
-      // Change isReadOnly
-      rerender({ isReadOnly: true, onNext: mockOnNext });
-
-      expect(result.current.handleNext).not.toBe(initialHandleNext);
-    });
-  });
-});
+      expect(result.current.tabUnlockState[PLAN_FORM_TAB.SLA]).toBe(false)
+    })
+  })
+})

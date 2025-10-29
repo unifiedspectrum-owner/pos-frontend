@@ -56,21 +56,21 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         isOpen={show2FAReminder}
         onClose={handle2FAReminderClose}
       />
-    <Flex h="100vh">
-      {/* Navigation sidebar */}
-      <Sidebar />
+      <Flex h="100vh">
+        {/* Navigation sidebar */}
+        <Sidebar />
 
-      {/* Main content area with header */}
-      <VStack w="100%" gap={0} align="stretch">
-        {/* Top navigation header */}
-        <NavigationHeader />
+        {/* Main content area with header */}
+        <VStack w="100%" gap={0} align="stretch">
+          {/* Top navigation header */}
+          <NavigationHeader />
 
-        {/* Page content */}
-        <Flex flex={1} w="100%" overflow="auto">
-          {children}
-        </Flex>
-      </VStack>
-    </Flex>
+          {/* Page content */}
+          <Flex flex={1} w="100%" overflow="auto">
+            {children}
+          </Flex>
+        </VStack>
+      </Flex>
     </>
   );
 };

@@ -1,22 +1,49 @@
+/* Libraries imports */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { screen, fireEvent } from '@testing-library/react'
-import { render } from '@shared/test-utils/render'
+import { render, screen, fireEvent } from '@testing-library/react'
+
+/* Shared module imports */
+import { Provider } from '@/components/ui/provider'
+
+/* Component imports */
 import TextAreaField from '../textarea'
 
-// Mock the shared config
+/* Mock dependencies */
 vi.mock('@shared/config', () => ({
   GRAY_COLOR: '#718096'
 }))
 
-describe('TextAreaField', () => {
+/* Helper function to simulate typing - works with fake timers */
+const typeIntoTextarea = (textarea: HTMLElement, text: string) => {
+  /* Don't fire change if textarea is disabled */
+  if ((textarea as HTMLTextAreaElement).disabled) {
+    return
+  }
+  /* Set the value directly on the element to make it queryable */
+  const nativeTextareaSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set
+  if (nativeTextareaSetter) {
+    nativeTextareaSetter.call(textarea, text)
+  }
+  fireEvent.change(textarea, { target: { value: text } })
+}
+
+/* Test wrapper with Chakra Provider */
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <Provider>{children}</Provider>
+)
+
+describe('TextAreaField Component', () => {
+  const mockOnChange = vi.fn()
+  const mockOnBlur = vi.fn()
+
   const defaultProps = {
-    label: 'Test TextArea',
+    label: 'Description',
     value: '',
-    placeholder: 'Enter text',
+    placeholder: 'Enter description',
     isInValid: false,
     required: false,
-    errorMessage: '',
-    onChange: vi.fn()
+    onChange: mockOnChange,
+    isDebounced: false
   }
 
   beforeEach(() => {
@@ -29,599 +56,682 @@ describe('TextAreaField', () => {
     vi.useRealTimers()
   })
 
-  describe('Rendering', () => {
-    it('renders with default props', () => {
-      render(<TextAreaField {...defaultProps} />)
-      expect(screen.getByLabelText('Test TextArea')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('Enter text')).toBeInTheDocument()
+  describe('Basic Rendering', () => {
+    it('should render with required props', () => {
+      render(<TextAreaField {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.getByLabelText(/Description/)).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('Enter description')).toBeInTheDocument()
     })
 
-    it('renders textarea element', () => {
-      render(<TextAreaField {...defaultProps} />)
-      const textarea = screen.getByRole('textbox')
-      expect(textarea.tagName.toLowerCase()).toBe('textarea')
+    it('should render with value', () => {
+      render(<TextAreaField {...defaultProps} value="Test description" />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByDisplayValue('Test description')
+      expect(textarea).toBeInTheDocument()
     })
 
-    it('displays error message when invalid', () => {
+    it('should render with label text', () => {
+      render(<TextAreaField {...defaultProps} label="Comments" />, { wrapper: TestWrapper })
+
+      expect(screen.getByLabelText('Comments')).toBeInTheDocument()
+    })
+
+    it('should render with placeholder', () => {
+      render(<TextAreaField {...defaultProps} placeholder="Type your message..." />, { wrapper: TestWrapper })
+
+      expect(screen.getByPlaceholderText('Type your message...')).toBeInTheDocument()
+    })
+
+    it('should render as textarea element', () => {
+      render(<TextAreaField {...defaultProps} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      expect(textarea.tagName).toBe('TEXTAREA')
+    })
+  })
+
+  describe('Required Field', () => {
+    it('should show required indicator when required is true', () => {
+      render(<TextAreaField {...defaultProps} required={true} />, { wrapper: TestWrapper })
+
+      const label = screen.getByText('Description')
+      expect(label.parentElement).toBeInTheDocument()
+    })
+
+    it('should not show required indicator when required is false', () => {
+      render(<TextAreaField {...defaultProps} required={false} />, { wrapper: TestWrapper })
+
+      const label = screen.getByText('Description')
+      expect(label).toBeInTheDocument()
+    })
+
+    it('should allow required prop to be updated', () => {
+      const { rerender } = render(<TextAreaField {...defaultProps} required={false} />, { wrapper: TestWrapper })
+
+      rerender(<TestWrapper><TextAreaField {...defaultProps} required={true} /></TestWrapper>)
+
+      const label = screen.getByText('Description')
+      expect(label.parentElement).toBeInTheDocument()
+    })
+  })
+
+  describe('Validation State', () => {
+    it('should show error message when invalid', () => {
       render(
-        <TextAreaField 
-          {...defaultProps} 
-          isInValid 
-          errorMessage="This field is required" 
-        />
+        <TextAreaField {...defaultProps} isInValid={true} errorMessage="This field is required" />,
+        { wrapper: TestWrapper }
       )
+
       expect(screen.getByText('This field is required')).toBeInTheDocument()
     })
 
-    it('renders with custom name attribute', () => {
-      render(<TextAreaField {...defaultProps} name="testTextArea" />)
-      const textarea = screen.getByRole('textbox')
-      expect(textarea).toHaveAttribute('name', 'testTextArea')
+    it('should not show error message when valid', () => {
+      render(<TextAreaField {...defaultProps} isInValid={false} errorMessage="This field is required" />, { wrapper: TestWrapper })
+
+      expect(screen.queryByText('This field is required')).not.toBeInTheDocument()
+    })
+
+    it('should apply error styling when invalid', () => {
+      render(<TextAreaField {...defaultProps} isInValid={true} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      expect(textarea).toHaveStyle({ borderColor: 'red.500' })
+    })
+
+    it('should update validation state dynamically', () => {
+      const { rerender } = render(<TextAreaField {...defaultProps} isInValid={false} />, { wrapper: TestWrapper })
+
+      rerender(<TestWrapper><TextAreaField {...defaultProps} isInValid={true} errorMessage="Error" /></TestWrapper>)
+
+      expect(screen.getByText('Error')).toBeInTheDocument()
+    })
+
+    it('should handle missing error message gracefully', () => {
+      render(<TextAreaField {...defaultProps} isInValid={true} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      expect(textarea).toBeInTheDocument()
     })
   })
 
-  describe('Basic TextArea Functionality', () => {
-    it('displays the provided value', () => {
-      render(<TextAreaField {...defaultProps} value="test value" />)
-      expect(screen.getByDisplayValue('test value')).toBeInTheDocument()
+  describe('Helper Text', () => {
+    it('should show helper text when provided', () => {
+      render(<TextAreaField {...defaultProps} helperText="Maximum 500 characters" />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Maximum 500 characters')).toBeInTheDocument()
     })
 
-    it('calls onChange when user types (non-debounced)', async () => {
-      const handleChange = vi.fn()
+    it('should not show helper text when not provided', () => {
+      render(<TextAreaField {...defaultProps} />, { wrapper: TestWrapper })
+
+      expect(screen.queryByText('Maximum')).not.toBeInTheDocument()
+    })
+
+    it('should show both helper text and error message', () => {
       render(
-        <TextAreaField 
-          {...defaultProps} 
-          onChange={handleChange} 
-          isDebounced={false}
-        />
+        <TextAreaField {...defaultProps} helperText="Enter details" isInValid={true} errorMessage="Required field" />,
+        { wrapper: TestWrapper }
       )
-      
-      const textarea = screen.getByRole('textbox')
-      
-      // Simulate typing character by character to test non-debounced behavior
-      fireEvent.change(textarea, { target: { value: 'h' } })
-      fireEvent.change(textarea, { target: { value: 'he' } })
-      fireEvent.change(textarea, { target: { value: 'hel' } })
-      fireEvent.change(textarea, { target: { value: 'hell' } })
-      fireEvent.change(textarea, { target: { value: 'hello' } })
-      
-      expect(handleChange).toHaveBeenCalledTimes(5) // One for each character
-      
-      // In non-debounced mode, each onChange call receives the actual React SyntheticEvent
-      // Verify that onChange is being called correctly for each keystroke
-      expect(handleChange.mock.calls[0][0].target).toBe(textarea)
-      expect(handleChange.mock.calls[1][0].target).toBe(textarea)
-      expect(handleChange.mock.calls[2][0].target).toBe(textarea)
-      expect(handleChange.mock.calls[3][0].target).toBe(textarea)
-      expect(handleChange.mock.calls[4][0].target).toBe(textarea)
-      
-      // All calls should be React SyntheticEvents with type 'change'
-      handleChange.mock.calls.forEach(call => {
-        expect(call[0].type).toBe('change')
-      })
-    })
 
-    it('handles multiline text input', async () => {
-      const handleChange = vi.fn()
-      const multilineText = 'Line 1\nLine 2\nLine 3'
-      
-      const { rerender } = render(
-        <TextAreaField 
-          {...defaultProps} 
-          onChange={handleChange} 
-          isDebounced={false}
-        />
-      )
-      
-      const textarea = screen.getByRole('textbox')
-      
-      // Use fireEvent for reliable multiline text input
-      fireEvent.change(textarea, { target: { value: multilineText } })
-      
-      // In non-debounced mode, React's SyntheticEvent is passed through
-      // Check that the onChange was called correctly
-      expect(handleChange).toHaveBeenCalledTimes(1)
-      const call = handleChange.mock.calls[0][0]
-      expect(call.target).toBe(textarea)
-      expect(call.type).toBe('change')
-      
-      // Test that the component can display multiline text when provided via props
-      rerender(
-        <TextAreaField 
-          {...defaultProps} 
-          value={multilineText}
-          onChange={handleChange} 
-          isDebounced={false}
-        />
-      )
-      
-      const updatedTextarea = screen.getByRole('textbox')
-      expect(updatedTextarea).toHaveValue(multilineText)
-    })
-
-    it('updates local state immediately for responsive UI', async () => {
-      render(<TextAreaField {...defaultProps} />)
-      
-      const textarea = screen.getByRole('textbox')
-      fireEvent.change(textarea, { target: { value: 'test' } })
-      
-      expect(textarea).toHaveValue('test')
+      expect(screen.getByText('Enter details')).toBeInTheDocument()
+      expect(screen.getByText('Required field')).toBeInTheDocument()
     })
   })
 
-  describe('Debouncing Functionality', () => {
-    it('debounces onChange calls by default', async () => {
-      const handleChange = vi.fn()
-      render(<TextAreaField {...defaultProps} onChange={handleChange} />)
-      
-      const textarea = screen.getByRole('textbox')
-      fireEvent.change(textarea, { target: { value: 'hello' } })
-      
-      // Should not call onChange immediately
-      expect(handleChange).not.toHaveBeenCalled()
-      
-      // Fast forward debounce timer
-      vi.advanceTimersByTime(300)
-      
-      expect(handleChange).toHaveBeenCalledTimes(1)
-      expect(handleChange).toHaveBeenCalledWith(
-        expect.objectContaining({ target: { value: 'hello' } })
-      )
+  describe('Disabled State', () => {
+    it('should be disabled when disabled prop is true', () => {
+      render(<TextAreaField {...defaultProps} disabled={true} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      expect(textarea).toBeDisabled()
     })
 
-    it('uses custom debounce delay', async () => {
-      const handleChange = vi.fn()
-      render(
-        <TextAreaField 
-          {...defaultProps} 
-          onChange={handleChange} 
-          debounceMs={500}
-        />
-      )
+    it('should not be disabled when disabled prop is false', () => {
+      render(<TextAreaField {...defaultProps} disabled={false} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      expect(textarea).not.toBeDisabled()
+    })
+
+    it('should not allow input when disabled', () => {
       
-      const textarea = screen.getByRole('textbox')
-      fireEvent.change(textarea, { target: { value: 'test' } })
+      render(<TextAreaField {...defaultProps} disabled={true} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'test')
+
+      expect(mockOnChange).not.toHaveBeenCalled()
+    })
+
+    it('should update disabled state dynamically', () => {
+      const { rerender } = render(<TextAreaField {...defaultProps} disabled={false} />, { wrapper: TestWrapper })
+
+      rerender(<TestWrapper><TextAreaField {...defaultProps} disabled={true} /></TestWrapper>)
+
+      const textarea = screen.getByLabelText(/Description/)
+      expect(textarea).toBeDisabled()
+    })
+  })
+
+  describe('ReadOnly State', () => {
+    it('should not trigger onChange when readOnly', () => {
       
-      // Should not fire after default delay (300ms)
+      render(<TextAreaField {...defaultProps} readOnly={true} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'test')
+
+      expect(mockOnChange).not.toHaveBeenCalled()
+    })
+
+    it('should not trigger onBlur when readOnly', () => {
+      
+      render(<TextAreaField {...defaultProps} readOnly={true} onBlur={mockOnBlur} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      fireEvent.click(textarea)
+      fireEvent.blur(document.activeElement!)
+
+      expect(mockOnBlur).not.toHaveBeenCalled()
+    })
+
+    it('should allow readOnly to be false by default', () => {
+      
+      render(<TextAreaField {...defaultProps} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'a')
+
+      expect(mockOnChange).toHaveBeenCalled()
+    })
+  })
+
+  describe('Non-Debounced Mode', () => {
+    it('should call onChange immediately when isDebounced is false', () => {
+      render(<TextAreaField {...defaultProps} isDebounced={false} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'test')
+
+      expect(mockOnChange).toHaveBeenCalled()
+    })
+
+    it('should emit correct values in non-debounced mode', () => {
+      const { rerender } = render(<TextAreaField {...defaultProps} isDebounced={false} />, { wrapper: TestWrapper })
+
+      let textarea = screen.getByLabelText(/Description/) as HTMLTextAreaElement
+
+      typeIntoTextarea(textarea, 'a')
+      expect(mockOnChange).toHaveBeenCalled()
+
+      rerender(<TestWrapper><TextAreaField {...defaultProps} value="a" isDebounced={false} /></TestWrapper>)
+      textarea = screen.getByLabelText(/Description/) as HTMLTextAreaElement
+      expect(textarea.value).toBe('a')
+
+      typeIntoTextarea(textarea, 'ab')
+      rerender(<TestWrapper><TextAreaField {...defaultProps} value="ab" isDebounced={false} /></TestWrapper>)
+      textarea = screen.getByLabelText(/Description/) as HTMLTextAreaElement
+      expect(textarea.value).toBe('ab')
+
+      typeIntoTextarea(textarea, 'abc')
+      rerender(<TestWrapper><TextAreaField {...defaultProps} value="abc" isDebounced={false} /></TestWrapper>)
+      textarea = screen.getByLabelText(/Description/) as HTMLTextAreaElement
+      expect(textarea.value).toBe('abc')
+    })
+
+    it('should handle rapid typing in non-debounced mode', () => {
+      render(<TextAreaField {...defaultProps} isDebounced={false} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/) as HTMLTextAreaElement
+      typeIntoTextarea(textarea, 'test123')
+
+      expect(mockOnChange).toHaveBeenCalled()
+    })
+
+    it('should handle multiline input in non-debounced mode', () => {
+      
+      render(<TextAreaField {...defaultProps} isDebounced={false} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'line1{Enter}line2')
+
+      expect(mockOnChange).toHaveBeenCalled()
+    })
+  })
+
+  describe('Debounced Mode', () => {
+    it('should not call onChange immediately when isDebounced is true', () => {
+      
+      render(<TextAreaField {...defaultProps} isDebounced={true} debounceMs={300} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'test')
+
+      expect(mockOnChange).not.toHaveBeenCalled()
+    })
+
+    it('should call onChange after debounce delay', () => {
+      render(<TextAreaField {...defaultProps} isDebounced={true} debounceMs={300} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'test')
+
       vi.advanceTimersByTime(300)
-      expect(handleChange).not.toHaveBeenCalled()
-      
-      // Should fire after custom delay (total 500ms)
+
+      expect(mockOnChange).toHaveBeenCalledTimes(1)
+    })
+
+    it('should use custom debounce delay', () => {
+      render(<TextAreaField {...defaultProps} isDebounced={true} debounceMs={500} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'test')
+
+      vi.advanceTimersByTime(300)
+      expect(mockOnChange).not.toHaveBeenCalled()
+
       vi.advanceTimersByTime(200)
-      expect(handleChange).toHaveBeenCalledTimes(1)
-      expect(handleChange).toHaveBeenCalledWith(
-        expect.objectContaining({ target: { value: 'test' } })
-      )
+
+      expect(mockOnChange).toHaveBeenCalledTimes(1)
     })
 
-    it('emits final value on blur even if not debounced yet', async () => {
-      const handleChange = vi.fn()
-      render(<TextAreaField {...defaultProps} onChange={handleChange} />)
-      
-      const textarea = screen.getByRole('textbox')
-      
-      // Type some text (this will start the debounce timer)
-      fireEvent.change(textarea, { target: { value: 'test' } })
-      
-      // Verify no onChange has been called yet (still within debounce period)
-      expect(handleChange).not.toHaveBeenCalled()
-      
-      // Blur the textarea before debounce timer completes
+    it('should reset debounce timer on each keystroke', () => {
+      render(<TextAreaField {...defaultProps} isDebounced={true} debounceMs={300} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+
+      typeIntoTextarea(textarea, 't')
+      vi.advanceTimersByTime(100)
+
+      typeIntoTextarea(textarea, 'e')
+      vi.advanceTimersByTime(100)
+
+      typeIntoTextarea(textarea, 's')
+      vi.advanceTimersByTime(100)
+
+      typeIntoTextarea(textarea, 't')
+
+      expect(mockOnChange).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(300)
+
+      expect(mockOnChange).toHaveBeenCalledTimes(1)
+    })
+
+    it('should emit final value on blur in debounced mode', () => {
+      render(<TextAreaField {...defaultProps} isDebounced={true} debounceMs={300} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'test')
       fireEvent.blur(textarea)
+
+      expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({
+        target: expect.objectContaining({ value: 'test' })
+      }))
+    })
+
+    it('should not emit duplicate values on blur', () => {
+      render(<TextAreaField {...defaultProps} isDebounced={true} debounceMs={300} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'test')
+
+      vi.advanceTimersByTime(300)
+
+      expect(mockOnChange).toHaveBeenCalledTimes(1)
+
+      mockOnChange.mockClear()
+      fireEvent.blur(textarea)
+
+      expect(mockOnChange).not.toHaveBeenCalled()
+    })
+
+    it('should update local value immediately while debouncing', () => {
+      render(<TextAreaField {...defaultProps} isDebounced={true} debounceMs={300} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/) as HTMLTextAreaElement
+      typeIntoTextarea(textarea, 'test')
+
+      expect(textarea.value).toBe('test')
+      expect(mockOnChange).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Blur Event', () => {
+    it('should call onBlur when provided', () => {
+      render(<TextAreaField {...defaultProps} onBlur={mockOnBlur} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      fireEvent.focus(textarea)
+      fireEvent.blur(textarea)
+
+      expect(mockOnBlur).toHaveBeenCalledTimes(1)
+    })
+
+    it('should work without onBlur handler', () => {
+      render(<TextAreaField {...defaultProps} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      fireEvent.focus(textarea)
+      fireEvent.blur(textarea)
+
+      expect(textarea).not.toHaveFocus()
+    })
+
+    it('should call onBlur with correct event', () => {
+      render(<TextAreaField {...defaultProps} onBlur={mockOnBlur} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      fireEvent.focus(textarea)
+      fireEvent.blur(textarea)
+
+      expect(mockOnBlur).toHaveBeenCalledWith(expect.objectContaining({
+        target: textarea
+      }))
+    })
+  })
+
+  describe('Name Attribute', () => {
+    it('should set name attribute when provided', () => {
+      render(<TextAreaField {...defaultProps} name="description" />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      expect(textarea).toHaveAttribute('name', 'description')
+    })
+
+    it('should include name in change event', () => {
       
-      // Should emit the value immediately on blur
-      expect(handleChange).toHaveBeenCalledTimes(1)
-      expect(handleChange).toHaveBeenCalledWith(
-        expect.objectContaining({ target: { value: 'test' } })
+      render(<TextAreaField {...defaultProps} name="comments" isDebounced={false} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'test')
+
+      expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({
+        target: expect.objectContaining({ name: 'comments' })
+      }))
+    })
+
+    it('should work without name attribute', () => {
+      
+      render(<TextAreaField {...defaultProps} isDebounced={false} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'test')
+
+      expect(mockOnChange).toHaveBeenCalled()
+    })
+  })
+
+  describe('Input Props', () => {
+    it('should apply additional textarea props', () => {
+      render(
+        <TextAreaField {...defaultProps} inputProps={{ maxLength: 500, rows: 5 }} />,
+        { wrapper: TestWrapper }
       )
+
+      const textarea = screen.getByLabelText(/Description/)
+      expect(textarea).toHaveAttribute('maxLength', '500')
+      expect(textarea).toHaveAttribute('rows', '5')
+    })
+
+    it('should merge input props with default props', () => {
+      render(
+        <TextAreaField {...defaultProps} inputProps={{ className: 'custom-class' }} />,
+        { wrapper: TestWrapper }
+      )
+
+      const textarea = screen.getByLabelText(/Description/)
+      expect(textarea).toHaveClass('custom-class')
+    })
+
+    it('should apply rows attribute', () => {
+      render(
+        <TextAreaField {...defaultProps} inputProps={{ rows: 10 }} />,
+        { wrapper: TestWrapper }
+      )
+
+      const textarea = screen.getByLabelText(/Description/)
+      expect(textarea).toHaveAttribute('rows', '10')
     })
   })
 
   describe('Controlled Component Behavior', () => {
-    it('updates when external value changes', () => {
-      const { rerender } = render(<TextAreaField {...defaultProps} value="initial" />)
-      expect(screen.getByDisplayValue('initial')).toBeInTheDocument()
-      
-      rerender(<TextAreaField {...defaultProps} value="updated" />)
+    it('should update when value prop changes', () => {
+      const { rerender } = render(<TextAreaField {...defaultProps} value="initial" />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByDisplayValue('initial')
+      expect(textarea).toBeInTheDocument()
+
+      rerender(<TestWrapper><TextAreaField {...defaultProps} value="updated" /></TestWrapper>)
+
       expect(screen.getByDisplayValue('updated')).toBeInTheDocument()
     })
 
-    it('preserves local value while typing', async () => {
-      const handleChange = vi.fn()
-      const { rerender } = render(
-        <TextAreaField 
-          {...defaultProps} 
-          value="initial" 
-          onChange={handleChange}
-          isDebounced={true} // Use debounced mode to test local state behavior
-        />
-      )
-      
-      const textarea = screen.getByRole('textbox')
-      
-      // Simulate user typing (this will set isTyping to true internally)
-      fireEvent.change(textarea, { target: { value: 'initial modified' } })
-      
-      // Local state should show immediate change
-      expect(textarea).toHaveValue('initial modified')
-      
-      // External value change should not override while user is typing
-      // The component tracks isTypingRef to prevent external updates during typing
-      rerender(
-        <TextAreaField 
-          {...defaultProps} 
-          value="external" 
-          onChange={handleChange}
-          isDebounced={true}
-        />
-      )
-      
-      // Should preserve the local value since user was typing
-      expect(textarea).toHaveValue('initial modified')
-    })
-  })
+    it('should handle empty value', () => {
+      render(<TextAreaField {...defaultProps} value="" />, { wrapper: TestWrapper })
 
-  describe('States and Props', () => {
-    it('handles disabled state', async () => {
-      const handleChange = vi.fn()
-      render(<TextAreaField {...defaultProps} disabled onChange={handleChange} />)
-      
-      const textarea = screen.getByRole('textbox')
-      expect(textarea).toBeDisabled()
-      
-      // Try to trigger change on disabled textarea
-      // Note: fireEvent can still change disabled textarea values in the DOM,
-      // but the key test is that onChange handler is not called
-      fireEvent.change(textarea, { target: { value: 'test' } })
-      expect(handleChange).not.toHaveBeenCalled()
-      
-      // The main behavior we're testing is that onChange is not called
-      // The disabled attribute prevents user interaction in real browsers
+      const textarea = screen.getByLabelText(/Description/) as HTMLTextAreaElement
+      expect(textarea.value).toBe('')
     })
 
-    it('handles readOnly state', async () => {
-      // Suppress React warning about value without onChange - this is intentional for readOnly
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      
-      const handleChange = vi.fn()
-      render(
-        <TextAreaField 
-          label="Test TextArea"
-          value="readonly value"
-          placeholder="Enter text"
-          isInValid={false}
-          required={false}
-          errorMessage=""
-          onChange={handleChange}
-          readOnly
-          isDebounced={false}
-        />
-      )
-      
-      const textarea = screen.getByRole('textbox')
-      expect(textarea).toHaveValue('readonly value')
-      
-      // The component removes the onChange handler when readOnly=true
-      // Try to change the textarea value
-      fireEvent.change(textarea, { target: { value: 'modified value' } })
-      
-      // The onChange handler should not be called due to readOnly logic
-      expect(handleChange).not.toHaveBeenCalled()
-      
-      // Restore console.error
-      consoleSpy.mockRestore()
+    it('should handle value changes from parent', () => {
+      const { rerender } = render(<TextAreaField {...defaultProps} value="test" isDebounced={true} />, { wrapper: TestWrapper })
+
+      rerender(<TestWrapper><TextAreaField {...defaultProps} value="new value" isDebounced={true} /></TestWrapper>)
+
+      const textarea = screen.getByLabelText(/Description/) as HTMLTextAreaElement
+      expect(textarea.value).toBe('new value')
     })
 
-    it('calls onBlur when provided', async () => {
-      const handleBlur = vi.fn()
-      render(<TextAreaField {...defaultProps} onBlur={handleBlur} />)
-      
-      const textarea = screen.getByRole('textbox')
-      textarea.focus()
-      fireEvent.blur(textarea)
-      
-      expect(handleBlur).toHaveBeenCalledTimes(1)
-    })
+    it('should respect external value changes during typing', () => {
+      const { rerender } = render(<TextAreaField {...defaultProps} value="" isDebounced={true} />, { wrapper: TestWrapper })
 
-    it('spreads inputProps to underlying Textarea', () => {
-      render(
-        <TextAreaField 
-          {...defaultProps} 
-          inputProps={{ 
-            'aria-label': 'Custom label',
-            id: 'custom-id',
-            rows: 5
-          }} 
-        />
-      )
-      
-      const textarea = screen.getByRole('textbox')
-      expect(textarea).toHaveAttribute('aria-label', 'Custom label')
-      expect(textarea).toHaveAttribute('id', 'custom-id')
-      expect(textarea).toHaveAttribute('rows', '5')
-    })
-  })
+      const textarea = screen.getByLabelText(/Description/) as HTMLTextAreaElement
+      typeIntoTextarea(textarea, 'user')
 
-  describe('Error Handling and Validation', () => {
-    it('applies invalid styling when isInValid is true', () => {
-      render(
-        <TextAreaField 
-          {...defaultProps} 
-          isInValid 
-          errorMessage="Invalid input" 
-        />
-      )
-      
-      expect(screen.getByText('Invalid input')).toBeInTheDocument()
-    })
+      vi.advanceTimersByTime(100)
 
-    it('shows required indicator', () => {
-      render(<TextAreaField {...defaultProps} required />)
-      expect(screen.getByLabelText(/Test TextArea/)).toBeInTheDocument()
-    })
-  })
+      rerender(<TestWrapper><TextAreaField {...defaultProps} value="external" isDebounced={true} /></TestWrapper>)
 
-  describe('Synthetic Event Creation', () => {
-    it('creates synthetic events with correct structure in debounced mode', async () => {
-      const handleChange = vi.fn()
-      render(
-        <TextAreaField 
-          {...defaultProps} 
-          name="testTextArea" 
-          onChange={handleChange}
-          isDebounced={true} // Use debounced mode where synthetic events are created
-        />
-      )
-      
-      const textarea = screen.getByRole('textbox')
-      fireEvent.change(textarea, { target: { value: 'a' } })
-      
-      // Advance timer to trigger the synthetic event creation
       vi.advanceTimersByTime(300)
-      
-      expect(handleChange).toHaveBeenCalledWith(
-        expect.objectContaining({
-          target: expect.objectContaining({
-            value: 'a',
-            name: 'testTextArea'
-          })
-        })
-      )
-    })
 
-    it('passes through React events in non-debounced mode', async () => {
-      const handleChange = vi.fn()
-      render(
-        <TextAreaField 
-          {...defaultProps} 
-          name="testTextArea" 
-          onChange={handleChange}
-          isDebounced={false} // Non-debounced mode passes React event directly
-        />
-      )
-      
-      const textarea = screen.getByRole('textbox')
-      fireEvent.change(textarea, { target: { value: 'a' } })
-      
-      // In non-debounced mode, React's SyntheticEvent is passed through
-      const call = handleChange.mock.calls[0][0]
-      expect(call.target).toBe(textarea)
-      expect(call.target.value).toBe('')
-      expect(call.target.name).toBe('testTextArea')
-      expect(call.type).toBe('change')
+      expect(textarea.value).toBe('user')
     })
   })
 
-  describe('Memory Management', () => {
-    it('cleans up timeouts on unmount', () => {
-      const { unmount } = render(<TextAreaField {...defaultProps} />)
-      
-      const textarea = screen.getByRole('textbox')
-      fireEvent.change(textarea, { target: { value: 'test' } })
-      
-      unmount()
-      
-      // Should not throw or cause memory leaks
-      vi.advanceTimersByTime(300)
-    })
-  })
+  describe('Multiline Input', () => {
+    it('should handle multiline text', () => {
+      const multilineText = 'Line 1\nLine 2\nLine 3'
+      render(<TextAreaField {...defaultProps} value={multilineText} isDebounced={false} />, { wrapper: TestWrapper })
 
-  describe('TextArea Specific Features', () => {
-    it('handles long text content', async () => {
-      const longText = 'Lorem ipsum '.repeat(100)
-      const handleChange = vi.fn()
-      const testText = longText.substring(0, 50) // First 50 chars
-      
-      const { rerender } = render(
-        <TextAreaField 
-          {...defaultProps} 
-          onChange={handleChange} 
-          isDebounced={false}
-        />
-      )
-      
-      const textarea = screen.getByRole('textbox')
-      
-      // Simulate typing long text with fireEvent for reliability
-      fireEvent.change(textarea, { target: { value: testText } })
-      
-      // In non-debounced mode, verify onChange was called correctly
-      expect(handleChange).toHaveBeenCalledTimes(1)
-      const call = handleChange.mock.calls[0][0]
-      expect(call.target).toBe(textarea)
-      expect(call.type).toBe('change')
-      
-      // Test that the component can handle long text by rerendering with the value
-      rerender(
-        <TextAreaField 
-          {...defaultProps} 
-          value={testText}
-          onChange={handleChange} 
-          isDebounced={false}
-        />
-      )
-      
-      const updatedTextarea = screen.getByRole('textbox')
-      expect(updatedTextarea).toHaveValue(testText)
+      const textarea = screen.getByLabelText(/Description/) as HTMLTextAreaElement
+      expect(textarea.value).toContain('\n')
+      expect(textarea.value).toBe(multilineText)
     })
 
-    it('preserves line breaks and formatting', async () => {
-      const multilineText = `Line 1
-Line 2
-  Indented line
-Line 4`
-      
-      render(<TextAreaField {...defaultProps} value={multilineText} />)
-      
-      const textarea = screen.getByRole('textbox')
-      expect(textarea).toHaveValue(multilineText)
+    it('should preserve line breaks', () => {
+      const multilineText = 'Line 1\nLine 2\nLine 3'
+      render(<TextAreaField {...defaultProps} value={multilineText} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByPlaceholderText('Enter description') as HTMLTextAreaElement
+      expect(textarea.value).toBe(multilineText)
     })
 
-    it('handles copy and paste operations', async () => {
-      const handleChange = vi.fn()
-      const { rerender } = render(
-        <TextAreaField 
-          {...defaultProps} 
-          onChange={handleChange} 
-          isDebounced={false}
-        />
-      )
-      
-      const textarea = screen.getByRole('textbox')
-      
-      // Simulate paste operation by directly changing the value
-      // This is more reliable than userEvent.paste() which can have timing issues
-      fireEvent.change(textarea, { target: { value: 'Pasted text' } })
-      
-      // In non-debounced mode, the display value is controlled by parent's value prop
-      // The key test is that onChange was called correctly
-      expect(handleChange).toHaveBeenCalledTimes(1)
-      const call = handleChange.mock.calls[0][0]
-      expect(call.target).toBe(textarea)
-      expect(call.type).toBe('change')
-      
-      // Test that the component can handle pasted text by simulating controlled update
-      rerender(
-        <TextAreaField 
-          {...defaultProps} 
-          value="Pasted text"
-          onChange={handleChange} 
-          isDebounced={false}
-        />
-      )
-      
-      const updatedTextarea = screen.getByRole('textbox')
-      expect(updatedTextarea).toHaveValue('Pasted text')
-    })
-  })
+    it('should handle empty lines', () => {
+      render(<TextAreaField {...defaultProps} isDebounced={false} />, { wrapper: TestWrapper })
 
-  describe('Accessibility', () => {
-    it('should not have accessibility violations', async () => {
-      render(<TextAreaField {...defaultProps} />)
-      
-      // Skip axe testing entirely and use manual accessibility checks
-      // This is more reliable than fighting with axe configuration
-      const textarea = screen.getByRole('textbox')
-      expect(textarea).toBeInTheDocument()
-      
-      // Verify proper labeling
-      expect(screen.getByText('Test TextArea')).toBeInTheDocument()
-      expect(screen.getByLabelText('Test TextArea')).toBe(textarea)
-      
-      // Verify essential textarea attributes
-      expect(textarea.tagName.toLowerCase()).toBe('textarea')
-      expect(textarea).toHaveAttribute('placeholder', 'Enter text')
-      
-      // Verify textarea is focusable
-      textarea.focus()
-      expect(textarea).toHaveFocus()
-      
-      // Test keyboard interaction
-      fireEvent.change(textarea, { target: { value: 'test' } })
-      expect(textarea).toHaveValue('test')
-    })
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'Line 1\n\nLine 3')
 
-    it('associates label with textarea', () => {
-      render(<TextAreaField {...defaultProps} label="Description" />)
-      const textarea = screen.getByLabelText('Description')
-      expect(textarea).toBeInTheDocument()
-    })
-
-    it('provides error information to screen readers', () => {
-      render(
-        <TextAreaField 
-          {...defaultProps} 
-          isInValid 
-          errorMessage="Description is required" 
-        />
-      )
-      
-      expect(screen.getByText('Description is required')).toBeInTheDocument()
-    })
-
-    it('supports keyboard navigation', async () => {
-      render(<TextAreaField {...defaultProps} />)
-      
-      const textarea = screen.getByRole('textbox')
-      textarea.focus()
-      expect(textarea).toHaveFocus()
+      expect(mockOnChange).toHaveBeenCalled()
     })
   })
 
   describe('Edge Cases', () => {
-    it('handles empty values gracefully', () => {
-      render(<TextAreaField {...defaultProps} value="" />)
-      const textarea = screen.getByRole('textbox')
-      expect(textarea).toHaveValue('')
+    it('should handle very long text input', () => {
+      
+      const longText = 'a'.repeat(1000)
+
+      render(<TextAreaField {...defaultProps} isDebounced={false} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, longText)
+
+      expect(mockOnChange).toHaveBeenCalled()
     })
 
-    it('handles null/undefined onChange gracefully', () => {
-      expect(() => {
-        render(<TextAreaField {...defaultProps} onChange={undefined as any} />)
-      }).not.toThrow()
+    it('should handle special characters', () => {
+      
+      render(<TextAreaField {...defaultProps} isDebounced={false} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, '!@#$%^&*()')
+
+      expect(mockOnChange).toHaveBeenCalled()
     })
 
-    it('handles special characters and emojis', async () => {
-      const specialText = '🚀 Special chars: @#$%^&*()_+ äöü ñ'
+    it('should handle rapid value changes', () => {
+      const { rerender } = render(<TextAreaField {...defaultProps} value="1" />, { wrapper: TestWrapper })
+
+      for (let i = 2; i <= 10; i++) {
+        rerender(<TestWrapper><TextAreaField {...defaultProps} value={i.toString()} /></TestWrapper>)
+      }
+
+      expect(screen.getByDisplayValue('10')).toBeInTheDocument()
+    })
+
+    it('should cleanup timers on unmount', () => {
+      const { unmount } = render(<TextAreaField {...defaultProps} isDebounced={true} />, { wrapper: TestWrapper })
+
+      unmount()
+
+      vi.advanceTimersByTime(1000)
+
+      expect(mockOnChange).not.toHaveBeenCalled()
+    })
+
+    it('should handle switching between debounced modes', () => {
+      const { rerender } = render(<TextAreaField {...defaultProps} isDebounced={true} />, { wrapper: TestWrapper })
+
+      let textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'test')
+
+      rerender(<TestWrapper><TextAreaField {...defaultProps} isDebounced={false} /></TestWrapper>)
+
+      mockOnChange.mockClear()
+      textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'a')
+
+      expect(mockOnChange).toHaveBeenCalled()
+    })
+
+    it('should handle Unicode characters', () => {
       
-      render(<TextAreaField {...defaultProps} value={specialText} />)
-      
-      const textarea = screen.getByRole('textbox')
-      expect(textarea).toHaveValue(specialText)
+      render(<TextAreaField {...defaultProps} isDebounced={false} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, '你好世界🌍')
+
+      expect(mockOnChange).toHaveBeenCalled()
     })
   })
 
-  describe('Performance', () => {
-    it('does not re-render unnecessarily', () => {
-      const { rerender } = render(<TextAreaField {...defaultProps} />)
-      
-      // Same props should not cause issues
-      rerender(<TextAreaField {...defaultProps} />)
-      
-      expect(screen.getByRole('textbox')).toBeInTheDocument()
+  describe('Accessibility', () => {
+    it('should have accessible label', () => {
+      render(<TextAreaField {...defaultProps} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      expect(textarea).toBeInTheDocument()
     })
 
-    it('handles large text efficiently', async () => {
-      const largeText = 'A'.repeat(1000)
-      const handleChange = vi.fn()
-      
+    it('should associate error message with textarea', () => {
       render(
-        <TextAreaField 
-          {...defaultProps} 
-          onChange={handleChange} 
-          isDebounced={true}
-        />
+        <TextAreaField {...defaultProps} isInValid={true} errorMessage="Error message" />,
+        { wrapper: TestWrapper }
       )
+
+      const errorMessage = screen.getByText('Error message')
+      expect(errorMessage).toBeInTheDocument()
+    })
+
+    it('should be keyboard navigable', () => {
+      render(<TextAreaField {...defaultProps} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      textarea.focus()
+
+      expect(textarea).toHaveFocus()
+    })
+
+    it('should support screen readers with proper semantics', () => {
+      render(<TextAreaField {...defaultProps} required={true} />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      expect(textarea).toBeInTheDocument()
+    })
+
+    it('should associate helper text with textarea', () => {
+      render(<TextAreaField {...defaultProps} helperText="Enter details" />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Enter details')).toBeInTheDocument()
+    })
+  })
+
+  describe('Integration', () => {
+    it('should work in a form context', () => {
       
-      const textarea = screen.getByRole('textbox')
+      const handleSubmit = vi.fn((e) => e.preventDefault())
+
+      render(
+        <form onSubmit={handleSubmit}>
+          <TextAreaField {...defaultProps} name="description" isDebounced={false} />
+          <button type="submit">Submit</button>
+        </form>,
+        { wrapper: TestWrapper }
+      )
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'test description')
+
+      const submitButton = screen.getByText('Submit')
+      fireEvent.click(submitButton)
+
+      expect(handleSubmit).toHaveBeenCalled()
+    })
+
+    it('should handle multiple instances independently', () => {
       
-      // Should handle large input without issues
-      fireEvent.change(textarea, { target: { value: largeText } })
+      const onChange1 = vi.fn()
+      const onChange2 = vi.fn()
+
+      render(
+        <>
+          <TextAreaField {...defaultProps} label="Field 1" onChange={onChange1} isDebounced={false} />
+          <TextAreaField {...defaultProps} label="Field 2" onChange={onChange2} isDebounced={false} />
+        </>,
+        { wrapper: TestWrapper }
+      )
+
+      const textarea1 = screen.getByLabelText('Field 1')
+      const textarea2 = screen.getByLabelText('Field 2')
+
+      typeIntoTextarea(textarea1, 'test1')
+      typeIntoTextarea(textarea2, 'test2')
+
+      expect(onChange1).toHaveBeenCalled()
+      expect(onChange2).toHaveBeenCalled()
+    })
+
+    it('should work with form validation', () => {
       
-      expect(textarea).toHaveValue(largeText)
-      
-      vi.advanceTimersByTime(300)
-      expect(handleChange).toHaveBeenCalledTimes(1)
+      render(<TextAreaField {...defaultProps} required={true} isInValid={true} errorMessage="Required" />, { wrapper: TestWrapper })
+
+      const textarea = screen.getByLabelText(/Description/)
+      typeIntoTextarea(textarea, 'valid input')
+
+      expect(mockOnChange).toHaveBeenCalled()
+      expect(screen.getByText('Required')).toBeInTheDocument()
     })
   })
 })

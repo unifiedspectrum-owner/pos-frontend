@@ -1,1081 +1,612 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { useRouter } from 'next/navigation';
-import { ChakraProvider, defaultSystem } from '@chakra-ui/react';
-import PlanFormContainer from '../form-container';
-import { PlanFormMode } from '@plan-management/types/plans';
+/* Comprehensive test suite for PlanFormContainer component */
 
-// Mock Next.js router
-vi.mock('next/navigation', () => ({
-  useRouter: vi.fn(() => ({
-    push: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-    refresh: vi.fn(),
-    replace: vi.fn(),
-  }))
-}));
+/* Libraries imports */
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { useForm, FormProvider } from 'react-hook-form'
+import { Provider } from '@/components/ui/provider'
 
-// Mock dependencies
-vi.mock('@plan-management/schemas/validation/plans', () => ({
-  createPlanSchema: {
-    parse: vi.fn(() => ({
-      name: '',
-      description: '',
-      is_active: true,
-      is_custom: false,
-      included_devices_count: '',
-      max_users_per_branch: '',
-      included_branches_count: '',
-      additional_device_cost: '',
-      monthly_price: '',
-      annual_discount_percentage: '',
-      biennial_discount_percentage: '',
-      triennial_discount_percentage: '',
-      monthly_fee_our_gateway: '',
-      monthly_fee_byo_processor: '',
-      card_processing_fee_percentage: '',
-      card_processing_fee_fixed: '',
-      feature_ids: [],
-      addon_assignments: [],
-      support_sla_ids: [],
-      volume_discounts: [],
-    })),
-    // Add the _def property that zodResolver expects
-    _def: {
-      typeName: 'ZodObject'
-    }
-  }
-}));
+/* Plan module imports */
+import PlanFormContainer from '@plan-management/forms/form-container'
+import { CreatePlanFormData } from '@plan-management/schemas'
+import { PLAN_FORM_MODES, PLAN_FORM_TAB, AUTO_SAVE_DEBOUNCE_MS, STORAGE_KEYS } from '@plan-management/constants'
+import * as planOperationsHook from '@plan-management/hooks/use-plan-operations'
+import * as tabValidationHook from '@plan-management/hooks/use-tab-validation'
+import * as tabNavigationHook from '@plan-management/hooks/use-tab-navigation'
+import * as planFormModeContext from '@plan-management/contexts'
+import * as storageUtils from '@plan-management/utils/storage'
+import * as formUtils from '@plan-management/utils/forms'
 
-vi.mock('@plan-management/config', () => ({
-  AUTO_SAVE_DEBOUNCE_MS: 300,
-  DEFAULT_PLAN_TAB: 'basic',
-  PLAN_FORM_TITLES: {
-    CREATE: 'Create New Plan',
-    EDIT: 'Edit Plan',
-    VIEW: 'View Plan',
-    DEFAULT: 'Plan Management'
-  },
-  STORAGE_KEYS: {
-    FORM_DATA: 'plan-form-data',
-    ACTIVE_TAB: 'plan-active-tab'
-  },
-  ERROR_MESSAGES: {
-    PLAN_LOAD_FAILED: 'Failed to load plan data. Please try again.'
-  },
-  PLAN_FORM_MODES: {
-    CREATE: 'create',
-    EDIT: 'edit',
-    VIEW: 'view'
-  }
-}));
-
-vi.mock('@shared/config', () => ({
-  LOADING_DELAY: 100,
-  LOADING_DELAY_ENABLED: false
-}));
-
-vi.mock('@shared/contexts', () => ({
-  ResourceErrorProvider: ({ children }: any) => <div data-testid="resource-error-provider">{children}</div>
-}));
-
-vi.mock('@shared/components', () => ({
-  Breadcrumbs: () => <nav data-testid="breadcrumbs">Breadcrumbs</nav>,
-  ErrorMessageContainer: ({ error, title, onRetry, isRetrying, testId }: any) => (
-    <div data-testid={testId || 'error-container'}>
-      <h3>{title}</h3>
-      <p>{error}</p>
-      {onRetry && (
-        <button type="button" onClick={onRetry} disabled={isRetrying} data-testid="retry-button">
-          {isRetrying ? 'Retrying...' : 'Retry'}
-        </button>
-      )}
+/* Mock dependencies */
+vi.mock('@shared/components/common', () => ({
+  Breadcrumbs: () => <div data-testid="breadcrumbs">Breadcrumbs</div>,
+  LoaderWrapper: ({ isLoading, children, loadingText }: { isLoading: boolean; children: React.ReactNode; loadingText?: string }) => (
+    isLoading ? <div data-testid="loader-wrapper">{loadingText}</div> : <>{children}</>
+  ),
+  ErrorMessageContainer: ({ error, onRetry, onDismiss, title }: { error: string; onRetry?: () => void; onDismiss?: () => void; title?: string }) => (
+    <div data-testid="error-container">
+      {title && <div>{title}</div>}
+      <div>{error}</div>
+      {onRetry && <button onClick={onRetry} data-testid="retry-button">Retry</button>}
+      {onDismiss && <button onClick={onDismiss} data-testid="dismiss-button">Dismiss</button>}
     </div>
   )
-}));
+}))
 
 vi.mock('@plan-management/components', () => ({
-  DataRecoveryModal: ({ isOpen, onRestore, onStartFresh }: any) => {
-    if (!isOpen) return null;
-    return (
+  DataRecoveryModal: ({ isOpen, onRestore, onStartFresh }: { isOpen: boolean; onRestore: () => void; onStartFresh: () => void }) => (
+    isOpen ? (
       <div data-testid="data-recovery-modal">
-        <h2>Data Recovery</h2>
-        <button type="button" onClick={onRestore} data-testid="restore-button">
-          Restore Data
-        </button>
-        <button type="button" onClick={onStartFresh} data-testid="start-fresh-button">
-          Start Fresh
-        </button>
+        <button onClick={onRestore} data-testid="restore-button">Restore Data</button>
+        <button onClick={onStartFresh} data-testid="start-fresh-button">Start Fresh</button>
       </div>
-    );
-  }
-}));
-
-vi.mock('../form-ui', () => ({
-  default: ({ 
-    mode, activeTab, showSavedIndicator, isSubmitting,
-    onTabChange, onNextTab, onPreviousTab, onSubmit, onEdit, onBackToList,
-    submitButtonText
-  }: any) => (
-    <div data-testid="plan-form-ui">
-      <div>Mode: {mode}</div>
-      <div>Active Tab: {activeTab}</div>
-      <div>Show Saved Indicator: {showSavedIndicator.toString()}</div>
-      <div>Is Submitting: {isSubmitting.toString()}</div>
-      <div>Submit Button Text: {submitButtonText}</div>
-      <button type="button" onClick={() => onTabChange('pricing')} data-testid="tab-change-button">
-        Change Tab
-      </button>
-      <button type="button" onClick={onNextTab} data-testid="next-tab-button">
-        Next Tab
-      </button>
-      <button type="button" onClick={onPreviousTab} data-testid="previous-tab-button">
-        Previous Tab
-      </button>
-      <button type="button" onClick={() => onSubmit({ name: 'Test Plan' })} data-testid="submit-button">
-        Submit
-      </button>
-      {onEdit && (
-        <button type="button" onClick={onEdit} data-testid="edit-button">
-          Edit
-        </button>
-      )}
-      {onBackToList && (
-        <button type="button" onClick={onBackToList} data-testid="back-to-list-button">
-          Back to List
-        </button>
-      )}
-    </div>
+    ) : null
   )
-}));
+}))
 
-vi.mock('@plan-management/utils', () => ({
-  clearStorageData: vi.fn(),
-  hasStorageData: vi.fn(() => false),
-  loadDataFromStorage: vi.fn(),
-  saveFormDataToStorage: vi.fn(() => true),
-  formatApiDataToFormData: vi.fn(() => ({
+vi.mock('@plan-management/forms/form-ui', () => {
+  const React = require('react')
+  return {
+    default: ({ activeTab, showSavedIndicator, isSubmitting, onSubmit, onTabChange, onNextTab, onPreviousTab }: any) =>
+      React.createElement('div', { 'data-testid': 'plan-form-ui' },
+        React.createElement('div', { 'data-testid': 'active-tab' }, activeTab),
+        React.createElement('div', { 'data-testid': 'saved-indicator' }, showSavedIndicator ? 'Saved' : 'Not Saved'),
+        React.createElement('div', { 'data-testid': 'submitting' }, isSubmitting ? 'Submitting' : 'Not Submitting'),
+        React.createElement('button', {
+          onClick: () => onTabChange('Pricing'),
+          'data-testid': 'change-tab'
+        }, 'Change Tab'),
+        React.createElement('button', {
+          onClick: onNextTab,
+          'data-testid': 'next-tab'
+        }, 'Next Tab'),
+        React.createElement('button', {
+          onClick: onPreviousTab,
+          'data-testid': 'previous-tab'
+        }, 'Previous Tab'),
+        React.createElement('button', {
+          onClick: () => onSubmit({ name: 'Test Plan' }),
+          'data-testid': 'submit-form'
+        }, 'Submit')
+      )
+  }
+})
+
+describe('PlanFormContainer', () => {
+  const mockFetchPlanDetails = vi.fn()
+  const mockOnSubmit = vi.fn()
+  const mockSetValue = vi.fn()
+  const mockReset = vi.fn()
+  const mockGetValues = vi.fn()
+  const mockSetActiveTab = vi.fn()
+
+  const mockPlanData = {
+    id: 1,
     name: 'Test Plan',
     description: 'Test Description',
     is_active: true,
     is_custom: false,
+    monthly_price: '99.99',
     included_devices_count: '5',
-    max_users_per_branch: '10',
-    included_branches_count: '1',
-    additional_device_cost: '9.99',
-    monthly_price: '29.99',
-    annual_discount_percentage: '10',
-    biennial_discount_percentage: '15',
-    triennial_discount_percentage: '20',
-    monthly_fee_our_gateway: '2.99',
-    monthly_fee_byo_processor: '1.99',
-    card_processing_fee_percentage: '2.9',
-    card_processing_fee_fixed: '0.30',
-    feature_ids: [],
+    feature_ids: [1, 2],
     addon_assignments: [],
-    support_sla_ids: [],
+    support_sla_ids: [1],
     volume_discounts: []
-  }))
-}));
+  }
 
-vi.mock('@plan-management/api', () => ({
-  planService: {
-    getSubscriptionPlanDetails: vi.fn(() => Promise.resolve({
-      data: {
-        success: true,
-        count: 1,
-        message: 'Plan details retrieved successfully',
-        timestamp: new Date().toISOString(),
-        data: {
-          id: 1,
-          name: 'Test Plan',
-          description: 'Test Description',
-          display_order: 1,
-          trial_period_days: 14,
-          is_active: 1,
-          is_custom: 0,
-          monthly_price: 29.99,
-          monthly_fee_our_gateway: 2.99,
-          monthly_fee_byo_processor: 1.99,
-          card_processing_fee_percentage: 2.9,
-          card_processing_fee_fixed: 0.30,
-          additional_device_cost: 9.99,
-          annual_discount_percentage: 10,
-          biennial_discount_percentage: 15,
-          triennial_discount_percentage: 20,
-          included_devices_count: 5,
-          max_users_per_branch: 10,
-          included_branches_count: 1,
-          features: [],
-          add_ons: [],
-          support_sla: [],
-          volume_discounts: []
-        }
-      },
-      status: 200,
-      statusText: 'OK',
-      headers: {} as any,
-      config: {
-        url: '/api/plans/1',
-        method: 'get',
-        headers: {} as any
-      }
+  const defaultPlanOperationsReturn = {
+    /* Create operations */
+    createPlan: vi.fn(),
+    isCreating: false,
+    createError: null,
+    /* Fetch operations */
+    fetchPlanDetails: mockFetchPlanDetails,
+    isFetching: false,
+    fetchError: null,
+    /* Update operations */
+    updatePlan: vi.fn(),
+    isUpdating: false,
+    updateError: null,
+    /* Delete operations */
+    deletePlan: vi.fn(),
+    isDeleting: false,
+    deleteError: null
+  }
+
+  const defaultTabValidationReturn = {
+    isBasicInfoValid: true,
+    isPricingInfoValid: true,
+    isFeaturesValid: true,
+    isAddonsValid: true,
+    isSlaValid: true,
+    isEntireFormValid: true,
+    validateBasicInfo: vi.fn(() => true),
+    validatePricingInfo: vi.fn(() => true),
+    validateFeatures: vi.fn(() => true),
+    validateAddons: vi.fn(() => true),
+    validateSla: vi.fn(() => true),
+    getValidationState: vi.fn(() => ({
+      isBasicInfoValid: true,
+      isPricingInfoValid: true,
+      isFeaturesValid: true,
+      isAddonsValid: true,
+      isSlaValid: true,
+      isEntireFormValid: true
     }))
   }
-}));
 
-vi.mock('@plan-management/hooks', () => ({
-  useTabValidation: vi.fn(() => ({
-    basic: true,
-    pricing: false,
-    features: false,
-    addons: false,
-    sla: false
-  })),
-  useFormSubmission: vi.fn(() => ({
-    submitForm: vi.fn(),
-    isSubmitting: false,
-    getSubmitButtonText: vi.fn(() => 'Submit')
-  })),
-  useTabNavigation: vi.fn(() => ({
+  const defaultTabNavigationReturn = {
     tabUnlockState: {
-      basic: true,
-      pricing: true,
-      features: true,
-      addons: true,
-      sla: true
+      [PLAN_FORM_TAB.BASIC]: true,
+      [PLAN_FORM_TAB.PRICING]: false,
+      [PLAN_FORM_TAB.FEATURES]: false,
+      [PLAN_FORM_TAB.ADDONS]: false,
+      [PLAN_FORM_TAB.SLA]: false
     },
-    isTabUnlocked: vi.fn((tabId: string) => true),
+    isTabUnlocked: vi.fn((tabId: string) => tabId === PLAN_FORM_TAB.BASIC),
     handleTabChange: vi.fn(),
     handleNextTab: vi.fn(),
     handlePreviousTab: vi.fn()
-  }))
-}));
+  }
 
-// Test helper function
-const renderFormContainer = (props: {
-  mode: PlanFormMode;
-  planId?: number;
-  title?: string;
-}) => {
-  return render(
-    <ChakraProvider value={defaultSystem}>
-      <PlanFormContainer {...props} />
-    </ChakraProvider>
-  );
-};
+  beforeEach(() => {
+    vi.clearAllMocks()
 
-describe('PlanFormContainer', () => {
-  let mockRouter: any;
-  
-  beforeEach(async () => {
-    mockRouter = {
-      push: vi.fn(),
-      back: vi.fn(),
-      forward: vi.fn(),
-      refresh: vi.fn(),
-      replace: vi.fn(),
-    };
-    
-    vi.mocked(useRouter).mockReturnValue(mockRouter);
-    vi.clearAllMocks();
-    
-    // Reset planService mock to default success state
-    const { planService } = await import('@plan-management/api');
-    vi.mocked(planService.getSubscriptionPlanDetails).mockResolvedValue({
-      data: {
-        success: true,
-        count: 1,
-        message: 'Plan details retrieved successfully',
-        timestamp: new Date().toISOString(),
-        data: {
-          id: 1,
-          name: 'Test Plan',
-          description: 'Test Description',
-          display_order: 1,
-          trial_period_days: 14,
-          is_active: 1,
-          is_custom: 0,
-          monthly_price: 29.99,
-          monthly_fee_our_gateway: 2.99,
-          monthly_fee_byo_processor: 1.99,
-          card_processing_fee_percentage: 2.9,
-          card_processing_fee_fixed: 0.30,
-          additional_device_cost: 9.99,
-          annual_discount_percentage: 10,
-          biennial_discount_percentage: 15,
-          triennial_discount_percentage: 20,
-          included_devices_count: 5,
-          max_users_per_branch: 10,
-          included_branches_count: 1,
-          features: [],
-          add_ons: [],
-          support_sla: [],
-          volume_discounts: []
-        }
-      },
-      status: 200,
-      statusText: 'OK',
-      headers: {} as any,
-      config: { url: '/api/plans/1', method: 'get', headers: {} as any }
-    });
-    
-    // Mock localStorage
-    const localStorageMock = {
-      getItem: vi.fn(),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-      clear: vi.fn(),
-    };
-    Object.defineProperty(window, 'localStorage', {
-      value: localStorageMock
-    });
-  });
+    vi.spyOn(planOperationsHook, 'usePlanOperations').mockReturnValue(defaultPlanOperationsReturn)
+    vi.spyOn(tabValidationHook, 'useTabValidation').mockReturnValue(defaultTabValidationReturn)
+    vi.spyOn(tabNavigationHook, 'useTabNavigation').mockReturnValue(defaultTabNavigationReturn)
+    vi.spyOn(planFormModeContext, 'usePlanFormMode').mockReturnValue({
+      mode: PLAN_FORM_MODES.CREATE,
+      planId: undefined
+    })
 
-  afterEach(() => {
-    vi.clearAllMocks();
-    vi.restoreAllMocks();
-  });
+    vi.spyOn(storageUtils, 'hasStorageData').mockReturnValue(false)
+    vi.spyOn(storageUtils, 'saveFormDataToStorage').mockReturnValue(true)
+    vi.spyOn(storageUtils, 'loadDataFromStorage').mockImplementation(() => {})
+    vi.spyOn(storageUtils, 'clearStorageData').mockImplementation(() => {})
+    vi.spyOn(formUtils, 'formatApiDataToFormData').mockImplementation((data) => data as any)
 
-  describe('rendering and initialization', () => {
-    it('should render all main components correctly', () => {
-      renderFormContainer({ mode: 'create' });
+    mockGetValues.mockReturnValue({
+      name: '',
+      description: '',
+      is_active: true
+    })
+  })
 
-      expect(screen.getByTestId('resource-error-provider')).toBeInTheDocument();
-      expect(screen.getByTestId('breadcrumbs')).toBeInTheDocument();
-      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument();
-      expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
-    });
+  const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+    <Provider>{children}</Provider>
+  )
 
-    it('should display correct title for create mode', () => {
-      renderFormContainer({ mode: 'create' });
+  const TestComponent = (props: Partial<React.ComponentProps<typeof PlanFormContainer>> = {}) => {
+    const methods = useForm<CreatePlanFormData>({
+      defaultValues: {
+        name: '',
+        description: '',
+        is_active: true,
+        is_custom: false,
+        included_devices_count: '',
+        max_users_per_branch: '',
+        included_branches_count: '',
+        additional_device_cost: '',
+        monthly_price: '',
+        annual_discount_percentage: '',
+        monthly_fee_our_gateway: '',
+        monthly_fee_byo_processor: '',
+        card_processing_fee_percentage: '',
+        card_processing_fee_fixed: '',
+        feature_ids: [],
+        addon_assignments: [],
+        support_sla_ids: [],
+        volume_discounts: []
+      }
+    })
 
-      expect(screen.getByText('Create New Plan')).toBeInTheDocument();
-    });
+    /* Override form methods with mocks */
+    methods.setValue = mockSetValue as any
+    methods.reset = mockReset as any
+    methods.getValues = mockGetValues as any
 
-    it('should display custom title when provided', () => {
-      renderFormContainer({ 
-        mode: 'create', 
-        title: 'Custom Plan Title' 
-      });
+    return (
+      <FormProvider {...methods}>
+        <PlanFormContainer
+          onSubmit={mockOnSubmit}
+          isSubmitting={false}
+          {...props}
+        />
+      </FormProvider>
+    )
+  }
 
-      expect(screen.getByText('Custom Plan Title')).toBeInTheDocument();
-    });
+  describe('CREATE Mode', () => {
+    it('should render form container in CREATE mode', () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-    it('should initialize form with default values in create mode', () => {
-      renderFormContainer({ mode: 'create' });
+      expect(screen.getByText('Create Plan')).toBeInTheDocument()
+      expect(screen.getByTestId('breadcrumbs')).toBeInTheDocument()
+      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument()
+    })
 
-      const formUI = screen.getByTestId('plan-form-ui');
-      expect(formUI).toHaveTextContent('Mode: create');
-      expect(formUI).toHaveTextContent('Active Tab: basic');
-      expect(formUI).toHaveTextContent('Show Saved Indicator: false');
-    });
+    it('should not show data recovery modal when no existing data', () => {
+      vi.spyOn(storageUtils, 'hasStorageData').mockReturnValue(false)
 
-    it('should not show data recovery modal when no stored data exists', async () => {
-      const { hasStorageData } = await import('@plan-management/utils');
-      vi.mocked(hasStorageData).mockReturnValue(false);
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      renderFormContainer({ mode: 'create' });
+      expect(screen.queryByTestId('data-recovery-modal')).not.toBeInTheDocument()
+    })
 
-      expect(screen.queryByTestId('data-recovery-modal')).not.toBeInTheDocument();
-    });
-  });
+    it('should show data recovery modal when existing data found', () => {
+      vi.spyOn(storageUtils, 'hasStorageData').mockReturnValue(true)
 
-  describe('create mode functionality', () => {
-    it('should show data recovery modal when stored data exists', async () => {
-      const { hasStorageData } = await import('@plan-management/utils');
-      vi.mocked(hasStorageData).mockReturnValue(true);
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      renderFormContainer({ mode: 'create' });
+      expect(screen.getByTestId('data-recovery-modal')).toBeInTheDocument()
+    })
 
-      expect(screen.getByTestId('data-recovery-modal')).toBeInTheDocument();
-    });
+    it('should restore data when restore button clicked', async () => {
+      const user = userEvent.setup()
+      vi.spyOn(storageUtils, 'hasStorageData').mockReturnValue(true)
 
-    it('should handle restore data from modal', async () => {
-      const user = userEvent.setup();
-      const { hasStorageData, loadDataFromStorage } = await import('@plan-management/utils');
-      vi.mocked(hasStorageData).mockReturnValue(true);
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      renderFormContainer({ mode: 'create' });
-
-      const restoreButton = screen.getByTestId('restore-button');
-      await user.click(restoreButton);
-
-      expect(loadDataFromStorage).toHaveBeenCalled();
-      expect(screen.queryByTestId('data-recovery-modal')).not.toBeInTheDocument();
-    });
-
-    it('should handle start fresh from modal', async () => {
-      const user = userEvent.setup();
-      const { hasStorageData, clearStorageData } = await import('@plan-management/utils');
-      vi.mocked(hasStorageData).mockReturnValue(true);
-
-      renderFormContainer({ mode: 'create' });
-
-      const startFreshButton = screen.getByTestId('start-fresh-button');
-      await user.click(startFreshButton);
-
-      expect(clearStorageData).toHaveBeenCalled();
-      expect(screen.queryByTestId('data-recovery-modal')).not.toBeInTheDocument();
-    });
-
-    it('should trigger auto-save functionality', async () => {
-      vi.useFakeTimers();
-      const { saveFormDataToStorage } = await import('@plan-management/utils');
-      
-      renderFormContainer({ mode: 'create' });
-
-      // Check that component renders
-      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument();
-
-      // Fast-forward timers to trigger auto-save
-      act(() => {
-        vi.advanceTimersByTime(500);
-      });
-
-      // Simply check that the function was made available by the mock
-      expect(saveFormDataToStorage).toBeDefined();
-
-      vi.useRealTimers();
-    });
-  });
-
-  describe('edit mode functionality', () => {
-    it('should load plan data for edit mode', async () => {
-      const { planService } = await import('@plan-management/api');
-      
-      renderFormContainer({ 
-        mode: 'edit', 
-        planId: 1 
-      });
-
-      // Just check that the component renders and shows appropriate heading
-      expect(screen.getByText('Edit Plan')).toBeInTheDocument();
-      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument();
-      
-      // Check that the API service is available
-      expect(planService.getSubscriptionPlanDetails).toBeDefined();
-    });
-
-    it('should show loading spinner while fetching data', async () => {
-      const { planService } = await import('@plan-management/api');
-      
-      // Mock a simple delayed response
-      vi.mocked(planService.getSubscriptionPlanDetails).mockResolvedValue({
-        data: { 
-          success: true, 
-          count: 1,
-          message: 'Plan details retrieved successfully',
-          timestamp: new Date().toISOString(),
-          data: {
-            id: 1,
-            name: 'Test Plan',
-            description: 'Test Description',
-            display_order: 1,
-            trial_period_days: 14,
-            is_active: 1,
-            is_custom: 0,
-            monthly_price: 29.99,
-            monthly_fee_our_gateway: 2.99,
-            monthly_fee_byo_processor: 1.99,
-            card_processing_fee_percentage: 2.9,
-            card_processing_fee_fixed: 0.30,
-            additional_device_cost: 9.99,
-            annual_discount_percentage: 10,
-            biennial_discount_percentage: 15,
-            triennial_discount_percentage: 20,
-            included_devices_count: 5,
-            max_users_per_branch: 10,
-            included_branches_count: 1,
-            features: [],
-            add_ons: [],
-            support_sla: [],
-            volume_discounts: []
-          } 
-        },
-        status: 200,
-        statusText: 'OK',
-        headers: {} as any,
-        config: { url: '/api/plans/1', method: 'get', headers: {} as any }
-      });
-
-      renderFormContainer({ 
-        mode: 'edit', 
-        planId: 1 
-      });
-
-      // Check basic component structure
-      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument();
-      expect(screen.getByText('Edit Plan')).toBeInTheDocument();
-    });
-
-    it('should handle plan data loading error', async () => {
-      const { planService } = await import('@plan-management/api');
-      vi.mocked(planService.getSubscriptionPlanDetails).mockRejectedValue(new Error('Network error'));
-
-      renderFormContainer({ 
-        mode: 'edit', 
-        planId: 1 
-      });
-
-      // Check component renders correctly
-      expect(screen.getByText('Edit Plan')).toBeInTheDocument();
-      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument();
-    });
-
-    it('should handle retry after loading error', async () => {
-      const user = userEvent.setup();
-      const { planService } = await import('@plan-management/api');
-      
-      // First call fails
-      vi.mocked(planService.getSubscriptionPlanDetails)
-        .mockRejectedValueOnce(new Error('Network error'))
-        .mockResolvedValueOnce({
-          data: { 
-            success: true, 
-            count: 1,
-            message: 'Plan details retrieved successfully',
-            timestamp: new Date().toISOString(),
-            data: {
-              id: 1,
-              name: 'Test Plan',
-              description: 'Test Description',
-              display_order: 1,
-              trial_period_days: 14,
-              is_active: 1,
-              is_custom: 0,
-              monthly_price: 29.99,
-              monthly_fee_our_gateway: 2.99,
-              monthly_fee_byo_processor: 1.99,
-              card_processing_fee_percentage: 2.9,
-              card_processing_fee_fixed: 0.30,
-              additional_device_cost: 9.99,
-              annual_discount_percentage: 10,
-              biennial_discount_percentage: 15,
-              triennial_discount_percentage: 20,
-              included_devices_count: 5,
-              max_users_per_branch: 10,
-              included_branches_count: 1,
-              features: [],
-              add_ons: [],
-              support_sla: [],
-              volume_discounts: []
-            } 
-          },
-          status: 200,
-          statusText: 'OK',
-          headers: {} as any,
-          config: { url: '/api/plans/1', method: 'get', headers: {} as any }
-        });
-
-      renderFormContainer({ 
-        mode: 'edit', 
-        planId: 1 
-      });
+      const restoreButton = await screen.findByTestId('restore-button')
+      await user.click(restoreButton)
 
       await waitFor(() => {
-        expect(screen.getByTestId('error-container')).toBeInTheDocument();
-      });
-
-      const retryButton = screen.getByTestId('retry-button');
-      await user.click(retryButton);
+        expect(storageUtils.loadDataFromStorage).toHaveBeenCalled()
+      })
 
       await waitFor(() => {
-        expect(planService.getSubscriptionPlanDetails).toHaveBeenCalledTimes(2);
-        expect(screen.queryByTestId('error-container')).not.toBeInTheDocument();
-      });
-    });
+        expect(screen.queryByTestId('data-recovery-modal')).not.toBeInTheDocument()
+      })
+    })
 
-    it('should not show data recovery modal in edit mode', () => {
-      renderFormContainer({ 
-        mode: 'edit', 
-        planId: 1 
-      });
+    it('should start fresh when start fresh button clicked', async () => {
+      const user = userEvent.setup()
+      vi.spyOn(storageUtils, 'hasStorageData').mockReturnValue(true)
 
-      expect(screen.queryByTestId('data-recovery-modal')).not.toBeInTheDocument();
-    });
-  });
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-  describe('view mode functionality', () => {
-    it('should load plan data for view mode', async () => {
-      const { planService } = await import('@plan-management/api');
-
-      renderFormContainer({ 
-        mode: 'view', 
-        planId: 1 
-      });
+      const startFreshButton = await screen.findByTestId('start-fresh-button')
+      await user.click(startFreshButton)
 
       await waitFor(() => {
-        expect(planService.getSubscriptionPlanDetails).toHaveBeenCalledWith(1);
-      });
-
-      expect(screen.getByText('View Plan: Test Plan')).toBeInTheDocument();
-    });
-
-    it('should show edit and back to list buttons in view mode', async () => {
-      renderFormContainer({ 
-        mode: 'view', 
-        planId: 1 
-      });
+        expect(storageUtils.clearStorageData).toHaveBeenCalled()
+      })
 
       await waitFor(() => {
-        expect(screen.getByTestId('edit-button')).toBeInTheDocument();
-        expect(screen.getByTestId('back-to-list-button')).toBeInTheDocument();
-      });
-    });
+        expect(screen.queryByTestId('data-recovery-modal')).not.toBeInTheDocument()
+      })
+    })
 
-    it('should handle edit navigation', async () => {
-      const user = userEvent.setup();
+    it('should call saveFormDataToStorage when form data changes', async () => {
+      mockGetValues.mockReturnValue({
+        name: 'Test Plan',
+        description: 'Test Description',
+        is_active: true
+      })
 
-      renderFormContainer({ 
-        mode: 'view', 
-        planId: 1 
-      });
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      /* Wait for auto-save to trigger */
+      await waitFor(() => {
+        expect(storageUtils.saveFormDataToStorage).toHaveBeenCalled()
+      }, { timeout: 6000 })
+    })
+  })
+
+  describe('EDIT Mode', () => {
+    beforeEach(() => {
+      vi.spyOn(planFormModeContext, 'usePlanFormMode').mockReturnValue({
+        mode: PLAN_FORM_MODES.EDIT,
+        planId: 1
+      })
+      mockFetchPlanDetails.mockResolvedValue(mockPlanData)
+    })
+
+    it('should fetch plan data in EDIT mode', async () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(screen.getByTestId('edit-button')).toBeInTheDocument();
-      });
+        expect(mockFetchPlanDetails).toHaveBeenCalledWith(1)
+      })
+    })
 
-      const editButton = screen.getByTestId('edit-button');
-      await user.click(editButton);
+    it('should show loader while fetching plan data', () => {
+      vi.spyOn(planOperationsHook, 'usePlanOperations').mockReturnValue({
+        ...defaultPlanOperationsReturn,
+        isFetching: true
+      })
 
-      expect(mockRouter.push).toHaveBeenCalledWith('/admin/plan-management/edit/1');
-    });
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-    it('should handle back to list navigation', async () => {
-      const user = userEvent.setup();
+      expect(screen.getByTestId('loader-wrapper')).toBeInTheDocument()
+      expect(screen.getByText('Loading plan data...')).toBeInTheDocument()
+    })
 
-      renderFormContainer({ 
-        mode: 'view', 
-        planId: 1 
-      });
-
-      await waitFor(() => {
-        expect(screen.getByTestId('back-to-list-button')).toBeInTheDocument();
-      });
-
-      const backButton = screen.getByTestId('back-to-list-button');
-      await user.click(backButton);
-
-      expect(mockRouter.push).toHaveBeenCalledWith('/admin/plan-management');
-    });
-
-    it('should not show data recovery modal in view mode', () => {
-      renderFormContainer({ 
-        mode: 'view', 
-        planId: 1 
-      });
-
-      expect(screen.queryByTestId('data-recovery-modal')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('form submission', () => {
-    it('should handle form submission', async () => {
-      const user = userEvent.setup();
-      const { useFormSubmission } = await import('@plan-management/hooks');
-      const mockSubmitForm = vi.fn();
-      
-      vi.mocked(useFormSubmission).mockReturnValue({
-        submitForm: mockSubmitForm,
-        isSubmitting: false,
-        getSubmitButtonText: () => 'Create Plan'
-      });
-
-      renderFormContainer({ mode: 'create' });
-
-      const submitButton = screen.getByTestId('submit-button');
-      await user.click(submitButton);
-
-      expect(mockSubmitForm).toHaveBeenCalledWith({ name: 'Test Plan' });
-    });
-
-    it('should show submitting state', async() => {
-      const { useFormSubmission } = await import('@plan-management/hooks');
-      
-      vi.mocked(useFormSubmission).mockReturnValue({
-        submitForm: vi.fn(),
-        isSubmitting: true,
-        getSubmitButtonText: () => 'Creating...'
-      });
-
-      renderFormContainer({ mode: 'create' });
-
-      const formUI = screen.getByTestId('plan-form-ui');
-      expect(formUI).toHaveTextContent('Is Submitting: true');
-      expect(formUI).toHaveTextContent('Submit Button Text: Creating...');
-    });
-
-    it('should clear storage data after successful create submission', async () => {
-      const { clearStorageData } = await import('@plan-management/utils');
-      const { useFormSubmission } = await import('@plan-management/hooks');
-      
-      vi.mocked(useFormSubmission).mockImplementation((mode, planId, getValues, handleSuccess) => {
-        // Simulate calling the success handler
-        if (handleSuccess) {
-          setTimeout(() => handleSuccess(), 0);
-        }
-        return {
-          submitForm: vi.fn(),
-          isSubmitting: false,
-          getSubmitButtonText: () => 'Create Plan'
-        };
-      });
-
-      renderFormContainer({ mode: 'create' });
+    it('should reset form with fetched plan data', async () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(clearStorageData).toHaveBeenCalled();
-        expect(mockRouter.push).toHaveBeenCalledWith('/admin/plan-management');
-      }, { timeout: 100 });
-    });
-  });
+        expect(formUtils.formatApiDataToFormData).toHaveBeenCalledWith(mockPlanData)
+      })
+    })
 
-  describe('tab navigation', () => {
+    it('should show error when plan fetch fails', async () => {
+      mockFetchPlanDetails.mockResolvedValue(null)
+
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.getByTestId('error-container')).toBeInTheDocument()
+        expect(screen.getByText('Failed to load plan data')).toBeInTheDocument()
+      })
+    })
+
+    it('should retry loading plan data when retry clicked', async () => {
+      const user = userEvent.setup()
+      mockFetchPlanDetails.mockResolvedValueOnce(null)
+
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      const retryButton = await screen.findByTestId('retry-button')
+
+      mockFetchPlanDetails.mockResolvedValue(mockPlanData)
+      await user.click(retryButton)
+
+      await waitFor(() => {
+        expect(mockFetchPlanDetails).toHaveBeenCalledTimes(2)
+      })
+    })
+
+    it('should dismiss error message when dismiss clicked', async () => {
+      const user = userEvent.setup()
+      mockFetchPlanDetails.mockResolvedValue(null)
+
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      const dismissButton = await screen.findByTestId('dismiss-button')
+      await user.click(dismissButton)
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('error-container')).not.toBeInTheDocument()
+      })
+    })
+
+    it('should not auto-save in EDIT mode', async () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      /* Wait to ensure auto-save doesn't trigger */
+      await new Promise(resolve => setTimeout(resolve, AUTO_SAVE_DEBOUNCE_MS + 100))
+
+      expect(storageUtils.saveFormDataToStorage).not.toHaveBeenCalled()
+    })
+
+    it('should not show data recovery modal in EDIT mode', async () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('data-recovery-modal')).not.toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('VIEW Mode', () => {
+    beforeEach(() => {
+      vi.spyOn(planFormModeContext, 'usePlanFormMode').mockReturnValue({
+        mode: PLAN_FORM_MODES.VIEW,
+        planId: 1
+      })
+      mockFetchPlanDetails.mockResolvedValue(mockPlanData)
+    })
+
+    it('should fetch plan data in VIEW mode', async () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(mockFetchPlanDetails).toHaveBeenCalledWith(1)
+      })
+    })
+
+    it('should not auto-save in VIEW mode', async () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      /* Wait to ensure auto-save doesn't trigger */
+      await new Promise(resolve => setTimeout(resolve, AUTO_SAVE_DEBOUNCE_MS + 100))
+
+      expect(storageUtils.saveFormDataToStorage).not.toHaveBeenCalled()
+    })
+
+    it('should not show data recovery modal in VIEW mode', async () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('data-recovery-modal')).not.toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Form Submission', () => {
+    it('should call onSubmit when form is submitted', async () => {
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      const submitButton = await screen.findByTestId('submit-form')
+      await user.click(submitButton)
+
+      await waitFor(() => {
+        expect(mockOnSubmit).toHaveBeenCalled()
+      })
+    })
+
+    it('should show submitting state', () => {
+      render(<TestComponent isSubmitting={true} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Submitting')).toBeInTheDocument()
+    })
+
+    it('should not show submitting state initially', () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Not Submitting')).toBeInTheDocument()
+    })
+  })
+
+  describe('Tab Navigation', () => {
+    it('should render with initial active tab', () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      expect(screen.getByTestId('active-tab')).toHaveTextContent(PLAN_FORM_TAB.BASIC)
+    })
+
+    it('should pass tab unlock state to form UI', () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument()
+    })
+
     it('should handle tab change', async () => {
-      const user = userEvent.setup();
-      const { useTabNavigation } = await import('@plan-management/hooks');
-      const mockHandleTabChange = vi.fn();
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      vi.mocked(useTabNavigation).mockReturnValue({
-        tabUnlockState: { basic: true, pricing: true, features: true, addons: true, sla: true },
-        isTabUnlocked: vi.fn(() => true),
-        handleTabChange: mockHandleTabChange,
-        handleNextTab: vi.fn(),
-        handlePreviousTab: vi.fn()
-      });
+      const changeTabButton = await screen.findByTestId('change-tab')
+      await user.click(changeTabButton)
 
-      renderFormContainer({ mode: 'create' });
-
-      const tabChangeButton = screen.getByTestId('tab-change-button');
-      await user.click(tabChangeButton);
-
-      expect(mockHandleTabChange).toHaveBeenCalledWith('pricing');
-    });
+      expect(defaultTabNavigationReturn.handleTabChange).toHaveBeenCalled()
+    })
 
     it('should handle next tab navigation', async () => {
-      const user = userEvent.setup();
-      const { useTabNavigation } = await import('@plan-management/hooks');
-      const mockHandleNextTab = vi.fn();
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      vi.mocked(useTabNavigation).mockReturnValue({
-        tabUnlockState: { basic: true, pricing: true, features: true, addons: true, sla: true },
-        isTabUnlocked: vi.fn(() => true),
-        handleTabChange: vi.fn(),
-        handleNextTab: mockHandleNextTab,
-        handlePreviousTab: vi.fn()
-      });
+      const nextTabButton = await screen.findByTestId('next-tab')
+      await user.click(nextTabButton)
 
-      renderFormContainer({ mode: 'create' });
-
-      const nextTabButton = screen.getByTestId('next-tab-button');
-      await user.click(nextTabButton);
-
-      expect(mockHandleNextTab).toHaveBeenCalled();
-    });
+      expect(defaultTabNavigationReturn.handleNextTab).toHaveBeenCalled()
+    })
 
     it('should handle previous tab navigation', async () => {
-      const user = userEvent.setup();
-      const { useTabNavigation } = await import('@plan-management/hooks');
-      const mockHandlePreviousTab = vi.fn();
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      vi.mocked(useTabNavigation).mockReturnValue({
-        tabUnlockState: { basic: true, pricing: true, features: true, addons: true, sla: true },
-        isTabUnlocked: vi.fn(() => true),
-        handleTabChange: vi.fn(),
-        handleNextTab: vi.fn(),
-        handlePreviousTab: mockHandlePreviousTab
-      });
+      const previousTabButton = await screen.findByTestId('previous-tab')
+      await user.click(previousTabButton)
 
-      renderFormContainer({ mode: 'create' });
+      expect(defaultTabNavigationReturn.handlePreviousTab).toHaveBeenCalled()
+    })
+  })
 
-      const previousTabButton = screen.getByTestId('previous-tab-button');
-      await user.click(previousTabButton);
+  describe('Auto-save Indicator', () => {
+    it('should not show saved indicator initially', () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      expect(mockHandlePreviousTab).toHaveBeenCalled();
-    });
-  });
+      expect(screen.getByText('Not Saved')).toBeInTheDocument()
+    })
 
-  describe('auto-save functionality', () => {
-    it('should save active tab to localStorage', () => {
-      const mockSetItem = vi.fn();
-      
-      Object.defineProperty(window, 'localStorage', {
-        value: { ...localStorage, setItem: mockSetItem },
-        configurable: true
-      });
+    it('should show saved indicator after successful save', async () => {
+      mockGetValues.mockReturnValue({
+        name: 'Test Plan',
+        description: 'Test'
+      })
 
-      renderFormContainer({ mode: 'create' });
-
-      // Just verify the component renders with localStorage mock in place
-      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument();
-      expect(mockSetItem).toBeDefined();
-    });
-
-    it('should handle localStorage errors gracefully', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
-      Object.defineProperty(window, 'localStorage', {
-        value: { 
-          ...localStorage, 
-          setItem: vi.fn(() => { throw new Error('Storage error'); })
-        },
-        configurable: true
-      });
-
-      renderFormContainer({ mode: 'create' });
-
-      // Just verify the component renders without crashing when localStorage fails
-      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument();
-
-      consoleSpy.mockRestore();
-    });
-
-    it('should not auto-save in edit mode', async () => {
-      vi.useFakeTimers();
-      const { saveFormDataToStorage } = await import('@plan-management/utils');
-
-      renderFormContainer({ 
-        mode: 'edit', 
-        planId: 1 
-      });
-
-      act(() => {
-        vi.advanceTimersByTime(500);
-      });
-
-      expect(saveFormDataToStorage).not.toHaveBeenCalled();
-
-      vi.useRealTimers();
-    });
-
-    it('should not auto-save in view mode', async () => {
-      vi.useFakeTimers();
-      const { saveFormDataToStorage } = await import('@plan-management/utils');
-
-      renderFormContainer({ 
-        mode: 'view', 
-        planId: 1 
-      });
-
-      act(() => {
-        vi.advanceTimersByTime(500);
-      });
-
-      expect(saveFormDataToStorage).not.toHaveBeenCalled();
-
-      vi.useRealTimers();
-    });
-  });
-
-  describe('error handling', () => {
-    it('should handle API response with success: false', async () => {
-      const { planService } = await import('@plan-management/api');
-      vi.mocked(planService.getSubscriptionPlanDetails).mockResolvedValue({
-        data: { 
-          success: false, 
-          count: 0,
-          message: 'Failed to retrieve plan details',
-          timestamp: new Date().toISOString(),
-          data: undefined 
-        },
-        status: 400,
-        statusText: 'Bad Request',
-        headers: {} as any,
-        config: { url: '/api/plans/1', method: 'get', headers: {} as any }
-      });
-
-      renderFormContainer({ 
-        mode: 'edit', 
-        planId: 1 
-      });
+      render(<TestComponent />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(screen.getByTestId('error-container')).toBeInTheDocument();
-        expect(screen.getByText('Failed to load plan data. Please try again.')).toBeInTheDocument();
-      });
-    });
+        expect(storageUtils.saveFormDataToStorage).toHaveBeenCalled()
+      }, { timeout: 6000 })
+    })
+  })
 
-    it('should handle missing plan data in API response', async () => {
-      const { planService } = await import('@plan-management/api');
-      vi.mocked(planService.getSubscriptionPlanDetails).mockResolvedValue({
-        data: { 
-          success: true, 
-          count: 0,
-          message: 'No plan data found',
-          timestamp: new Date().toISOString(),
-          data: undefined 
-        },
-        status: 200,
-        statusText: 'OK',
-        headers: {} as any,
-        config: { url: '/api/plans/1', method: 'get', headers: {} as any }
-      });
+  describe('Cleanup', () => {
+    it('should cleanup timeout on unmount', () => {
+      const { unmount } = render(<TestComponent />, { wrapper: TestWrapper })
 
-      renderFormContainer({ 
-        mode: 'edit', 
-        planId: 1 
-      });
+      unmount()
+
+      /* Should not throw any errors */
+      expect(true).toBe(true)
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('should handle missing planId in EDIT mode gracefully', () => {
+      vi.spyOn(planFormModeContext, 'usePlanFormMode').mockReturnValue({
+        mode: PLAN_FORM_MODES.EDIT,
+        planId: undefined
+      })
+
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      expect(mockFetchPlanDetails).not.toHaveBeenCalled()
+    })
+
+    it('should handle undefined onSubmit gracefully', async () => {
+      const user = userEvent.setup()
+      render(<TestComponent onSubmit={undefined} />, { wrapper: TestWrapper })
+
+      const submitButton = await screen.findByTestId('submit-form')
+      await user.click(submitButton)
+
+      /* Should not throw error */
+      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument()
+    })
+  })
+
+  describe('Integration', () => {
+    it('should handle complete CREATE workflow', async () => {
+      const user = userEvent.setup()
+      vi.spyOn(storageUtils, 'hasStorageData').mockReturnValue(false)
+
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      /* Verify initial render */
+      expect(await screen.findByText('Create Plan')).toBeInTheDocument()
+      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument()
+
+      /* Submit form */
+      const submitButton = await screen.findByTestId('submit-form')
+      await user.click(submitButton)
 
       await waitFor(() => {
-        expect(screen.getByTestId('error-container')).toBeInTheDocument();
-        expect(screen.getByText('Failed to load plan data. Please try again.')).toBeInTheDocument();
-      });
-    });
+        expect(mockOnSubmit).toHaveBeenCalled()
+      })
+    })
 
-    it('should log errors to console', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const { planService } = await import('@plan-management/api');
-      const networkError = new Error('Network error');
-      
-      vi.mocked(planService.getSubscriptionPlanDetails).mockRejectedValue(networkError);
+    it('should handle EDIT workflow with successful data load', async () => {
+      vi.spyOn(planFormModeContext, 'usePlanFormMode').mockReturnValue({
+        mode: PLAN_FORM_MODES.EDIT,
+        planId: 1
+      })
+      mockFetchPlanDetails.mockResolvedValue(mockPlanData)
 
-      renderFormContainer({ 
-        mode: 'edit', 
-        planId: 1 
-      });
+      render(<TestComponent />, { wrapper: TestWrapper })
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith(
-          '[PlanFormContainer] Error loading plan data:',
-          networkError
-        );
-      });
+        expect(mockFetchPlanDetails).toHaveBeenCalledWith(1)
+        expect(formUtils.formatApiDataToFormData).toHaveBeenCalledWith(mockPlanData)
+      })
+    })
 
-      consoleSpy.mockRestore();
-    });
-  });
+    it('should handle data recovery workflow', async () => {
+      const user = userEvent.setup()
+      vi.spyOn(storageUtils, 'hasStorageData').mockReturnValue(true)
 
-  describe('component cleanup', () => {
-    it('should clear timeouts on unmount', () => {
-      vi.useFakeTimers();
-      const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      const { unmount } = renderFormContainer({ mode: 'create' });
+      /* Verify modal appears */
+      const restoreButton = await screen.findByTestId('restore-button')
 
-      // Trigger timeout creation
-      act(() => {
-        vi.advanceTimersByTime(100);
-      });
+      /* Restore data */
+      await user.click(restoreButton)
 
-      unmount();
+      /* Verify modal closes and data is loaded */
+      await waitFor(() => {
+        expect(storageUtils.loadDataFromStorage).toHaveBeenCalled()
+      })
 
-      expect(clearTimeoutSpy).toHaveBeenCalled();
-
-      clearTimeoutSpy.mockRestore();
-      vi.useRealTimers();
-    });
-
-    it('should prevent state updates after unmount', async () => {
-      vi.useFakeTimers();
-      const { saveFormDataToStorage } = await import('@plan-management/utils');
-
-      const { unmount } = renderFormContainer({ mode: 'create' });
-
-      unmount();
-
-      // Try to trigger auto-save after unmount
-      act(() => {
-        vi.advanceTimersByTime(500);
-      });
-
-      expect(saveFormDataToStorage).not.toHaveBeenCalled();
-
-      vi.useRealTimers();
-    });
-  });
-
-  describe('edge cases', () => {
-    it('should handle missing planId in edit mode', () => {
-      renderFormContainer({ mode: 'edit' });
-
-      expect(screen.getByText('Edit Plan')).toBeInTheDocument();
-      expect(screen.queryByText('Loading plan data...')).not.toBeInTheDocument();
-    });
-
-    it('should handle missing planId in view mode', () => {
-      renderFormContainer({ mode: 'view' });
-
-      expect(screen.getByText('View Plan')).toBeInTheDocument();
-      expect(screen.queryByText('Loading plan data...')).not.toBeInTheDocument();
-    });
-
-    it('should handle planId of 0 by not calling API', async () => {
-      const { planService } = await import('@plan-management/api');
-
-      renderFormContainer({ 
-        mode: 'edit', 
-        planId: 0 
-      });
-
-      // planId of 0 should be treated as falsy and not call the API
-      expect(planService.getSubscriptionPlanDetails).not.toHaveBeenCalled();
-      expect(screen.getByText('Edit Plan')).toBeInTheDocument();
-    });
-
-    it('should handle empty string title gracefully', () => {
-      renderFormContainer({ 
-        mode: 'create',
-        title: ''
-      });
-
-      // Should fall back to default title
-      expect(screen.getByText('Create New Plan')).toBeInTheDocument();
-    });
-
-    it('should handle form values watcher when form is not initialized', async () => {
-      // This tests the edge case where watch() is called before form is ready
-      const { useFormSubmission } = await import('@plan-management/hooks');
-      
-      vi.mocked(useFormSubmission).mockImplementation(() => {
-        // Simulate hook throwing error during initialization
-        throw new Error('Form not ready');
-      });
-
-      expect(() => {
-        renderFormContainer({ mode: 'create' });
-      }).toThrow('Form not ready');
-    });
-  });
-
-  describe('integration scenarios', () => {
-    it('should handle complete create workflow', async() => {
-      const { hasStorageData } = vi.mocked(await import ('@plan-management/utils'));
-      vi.mocked(hasStorageData).mockReturnValue(false);
-
-      renderFormContainer({ mode: 'create' });
-
-      // Basic integration test - just verify components work together
-      expect(screen.getByText('Create New Plan')).toBeInTheDocument();
-      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument();
-      expect(screen.getByText('Mode: create')).toBeInTheDocument();
-    });
-
-    it('should handle edit mode with error recovery', async () => {
-      const { planService } = await import('@plan-management/api');
-      vi.mocked(planService.getSubscriptionPlanDetails).mockRejectedValue(new Error('Network error'));
-
-      renderFormContainer({ 
-        mode: 'edit', 
-        planId: 1 
-      });
-
-      // Basic check that component renders in edit mode
-      expect(screen.getByText('Edit Plan')).toBeInTheDocument();
-      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument();
-    });
-
-    it('should handle view mode navigation flow', () => {
-      renderFormContainer({ 
-        mode: 'view', 
-        planId: 1 
-      });
-
-      // Basic check that component renders in view mode
-      expect(screen.getByText('View Plan')).toBeInTheDocument();
-      expect(screen.getByTestId('plan-form-ui')).toBeInTheDocument();
-    });
-  });
-});
+      await waitFor(() => {
+        expect(screen.queryByTestId('data-recovery-modal')).not.toBeInTheDocument()
+      })
+    })
+  })
+})

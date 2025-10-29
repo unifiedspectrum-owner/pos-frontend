@@ -4,7 +4,7 @@
 import { z } from 'zod/v4';
 
 /* Shared module imports */
-import { PhoneNumberSchema } from '@shared/schema/validation';
+import { PhoneNumberSchema } from '@shared/schema';
 import { OTP_REGEX } from '@shared/constants';
 
 /* Schema for creating new tenant account with complete business information */

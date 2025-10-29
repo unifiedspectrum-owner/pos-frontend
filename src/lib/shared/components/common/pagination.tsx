@@ -102,9 +102,8 @@ const Pagination: React.FC<PaginationProps> = ({
           buttonProps={{
             borderRadius:"md"
           }}
-        >
-          Previous
-        </SecondaryButton>
+          buttonText={'Previous'}
+        />
         
         <Text fontSize="sm" px={4}>
           Page {pagination.current_page} of {pagination.total_pages}
@@ -118,9 +117,8 @@ const Pagination: React.FC<PaginationProps> = ({
           buttonProps={{
             borderRadius:"md"
           }}
-        >
-          Next
-        </SecondaryButton>
+          buttonText={'Next'}
+        />
       </HStack>
     </Flex>
   )

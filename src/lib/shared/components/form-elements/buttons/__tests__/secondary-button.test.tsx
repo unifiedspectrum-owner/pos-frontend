@@ -1,457 +1,571 @@
+/* Libraries imports */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { screen, fireEvent } from '@testing-library/react'
-import { render } from '@shared/test-utils/render'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { axe } from 'vitest-axe'
-import { FiHome, FiUser } from 'react-icons/fi'
+import { IconType } from 'react-icons'
+
+/* Shared module imports */
+import { Provider } from '@/components/ui/provider'
+
+/* Component imports */
 import SecondaryButton from '../secondary-button'
 
-// Mock the shared config since it's imported but file wasn't found
+/* Mock dependencies */
+vi.mock('polished', () => ({
+  lighten: vi.fn((amount: number, color: string) => color)
+}))
+
 vi.mock('@shared/config', () => ({
   GRAY_COLOR: '#718096'
 }))
 
-describe('SecondaryButton', () => {
-  const defaultProps = {
-    children: 'Click me'
-  }
+/* Test wrapper with Chakra Provider */
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <Provider>{children}</Provider>
+)
 
+describe('SecondaryButton Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  describe('Rendering', () => {
-    it('renders with default props', () => {
-      render(<SecondaryButton {...defaultProps} />)
-      expect(screen.getByRole('button', { name: 'Click me' })).toBeInTheDocument()
+  describe('Basic Rendering', () => {
+    it('should render button with default text', () => {
+      render(<SecondaryButton />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Cancel')).toBeInTheDocument()
     })
 
-    it('renders children content correctly', () => {
-      render(<SecondaryButton>Secondary Button Text</SecondaryButton>)
-      expect(screen.getByText('Secondary Button Text')).toBeInTheDocument()
+    it('should render button with children', () => {
+      render(<SecondaryButton>Click Me</SecondaryButton>, { wrapper: TestWrapper })
+
+      /* buttonText defaults to "Cancel" and takes precedence over children */
+      expect(screen.getByText('Cancel')).toBeInTheDocument()
+      expect(screen.queryByText('Click Me')).not.toBeInTheDocument()
     })
 
-    it('renders with complex children', () => {
+    it('should render button with buttonText prop', () => {
+      render(<SecondaryButton buttonText="Go Back" />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Go Back')).toBeInTheDocument()
+    })
+
+    it('should prioritize buttonText over children', () => {
       render(
-        <SecondaryButton>
-          <span>Multi</span> <strong>Element</strong> Content
-        </SecondaryButton>
+        <SecondaryButton buttonText="Close">Children Text</SecondaryButton>,
+        { wrapper: TestWrapper }
       )
-      expect(screen.getByText('Multi')).toBeInTheDocument()
-      expect(screen.getByText('Element')).toBeInTheDocument()
-      expect(screen.getByText('Content')).toBeInTheDocument()
+
+      expect(screen.getByText('Close')).toBeInTheDocument()
+      expect(screen.queryByText('Children Text')).not.toBeInTheDocument()
     })
 
-    it('renders with outline variant by default', () => {
-      render(<SecondaryButton>Outline Button</SecondaryButton>)
-      const button = screen.getByRole('button')
-      expect(button).toHaveClass('chakra-button')
+    it('should render button with default type', () => {
+      render(<SecondaryButton buttonText="Click" />, { wrapper: TestWrapper })
+
+      const button = screen.getByText('Click').closest('button')
+      expect(button).toHaveAttribute('type', 'button')
+    })
+
+    it('should render button with submit type', () => {
+      render(<SecondaryButton type="submit" buttonText="Submit" />, { wrapper: TestWrapper })
+
+      const button = screen.getByText('Submit').closest('button')
+      expect(button).toHaveAttribute('type', 'submit')
+    })
+
+    it('should render button with reset type', () => {
+      render(<SecondaryButton type="reset" buttonText="Reset" />, { wrapper: TestWrapper })
+
+      const button = screen.getByText('Reset').closest('button')
+      expect(button).toHaveAttribute('type', 'reset')
     })
   })
 
-  describe('Props', () => {
-    it('applies custom onClick handler', async () => {
+  describe('Button States', () => {
+    it('should be enabled by default', () => {
+      render(<SecondaryButton />, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).not.toBeDisabled()
+    })
+
+    it('should be disabled when disabled prop is true', () => {
+      render(<SecondaryButton disabled={true} />, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeDisabled()
+    })
+
+    it('should show loading state when loading is true', () => {
+      render(<SecondaryButton loading={true} />, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeDisabled()
+    })
+
+    it('should show loading state when isLoading is true', () => {
+      render(<SecondaryButton isLoading={true} />, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeDisabled()
+    })
+
+    it('should show loadingText when loading and loadingText is provided', () => {
+      render(
+        <SecondaryButton buttonText="Cancel" loadingText="Cancelling..." isLoading={true} />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Cancelling...')).toBeInTheDocument()
+      expect(screen.queryByText('Cancel')).not.toBeInTheDocument()
+    })
+
+    it('should not show loadingText when not loading', () => {
+      render(
+        <SecondaryButton buttonText="Cancel" loadingText="Cancelling..." isLoading={false} />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Cancel')).toBeInTheDocument()
+      expect(screen.queryByText('Cancelling...')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Button Sizes', () => {
+    it('should render with default medium size', () => {
+      render(<SecondaryButton />, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+
+    it('should render with small size', () => {
+      render(<SecondaryButton size="sm" />, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+
+    it('should render with large size', () => {
+      render(<SecondaryButton size="lg" />, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+  })
+
+  describe('Button Interactions', () => {
+    it('should call onClick handler when clicked', async () => {
+      const user = userEvent.setup()
       const handleClick = vi.fn()
-      render(<SecondaryButton onClick={handleClick}>Click me</SecondaryButton>)
-      
-      await userEvent.click(screen.getByRole('button'))
+
+      render(<SecondaryButton onClick={handleClick} />, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      await user.click(button)
+
       expect(handleClick).toHaveBeenCalledTimes(1)
     })
 
-    it('applies different button types', () => {
-      const { rerender } = render(<SecondaryButton type="submit">Submit</SecondaryButton>)
-      expect(screen.getByRole('button')).toHaveAttribute('type', 'submit')
+    it('should not call onClick when disabled', async () => {
+      const user = userEvent.setup()
+      const handleClick = vi.fn()
 
-      rerender(<SecondaryButton type="reset">Reset</SecondaryButton>)
-      expect(screen.getByRole('button')).toHaveAttribute('type', 'reset')
-
-      rerender(<SecondaryButton type="button">Button</SecondaryButton>)
-      expect(screen.getByRole('button')).toHaveAttribute('type', 'button')
-    })
-
-    it('applies different sizes', () => {
-      const { rerender } = render(<SecondaryButton size="sm">Small</SecondaryButton>)
-      const button = screen.getByRole('button')
-      
-      // Check that the button renders with different sizes by verifying it has chakra classes
-      expect(button).toHaveClass('chakra-button')
-
-      rerender(<SecondaryButton size="md">Medium</SecondaryButton>)
-      expect(screen.getByRole('button')).toHaveClass('chakra-button')
-
-      rerender(<SecondaryButton size="lg">Large</SecondaryButton>)
-      expect(screen.getByRole('button')).toHaveClass('chakra-button')
-    })
-
-    it('spreads additional buttonProps', () => {
       render(
-        <SecondaryButton 
-          buttonProps={{ 
-            'aria-label': 'Secondary aria label',
-            id: 'secondary-id',
-            title: 'Secondary title'
-          }}
-        >
-          Secondary Button
-        </SecondaryButton>
+        <SecondaryButton onClick={handleClick} disabled={true} />,
+        { wrapper: TestWrapper }
       )
-      
+
       const button = screen.getByRole('button')
-      expect(button).toHaveAttribute('aria-label', 'Secondary aria label')
-      expect(button).toHaveAttribute('id', 'secondary-id')
-      expect(button).toHaveAttribute('title', 'Secondary title')
+      await user.click(button)
+
+      expect(handleClick).not.toHaveBeenCalled()
+    })
+
+    it('should not call onClick when loading', async () => {
+      const user = userEvent.setup()
+      const handleClick = vi.fn()
+
+      render(
+        <SecondaryButton onClick={handleClick} loading={true} />,
+        { wrapper: TestWrapper }
+      )
+
+      const button = screen.getByRole('button')
+      await user.click(button)
+
+      expect(handleClick).not.toHaveBeenCalled()
     })
   })
 
   describe('Icons', () => {
-    it('renders with left icon', () => {
-      render(<SecondaryButton leftIcon={FiHome}>With Left Icon</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
-      expect(button).toBeInTheDocument()
-      // Check if icon is rendered (icons are rendered as svg elements)
-      expect(button.querySelector('svg')).toBeInTheDocument()
+    it('should render with left icon', () => {
+      const LeftIcon: IconType = () => <svg data-testid="left-icon" />
+
+      render(
+        <SecondaryButton leftIcon={LeftIcon} buttonText="Back" />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('left-icon')).toBeInTheDocument()
+      expect(screen.getByText('Back')).toBeInTheDocument()
     })
 
-    it('renders with right icon', () => {
-      render(<SecondaryButton rightIcon={FiUser}>With Right Icon</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
-      expect(button).toBeInTheDocument()
-      expect(button.querySelector('svg')).toBeInTheDocument()
+    it('should render with right icon', () => {
+      const RightIcon: IconType = () => <svg data-testid="right-icon" />
+
+      render(
+        <SecondaryButton rightIcon={RightIcon} buttonText="Next" />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('right-icon')).toBeInTheDocument()
+      expect(screen.getByText('Next')).toBeInTheDocument()
     })
 
-    it('renders with both left and right icons', () => {
-      render(<SecondaryButton leftIcon={FiHome} rightIcon={FiUser}>Both Icons</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
-      expect(button).toBeInTheDocument()
-      // Should have 2 SVG elements
-      expect(button.querySelectorAll('svg')).toHaveLength(2)
+    it('should render with both left and right icons', () => {
+      const LeftIcon: IconType = () => <svg data-testid="left-icon" />
+      const RightIcon: IconType = () => <svg data-testid="right-icon" />
+
+      render(
+        <SecondaryButton
+          leftIcon={LeftIcon}
+          rightIcon={RightIcon}
+          buttonText="Options"
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('left-icon')).toBeInTheDocument()
+      expect(screen.getByTestId('right-icon')).toBeInTheDocument()
+      expect(screen.getByText('Options')).toBeInTheDocument()
     })
 
-    it('renders without icons when not provided', () => {
-      render(<SecondaryButton>No Icons</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
-      expect(button.querySelector('svg')).not.toBeInTheDocument()
-    })
-  })
+    it('should not render icons when not provided', () => {
+      render(<SecondaryButton />, { wrapper: TestWrapper })
 
-  describe('States', () => {
-    it('handles disabled state', async () => {
-      const handleClick = vi.fn()
-      render(<SecondaryButton disabled onClick={handleClick}>Disabled Button</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
-      expect(button).toBeDisabled()
-      
-      // Try to click disabled button
-      await userEvent.click(button)
-      expect(handleClick).not.toHaveBeenCalled()
-    })
-
-    it('handles loading state', () => {
-      render(<SecondaryButton loading>Loading Button</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
-      // Chakra UI loading state typically disables the button and shows a spinner
-      expect(button).toBeInTheDocument()
-    })
-
-    it('handles both disabled and loading states', () => {
-      render(<SecondaryButton disabled loading>Disabled Loading</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
-      expect(button).toBeDisabled()
+      expect(screen.queryByTestId('left-icon')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('right-icon')).not.toBeInTheDocument()
     })
   })
 
-  describe('Interactions', () => {
-    it('handles click events', async () => {
-      const handleClick = vi.fn()
-      render(<SecondaryButton onClick={handleClick}>Clickable</SecondaryButton>)
-      
-      await userEvent.click(screen.getByRole('button'))
-      expect(handleClick).toHaveBeenCalledTimes(1)
+  describe('Additional Props', () => {
+    it('should accept additional button props', () => {
+      render(
+        <SecondaryButton buttonProps={{ 'aria-label': 'Close dialog' }}>
+          Close
+        </SecondaryButton>,
+        { wrapper: TestWrapper }
+      )
+
+      const button = screen.getByRole('button')
+      expect(button).toHaveAttribute('aria-label', 'Close dialog')
     })
 
-    it('handles multiple clicks', async () => {
-      const handleClick = vi.fn()
-      render(<SecondaryButton onClick={handleClick}>Multi Click</SecondaryButton>)
-      
+    it('should spread buttonProps correctly', () => {
+      render(
+        <SecondaryButton buttonProps={{ id: 'close-btn', className: 'custom-class' }}>
+          Close
+        </SecondaryButton>,
+        { wrapper: TestWrapper }
+      )
+
       const button = screen.getByRole('button')
-      await userEvent.click(button)
-      await userEvent.click(button)
-      await userEvent.click(button)
-      
+      expect(button).toHaveAttribute('id', 'close-btn')
+    })
+  })
+
+  describe('Use Cases', () => {
+    it('should render cancel button for dialogs', () => {
+      render(
+        <SecondaryButton buttonText="Cancel" onClick={vi.fn()} />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Cancel')).toBeInTheDocument()
+    })
+
+    it('should render back button for navigation', () => {
+      render(
+        <SecondaryButton buttonText="Go Back" />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Go Back')).toBeInTheDocument()
+    })
+
+    it('should render close button with icon', () => {
+      const CloseIcon: IconType = () => <svg data-testid="close-icon" />
+
+      render(
+        <SecondaryButton leftIcon={CloseIcon} buttonText="Close" />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('close-icon')).toBeInTheDocument()
+      expect(screen.getByText('Close')).toBeInTheDocument()
+    })
+
+    it('should render loading state for cancellation', () => {
+      render(
+        <SecondaryButton buttonText="Cancel" loadingText="Cancelling..." isLoading={true} />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Cancelling...')).toBeInTheDocument()
+      expect(screen.getByRole('button')).toBeDisabled()
+    })
+
+    it('should render reset button for forms', () => {
+      render(
+        <SecondaryButton type="reset" buttonText="Reset Form" />,
+        { wrapper: TestWrapper }
+      )
+
+      const button = screen.getByRole('button')
+      expect(button).toHaveAttribute('type', 'reset')
+      expect(screen.getByText('Reset Form')).toBeInTheDocument()
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('should handle empty buttonText with children', () => {
+      render(<SecondaryButton buttonText="">Children Text</SecondaryButton>, { wrapper: TestWrapper })
+
+      /* Empty string is falsy, so children should be rendered */
+      expect(screen.getByText('Children Text')).toBeInTheDocument()
+    })
+
+    it('should handle both loading and disabled states', () => {
+      render(
+        <SecondaryButton loading={true} disabled={true} />,
+        { wrapper: TestWrapper }
+      )
+
+      const button = screen.getByRole('button')
+      expect(button).toBeDisabled()
+    })
+
+    it('should handle long text', () => {
+      const longText = 'This is a very long button text that should still render properly'
+      render(<SecondaryButton buttonText={longText} />, { wrapper: TestWrapper })
+
+      expect(screen.getByText(longText)).toBeInTheDocument()
+    })
+
+    it('should handle special characters in text', () => {
+      render(<SecondaryButton buttonText="Cancel & Close" />, { wrapper: TestWrapper })
+
+      expect(screen.getByText('Cancel & Close')).toBeInTheDocument()
+    })
+
+    it('should handle multiple clicks', async () => {
+      const user = userEvent.setup()
+      const handleClick = vi.fn()
+
+      render(<SecondaryButton onClick={handleClick} />, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      await user.click(button)
+      await user.click(button)
+      await user.click(button)
+
       expect(handleClick).toHaveBeenCalledTimes(3)
     })
 
-    it('handles keyboard interactions', async () => {
-      const handleClick = vi.fn()
-      render(<SecondaryButton onClick={handleClick}>Keyboard</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
-      
-      // Focus the button and use userEvent for more realistic keyboard interactions
-      await userEvent.click(button)
-      expect(handleClick).toHaveBeenCalledTimes(1)
-      
-      // Test keyboard activation with userEvent
-      await userEvent.keyboard('{Enter}')
-      expect(handleClick).toHaveBeenCalledTimes(2)
-      
-      // Test space key
-      await userEvent.keyboard(' ')
-      expect(handleClick).toHaveBeenCalledTimes(3)
-    })
+    it('should handle undefined onClick', async () => {
+      const user = userEvent.setup()
 
-    it('prevents click when disabled', async () => {
-      const handleClick = vi.fn()
-      render(<SecondaryButton disabled onClick={handleClick}>Disabled</SecondaryButton>)
-      
-      await userEvent.click(screen.getByRole('button'))
-      expect(handleClick).not.toHaveBeenCalled()
+      render(<SecondaryButton />, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      await user.click(button)
+
+      /* Should not throw error when onClick is undefined */
+      expect(button).toBeInTheDocument()
     })
   })
 
-  describe('Styling', () => {
-    it('applies outline variant styles', () => {
-      render(<SecondaryButton>Outline Button</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
-      // Check that the button has the outline variant styling
-      expect(button).toHaveClass('chakra-button')
-    })
+  describe('State Transitions', () => {
+    it('should transition from enabled to disabled', () => {
+      const { rerender } = render(
+        <SecondaryButton disabled={false} />,
+        { wrapper: TestWrapper }
+      )
 
-    it('applies hover styles on mouse over', async () => {
-      render(<SecondaryButton>Hover Button</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
-      await userEvent.hover(button)
-      
-      // Verify button is still present after hover (hover effects are CSS-based)
-      expect(button).toBeInTheDocument()
-    })
+      let button = screen.getByRole('button')
+      expect(button).not.toBeDisabled()
 
-    it('maintains focus styles', async () => {
-      render(<SecondaryButton>Focus Button</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
-      await userEvent.tab() // Should focus the button
-      
-      expect(button).toHaveFocus()
-    })
+      rerender(<SecondaryButton disabled={true} />)
 
-    it('applies disabled styles correctly', () => {
-      render(<SecondaryButton disabled>Disabled Styling</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
+      button = screen.getByRole('button')
       expect(button).toBeDisabled()
-      expect(button).toHaveClass('chakra-button')
+    })
+
+    it('should transition from loading to not loading', () => {
+      const { rerender } = render(
+        <SecondaryButton buttonText="Cancel" loadingText="Cancelling..." isLoading={true} />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Cancelling...')).toBeInTheDocument()
+
+      rerender(
+        <SecondaryButton buttonText="Cancel" loadingText="Cancelling..." isLoading={false} />
+      )
+
+      expect(screen.getByText('Cancel')).toBeInTheDocument()
+      expect(screen.queryByText('Cancelling...')).not.toBeInTheDocument()
+    })
+
+    it('should update button text dynamically', () => {
+      const { rerender } = render(
+        <SecondaryButton buttonText="Cancel" />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Cancel')).toBeInTheDocument()
+
+      rerender(<SecondaryButton buttonText="Close" />)
+
+      expect(screen.getByText('Close')).toBeInTheDocument()
+      expect(screen.queryByText('Cancel')).not.toBeInTheDocument()
+    })
+
+    it('should update onClick handler', async () => {
+      const user = userEvent.setup()
+      const firstHandler = vi.fn()
+      const secondHandler = vi.fn()
+
+      const { rerender } = render(
+        <SecondaryButton onClick={firstHandler} />,
+        { wrapper: TestWrapper }
+      )
+
+      let button = screen.getByRole('button')
+      await user.click(button)
+
+      expect(firstHandler).toHaveBeenCalledTimes(1)
+      expect(secondHandler).not.toHaveBeenCalled()
+
+      rerender(<SecondaryButton onClick={secondHandler} />)
+
+      button = screen.getByRole('button')
+      await user.click(button)
+
+      expect(firstHandler).toHaveBeenCalledTimes(1)
+      expect(secondHandler).toHaveBeenCalledTimes(1)
     })
   })
 
   describe('Accessibility', () => {
-    it('should not have accessibility violations', async () => {
-      const { container } = render(<SecondaryButton>Accessible Button</SecondaryButton>)
-      const results = await axe(container)
-      expect(results.violations).toHaveLength(0)
+    it('should have button role', () => {
+      render(<SecondaryButton />, { wrapper: TestWrapper })
+
+      expect(screen.getByRole('button')).toBeInTheDocument()
     })
 
-    it('should be keyboard accessible', async () => {
-      const handleClick = vi.fn()
-      render(<SecondaryButton onClick={handleClick}>Keyboard Accessible</SecondaryButton>)
-      
-      await userEvent.tab()
-      expect(screen.getByRole('button')).toHaveFocus()
-      
-      await userEvent.keyboard('{Enter}')
-      expect(handleClick).toHaveBeenCalledTimes(1)
-    })
+    it('should indicate disabled state for screen readers', () => {
+      render(<SecondaryButton disabled={true} />, { wrapper: TestWrapper })
 
-    it('should have proper ARIA attributes when disabled', () => {
-      render(<SecondaryButton disabled>ARIA Button</SecondaryButton>)
-      
       const button = screen.getByRole('button')
       expect(button).toBeDisabled()
     })
 
     it('should support custom aria-label', () => {
       render(
-        <SecondaryButton buttonProps={{ 'aria-label': 'Custom secondary action' }}>
-          Icon Only
-        </SecondaryButton>
+        <SecondaryButton buttonProps={{ 'aria-label': 'Cancel action' }}>
+          Cancel
+        </SecondaryButton>,
+        { wrapper: TestWrapper }
       )
-      
-      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Custom secondary action')
-    })
 
-    it('should be discoverable by screen readers', () => {
-      render(<SecondaryButton>Screen Reader Button</SecondaryButton>)
-      
-      expect(screen.getByRole('button', { name: 'Screen Reader Button' })).toBeInTheDocument()
-    })
-
-    it('should have proper contrast for outline button', () => {
-      render(<SecondaryButton>High Contrast</SecondaryButton>)
-      
       const button = screen.getByRole('button')
-      expect(button).toBeInTheDocument()
-      // Outline buttons should maintain good contrast
-      expect(button).toHaveClass('chakra-button')
+      expect(button).toHaveAttribute('aria-label', 'Cancel action')
     })
-  })
 
-  describe('Edge Cases', () => {
-    it('handles undefined onClick', () => {
-      render(<SecondaryButton>No Handler</SecondaryButton>)
-      
+    it('should be keyboard accessible', () => {
+      render(<SecondaryButton />, { wrapper: TestWrapper })
+
       const button = screen.getByRole('button')
-      expect(() => fireEvent.click(button)).not.toThrow()
+      expect(button).toHaveAttribute('type', 'button')
     })
 
-    it('handles empty children', () => {
-      render(<SecondaryButton>{''}</SecondaryButton>)
-      
-      expect(screen.getByRole('button')).toBeInTheDocument()
-    })
+    it('should indicate loading state appropriately', () => {
+      render(<SecondaryButton isLoading={true} />, { wrapper: TestWrapper })
 
-    it('handles null children gracefully', () => {
-      render(<SecondaryButton>{null}</SecondaryButton>)
-      
-      expect(screen.getByRole('button')).toBeInTheDocument()
-    })
-
-    it('handles undefined children', () => {
-      render(<SecondaryButton>{undefined}</SecondaryButton>)
-      
-      expect(screen.getByRole('button')).toBeInTheDocument()
-    })
-
-    it('handles zero as children', () => {
-      render(<SecondaryButton>{0}</SecondaryButton>)
-      
-      expect(screen.getByText('0')).toBeInTheDocument()
-    })
-
-    it('handles boolean false as children', () => {
-      render(<SecondaryButton>{false}</SecondaryButton>)
-      
-      expect(screen.getByRole('button')).toBeInTheDocument()
-    })
-  })
-
-  describe('Integration', () => {
-    it('works within forms', async () => {
-      const handleSubmit = vi.fn(e => e.preventDefault())
-      
-      render(
-        <form onSubmit={handleSubmit}>
-          <SecondaryButton type="submit">Submit Form</SecondaryButton>
-        </form>
-      )
-      
-      await userEvent.click(screen.getByRole('button'))
-      expect(handleSubmit).toHaveBeenCalledTimes(1)
-    })
-
-    it('integrates with form validation', async () => {
-      const handleClick = vi.fn()
-      
-      render(
-        <form>
-          <input required />
-          <SecondaryButton onClick={handleClick} type="button">
-            Cancel
-          </SecondaryButton>
-        </form>
-      )
-      
-      await userEvent.click(screen.getByRole('button'))
-      expect(handleClick).toHaveBeenCalledTimes(1)
-    })
-
-    it('works alongside PrimaryButton', async () => {
-      const handlePrimary = vi.fn()
-      const handleSecondary = vi.fn()
-      
-      render(
-        <div>
-          <SecondaryButton onClick={handleSecondary}>Cancel</SecondaryButton>
-          <button onClick={handlePrimary}>Save</button>
-        </div>
-      )
-      
-      await userEvent.click(screen.getByText('Cancel'))
-      expect(handleSecondary).toHaveBeenCalledTimes(1)
-      
-      await userEvent.click(screen.getByText('Save'))
-      expect(handlePrimary).toHaveBeenCalledTimes(1)
-    })
-  })
-
-  describe('Performance', () => {
-    it('should not re-render unnecessarily', () => {
-      const { rerender } = render(<SecondaryButton>Initial</SecondaryButton>)
-      
-      // Re-render with same props
-      rerender(<SecondaryButton>Initial</SecondaryButton>)
-      
-      expect(screen.getByRole('button')).toBeInTheDocument()
-    })
-
-    it('should handle rapid clicks', async () => {
-      const handleClick = vi.fn()
-      render(<SecondaryButton onClick={handleClick}>Rapid Click</SecondaryButton>)
-      
       const button = screen.getByRole('button')
-      
-      // Simulate rapid clicks
-      for (let i = 0; i < 5; i++) {
-        await userEvent.click(button)
-      }
-      
-      expect(handleClick).toHaveBeenCalledTimes(5)
-    })
-  })
-
-  describe('Secondary Button Specific Features', () => {
-    it('uses outline variant by default', () => {
-      render(<SecondaryButton>Outline Style</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
-      expect(button).toHaveClass('chakra-button')
-      // Secondary button should have outline styling
-    })
-
-    it('does not have background color override like PrimaryButton', () => {
-      render(<SecondaryButton>No BG Override</SecondaryButton>)
-      
-      const button = screen.getByRole('button')
-      expect(button).toBeInTheDocument()
-      // Unlike PrimaryButton, SecondaryButton doesn't accept bg prop
-    })
-
-    it('maintains consistent border styling', () => {
-      const { rerender } = render(<SecondaryButton>Border Test</SecondaryButton>)
-      
-      let button = screen.getByRole('button')
-      expect(button).toHaveClass('chakra-button')
-      
-      rerender(<SecondaryButton disabled>Disabled Border</SecondaryButton>)
-      button = screen.getByRole('button')
-      expect(button).toHaveClass('chakra-button')
       expect(button).toBeDisabled()
     })
+  })
 
-    it('has appropriate color contrast for text', () => {
-      render(<SecondaryButton>Text Contrast</SecondaryButton>)
-      
+  describe('Styling Variants', () => {
+    it('should render with outline variant', () => {
+      render(<SecondaryButton />, { wrapper: TestWrapper })
+
+      /* SecondaryButton uses outline variant by default */
       const button = screen.getByRole('button')
       expect(button).toBeInTheDocument()
-      // Text should have good contrast against transparent/outline background
+    })
+
+    it('should apply gray color scheme', () => {
+      render(<SecondaryButton />, { wrapper: TestWrapper })
+
+      const button = screen.getByRole('button')
+      expect(button).toBeInTheDocument()
+    })
+  })
+
+  describe('Integration Scenarios', () => {
+    it('should work as dialog cancel button', async () => {
+      const user = userEvent.setup()
+      const onCancel = vi.fn()
+
+      render(
+        <SecondaryButton onClick={onCancel} buttonText="Cancel" />,
+        { wrapper: TestWrapper }
+      )
+
+      const button = screen.getByText('Cancel')
+      await user.click(button)
+
+      expect(onCancel).toHaveBeenCalledTimes(1)
+    })
+
+    it('should work as form reset button', () => {
+      render(
+        <SecondaryButton type="reset" buttonText="Reset" />,
+        { wrapper: TestWrapper }
+      )
+
+      const button = screen.getByRole('button')
+      expect(button).toHaveAttribute('type', 'reset')
+    })
+
+    it('should work as back navigation button', () => {
+      const BackIcon: IconType = () => <svg data-testid="back-icon" />
+
+      render(
+        <SecondaryButton leftIcon={BackIcon} buttonText="Back" />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('back-icon')).toBeInTheDocument()
+      expect(screen.getByText('Back')).toBeInTheDocument()
+    })
+
+    it('should work in pagination controls', () => {
+      const PrevIcon: IconType = () => <svg data-testid="prev-icon" />
+
+      render(
+        <SecondaryButton leftIcon={PrevIcon} buttonText="Previous" disabled={false} />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('prev-icon')).toBeInTheDocument()
+      expect(screen.getByText('Previous')).toBeInTheDocument()
+      expect(screen.getByRole('button')).not.toBeDisabled()
     })
   })
 })

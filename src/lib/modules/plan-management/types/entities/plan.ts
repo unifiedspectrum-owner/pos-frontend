@@ -127,5 +127,5 @@ export interface CreatePlanApiResponse {
     name: string;
     status: boolean;
   };
-  validation_errors: ValidationError[];
+  validation_errors?: ValidationError[];
 }

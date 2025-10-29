@@ -4,7 +4,7 @@
 import z from "zod/v4";
 
 /* Shared module imports */
-import { PhoneNumberSchema } from "@shared/schema/validation";
+import { PhoneNumberSchema } from "@shared/schema";
 import { NAME_REGEX } from "@shared/constants";
 
 /* User creation form validation schema */
