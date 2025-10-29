@@ -73,7 +73,7 @@ export const useRoles = (params: UseRolesParams = {}): UseRolesReturn => {
 
       console.log('[useRoles] Roles API response:', response)
 
-      if (response.success) {
+      if (response.success && response.data) {
         setRoles(response.data.roles)
         setPagination(response.pagination)
         setLastUpdated(getCurrentISOString())
@@ -111,7 +111,7 @@ export const useRoles = (params: UseRolesParams = {}): UseRolesReturn => {
 
       console.log('[useRoles] Role permissions API response:', response)
 
-      if (response.success) {
+      if (response.success && response.data) {
         setRolePermissions(response.data.permissions)
         console.log('[useRoles] Successfully fetched', response.data.permissions.length, 'role permissions')
       } else {

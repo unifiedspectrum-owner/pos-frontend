@@ -64,7 +64,7 @@ export const useUsers = (params: UseUsersParams = {}): UseUsersReturn => {
 
       console.log('[useUsers] Users API response:', response)
 
-      if (response.success) {
+      if (response.success && response.data) {
         setUsers(response.data.users)
         setPagination(response.pagination)
         setLastUpdated(getCurrentISOString())
