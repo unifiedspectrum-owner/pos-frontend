@@ -1,949 +1,980 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Provider } from '@/components/ui/provider';
-import SLAsGrid from '../slas-grid';
-import { SupportSLA } from '@plan-management/types';
+/* Comprehensive test suite for SLAsGrid component */
 
-// Mock dependencies
-vi.mock('@shared/config', () => ({
-  PRIMARY_COLOR: '#3182CE',
-  GRAY_COLOR: '#718096',
-  DARK_COLOR: '#2D3748',
-  WHITE_COLOR: '#FFFFFF'
-}));
+/* Libraries imports */
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { Provider } from '@/components/ui/provider'
+import React from 'react'
 
+/* Plan module imports */
+import SLAsGrid from '@plan-management/forms/tabs/components/slas/slas-grid'
+import { SupportSLA } from '@plan-management/types'
+
+/* Mock ResourceGridSkeleton component */
 vi.mock('@plan-management/components', () => ({
-  ResourceSkeleton: ({ count, columns, variant, minHeight }: any) => (
-    <div data-testid="resource-skeleton">
-      <div data-testid="skeleton-count">{count}</div>
-      <div data-testid="skeleton-columns">{columns}</div>
-      <div data-testid="skeleton-variant">{variant}</div>
-      <div data-testid="skeleton-min-height">{minHeight}</div>
+  ResourceGridSkeleton: ({ count, columns, variant, minHeight }: {
+    count: number;
+    columns: number;
+    variant: string;
+    minHeight: string;
+  }) => (
+    <div data-testid="resource-grid-skeleton" data-count={count} data-columns={columns} data-variant={variant} data-minheight={minHeight}>
+      Loading skeleton...
     </div>
   )
-}));
+}))
 
+/* Mock EmptyStateContainer component */
 vi.mock('@shared/components', () => ({
-  EmptyStateContainer: ({ icon, title, description, testId }: any) => (
+  EmptyStateContainer: ({ icon, title, description, testId }: {
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+    testId: string;
+  }) => (
     <div data-testid={testId}>
       <div data-testid="empty-state-icon">{icon}</div>
       <div data-testid="empty-state-title">{title}</div>
       <div data-testid="empty-state-description">{description}</div>
     </div>
   )
-}));
+}))
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <Provider>{children}</Provider>
-);
+/* Mock Chakra UI components */
+vi.mock('@chakra-ui/react', async () => {
+  const actual = await vi.importActual('@chakra-ui/react')
+  return {
+    ...actual as Record<string, unknown>,
+    SimpleGrid: ({ children, columns, gap }: { children: React.ReactNode; columns: number; gap: number }) => (
+      <div data-testid="simple-grid" data-columns={columns} data-gap={gap}>{children}</div>
+    ),
+    GridItem: ({ children, h }: { children: React.ReactNode; h: string }) => (
+      <div data-testid="grid-item" data-h={h}>{children}</div>
+    ),
+    Box: ({ children, onClick, cursor, borderColor, bg, p, borderWidth, w, ...props }: {
+      children: React.ReactNode;
+      onClick?: () => void;
+      cursor?: string;
+      borderColor?: string;
+      bg?: string;
+      p?: number;
+      borderWidth?: number;
+      borderRadius?: string;
+      transition?: string;
+      position?: string;
+      h?: string;
+      minH?: string;
+      display?: string;
+      flexDirection?: string;
+      shadow?: string;
+      w?: string;
+      _hover?: Record<string, unknown>;
+    }) => {
+      /* Distinguish between SLA card and icon container */
+      const isSlaCard = p === 4 && borderWidth === 1
+      const testId = isSlaCard ? 'sla-card' : 'box'
+
+      return (
+        <div data-testid={testId} onClick={onClick} data-cursor={cursor || undefined} data-bordercolor={borderColor} data-bg={bg} {...props}>
+          {children}
+        </div>
+      )
+    },
+    Flex: ({ children, justifyContent, align, flexDir, gap, flex, minH, flexShrink, ml, flexWrap }: {
+      children: React.ReactNode;
+      justifyContent?: string;
+      align?: string;
+      flexDir?: string;
+      gap?: number;
+      flex?: number;
+      minH?: number;
+      flexShrink?: number;
+      ml?: number;
+      flexWrap?: string;
+    }) => (
+      <div data-testid="flex" data-justifycontent={justifyContent} data-align={align} data-flexdir={flexDir} data-gap={gap} data-flex={flex} data-minh={minH} data-flexshrink={flexShrink} data-ml={ml} data-flexwrap={flexWrap}>
+        {children}
+      </div>
+    ),
+    Text: ({ children, fontSize, fontWeight, color, lineHeight, flex }: {
+      children: React.ReactNode;
+      fontSize?: string;
+      fontWeight?: string;
+      color?: string;
+      lineHeight?: string;
+      flex?: number;
+    }) => (
+      <span data-testid="text" data-fontsize={fontSize} data-fontweight={fontWeight} data-color={color} data-lineheight={lineHeight} data-flex={flex}>
+        {children}
+      </span>
+    )
+  }
+})
+
+/* Mock react-icons */
+vi.mock('react-icons/md', () => ({
+  MdSecurity: ({ size, color }: { size: number; color: string }) => (
+    <div data-testid="md-security-icon" data-size={size} data-color={color}>Security Icon</div>
+  ),
+  MdOutlineCheckBoxOutlineBlank: () => (
+    <div data-testid="checkbox-outline-icon">Checkbox Icon</div>
+  )
+}))
+
+vi.mock('react-icons/fi', () => ({
+  FiPlus: () => (
+    <div data-testid="fi-plus-icon">Plus Icon</div>
+  )
+}))
+
+vi.mock('react-icons/fa', () => ({
+  FaPlus: ({ size, color }: { size: number; color: string }) => (
+    <div data-testid="fa-plus-icon" data-size={size} data-color={color}>Plus Icon</div>
+  )
+}))
 
 describe('SLAsGrid', () => {
+  const mockHandleToggleWithConfirm = vi.fn()
+
   const mockSlas: SupportSLA[] = [
     {
       id: 1,
       name: 'Premium Support',
-      support_channel: 'phone',
-      response_time_hours: 24,
+      support_channel: 'Email, Phone, Chat',
+      response_time_hours: 4,
       availability_schedule: '24/7',
-      notes: 'Premium tier support with dedicated agent',
+      notes: 'Priority support for critical issues',
       display_order: 1
     },
     {
       id: 2,
       name: 'Standard Support',
-      support_channel: 'email',
-      response_time_hours: 48,
-      availability_schedule: '9-5 Mon-Fri',
-      notes: 'Standard email support',
-      display_order: 2,
+      support_channel: 'Email',
+      response_time_hours: 24,
+      availability_schedule: 'Business Hours',
+      notes: '',
+      display_order: 2
     },
     {
       id: 3,
-      name: 'Chat Support',
-      support_channel: 'chat',
-      response_time_hours: 4,
-      availability_schedule: '9-5 Mon-Fri',
-      notes: '',
-      display_order: 3,
+      name: 'Basic Support',
+      support_channel: 'Email',
+      response_time_hours: 48,
+      availability_schedule: 'Business Hours',
+      notes: 'Community forum access',
+      display_order: 3
     }
-  ];
-
-  const defaultProps = {
-    loading: false,
-    displaySlas: mockSlas,
-    selectedSlaIds: [],
-    isReadOnly: false,
-    handleToggleWithConfirm: vi.fn()
-  };
+  ]
 
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
+  const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+    <Provider>{children}</Provider>
+  )
 
-  describe('loading states', () => {
-    it('should display loading skeleton when loading is true and no selected SLAs', () => {
+  describe('Loading State', () => {
+    it('should render skeleton when loading with no selected SLAs', () => {
       render(
         <SLAsGrid
-          {...defaultProps}
           loading={true}
+          displaySlas={[]}
           selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
         />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      expect(screen.getByTestId('resource-skeleton')).toBeInTheDocument();
-      expect(screen.getByTestId('skeleton-count')).toHaveTextContent('6');
-      expect(screen.getByTestId('skeleton-columns')).toHaveTextContent('3');
-      expect(screen.getByTestId('skeleton-variant')).toHaveTextContent('detailed');
-      expect(screen.getByTestId('skeleton-min-height')).toHaveTextContent('140px');
-    });
+      expect(screen.getByTestId('resource-grid-skeleton')).toBeInTheDocument()
+      expect(screen.getByText('Loading skeleton...')).toBeInTheDocument()
+    })
 
-    it('should not display loading skeleton when loading is true but has selected SLAs', () => {
+    it('should render skeleton with correct props', () => {
       render(
         <SLAsGrid
-          {...defaultProps}
           loading={true}
+          displaySlas={[]}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const skeleton = screen.getByTestId('resource-grid-skeleton')
+      expect(skeleton).toHaveAttribute('data-count', '6')
+      expect(skeleton).toHaveAttribute('data-columns', '3')
+      expect(skeleton).toHaveAttribute('data-variant', 'detailed')
+      expect(skeleton).toHaveAttribute('data-minheight', '140px')
+    })
+
+    it('should not render skeleton when loading with selected SLAs', () => {
+      render(
+        <SLAsGrid
+          loading={true}
+          displaySlas={mockSlas}
           selectedSlaIds={[1]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
         />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      expect(screen.queryByTestId('resource-skeleton')).not.toBeInTheDocument();
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-    });
+      expect(screen.queryByTestId('resource-grid-skeleton')).not.toBeInTheDocument()
+    })
 
-    it('should not display SLAs grid when loading is true and no selected SLAs', () => {
+    it('should not render SLAs when loading with no selected items', () => {
       render(
         <SLAsGrid
-          {...defaultProps}
           loading={true}
-          selectedSlaIds={[]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.queryByText('Premium Support')).not.toBeInTheDocument();
-      expect(screen.queryByText('Standard Support')).not.toBeInTheDocument();
-      expect(screen.queryByText('Chat Support')).not.toBeInTheDocument();
-    });
-
-    it('should display SLAs grid when loading is false', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          loading={false}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.queryByTestId('resource-skeleton')).not.toBeInTheDocument();
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-      expect(screen.getByText('Standard Support')).toBeInTheDocument();
-      expect(screen.getByText('Chat Support')).toBeInTheDocument();
-    });
-  });
-
-  describe('empty states', () => {
-    it('should show empty state when no SLAs available and isReadOnly is true', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={[]}
-          selectedSlaIds={[]}
-          isReadOnly={true}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByTestId('slas-empty-state')).toBeInTheDocument();
-      expect(screen.getByTestId('empty-state-title')).toHaveTextContent('No SLAs included');
-      expect(screen.getByTestId('empty-state-description')).toHaveTextContent('This plan does not include any SLAs');
-    });
-
-    it('should show empty state when no SLAs available and isReadOnly is false', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={[]}
+          displaySlas={mockSlas}
           selectedSlaIds={[]}
           isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
         />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      expect(screen.getByTestId('slas-empty-state')).toBeInTheDocument();
-      expect(screen.getByTestId('empty-state-title')).toHaveTextContent('No SLAs selected');
-      expect(screen.getByTestId('empty-state-description')).toHaveTextContent('Select SLAs from the list above to configure this plan');
-    });
+      expect(screen.queryByTestId('simple-grid')).not.toBeInTheDocument()
+    })
+  })
 
-    it('should not show empty state when SLAs are available', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={mockSlas}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.queryByTestId('slas-empty-state')).not.toBeInTheDocument();
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-    });
-
-    it('should not show empty state when SLAs are available', () => {
+  describe('Empty State', () => {
+    it('should render empty state when no SLAs and not loading', () => {
       render(
         <SLAsGrid
           loading={false}
-          displaySlas={[mockSlas[0]]}
-          selectedSlaIds={[]}
-          isReadOnly={false}
-          handleToggleWithConfirm={vi.fn()}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Should not show empty state when SLAs are available
-      expect(screen.queryByTestId('slas-empty-state')).not.toBeInTheDocument();
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-    });
-
-    it('should handle empty displaySlas gracefully', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
           displaySlas={[]}
           selectedSlaIds={[]}
-          isReadOnly={false} />,
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      // Should show empty state when both displaySlas and selectedSlaIds are empty
-      expect(screen.getByTestId('slas-empty-state')).toBeInTheDocument();
-    });
-  });
+      expect(screen.getByTestId('slas-empty-state')).toBeInTheDocument()
+    })
 
-  describe('SLA rendering', () => {
-    it('should render all SLAs with correct information', () => {
+    it('should show correct empty state title in edit mode', () => {
       render(
         <SLAsGrid
-          {...defaultProps}
-          displaySlas={mockSlas}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-      expect(screen.getByText('Channel: phone')).toBeInTheDocument();
-      expect(screen.getByText('Response: 24h')).toBeInTheDocument();
-      expect(screen.getByText('Schedule: 24/7')).toBeInTheDocument();
-      expect(screen.getByText('Premium tier support with dedicated agent')).toBeInTheDocument();
-      
-      expect(screen.getByText('Standard Support')).toBeInTheDocument();
-      expect(screen.getByText('Channel: email')).toBeInTheDocument();
-      expect(screen.getByText('Response: 48h')).toBeInTheDocument();
-      expect(screen.getByText('Standard email support')).toBeInTheDocument();
-      
-      expect(screen.getByText('Chat Support')).toBeInTheDocument();
-      expect(screen.getByText('Channel: chat')).toBeInTheDocument();
-      expect(screen.getByText('Response: 4h')).toBeInTheDocument();
-      
-      // Both Standard Support and Chat Support have "9-5 Mon-Fri" schedule
-      const scheduleElements = screen.getAllByText('Schedule: 9-5 Mon-Fri');
-      expect(scheduleElements).toHaveLength(2);
-    });
-
-    it('should render SLAs in a 3-column grid', () => {
-      const { container } = render(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={mockSlas}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Check that the grid structure is rendered by looking for the grid container
-      const gridContainer = container.querySelector('[class*="css-"]'); // Chakra UI generates CSS classes
-      expect(gridContainer).toBeInTheDocument();
-      
-      // Verify that all SLAs are rendered as individual items
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-      expect(screen.getByText('Standard Support')).toBeInTheDocument();
-      expect(screen.getByText('Chat Support')).toBeInTheDocument();
-    });
-
-    it('should render correct number of SLA cards', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={mockSlas}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      const slaCards = screen.getAllByText(/Premium Support|Standard Support|Chat Support/);
-      expect(slaCards).toHaveLength(3);
-    });
-
-    it('should handle SLAs without notes gracefully', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={[mockSlas[2]]} // Chat Support has null notes
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByText('Chat Support')).toBeInTheDocument();
-      expect(screen.getByText('Channel: chat')).toBeInTheDocument();
-      expect(screen.getByText('Response: 4h')).toBeInTheDocument();
-      expect(screen.getByText('Schedule: 9-5 Mon-Fri')).toBeInTheDocument();
-    });
-
-    it('should display notes when available', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={[mockSlas[0]]} // Premium Support has notes
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByText('Premium tier support with dedicated agent')).toBeInTheDocument();
-    });
-  });
-
-  describe('SLA selection states', () => {
-    it('should show unselected state for SLAs not in selectedSlaIds', () => {
-      const { container } = render(
-        <SLAsGrid
-          {...defaultProps}
+          loading={false}
+          displaySlas={[]}
           selectedSlaIds={[]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // All SLAs should show unselected state (checkbox outline icons)
-      // Since we can't easily test React Icons, we verify by checking that
-      // the SLAs are rendered and clickable (indicating unselected interactive state)
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-      expect(screen.getByText('Standard Support')).toBeInTheDocument();
-      expect(screen.getByText('Chat Support')).toBeInTheDocument();
-      
-      // Verify SLAs are in unselected state by checking for lack of selected styling
-      const slaCards = container.querySelectorAll('[class*="css-"]');
-      expect(slaCards.length).toBeGreaterThan(0);
-    });
-
-    it('should show selected state for SLAs in selectedSlaIds', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          selectedSlaIds={[1, 3]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Selected SLAs should have different styling/icons
-      // This would need to check for specific styling or icons used for selected state
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-      expect(screen.getByText('Chat Support')).toBeInTheDocument();
-    });
-
-    it('should handle mixed selection states correctly', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          selectedSlaIds={[2]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Only SLA with id 2 (Standard Support) should be selected
-      // Other SLAs should be unselected
-      expect(screen.getByText('Standard Support')).toBeInTheDocument();
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-      expect(screen.getByText('Chat Support')).toBeInTheDocument();
-    });
-  });
-
-  describe('interaction handling', () => {
-    it('should call handleToggleWithConfirm when SLA card is clicked and not readonly', async () => {
-      const user = userEvent.setup();
-      const mockHandleToggle = vi.fn();
-
-      render(
-        <SLAsGrid
-          {...defaultProps}
           isReadOnly={false}
-          handleToggleWithConfirm={mockHandleToggle}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
         />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      // Click on the SLA text which should be within the clickable area
-      await user.click(screen.getByText('Premium Support'));
-      expect(mockHandleToggle).toHaveBeenCalledWith(1);
-    });
+      expect(screen.getByTestId('empty-state-title')).toHaveTextContent('No SLAs selected')
+    })
 
-    it('should not call handleToggleWithConfirm when SLA card is clicked in readonly mode', async () => {
-      const user = userEvent.setup();
-      const mockHandleToggle = vi.fn();
-
+    it('should show correct empty state description in edit mode', () => {
       render(
         <SLAsGrid
-          {...defaultProps}
-          isReadOnly={true}
-          handleToggleWithConfirm={mockHandleToggle}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Click on the SLA text - in readonly mode this should not trigger the handler
-      await user.click(screen.getByText('Premium Support'));
-      expect(mockHandleToggle).not.toHaveBeenCalled();
-    });
-
-    it('should handle multiple SLA clicks correctly', async () => {
-      const user = userEvent.setup();
-      const mockHandleToggle = vi.fn();
-
-      render(
-        <SLAsGrid
-          {...defaultProps}
+          loading={false}
+          displaySlas={[]}
+          selectedSlaIds={[]}
           isReadOnly={false}
-          handleToggleWithConfirm={mockHandleToggle}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
         />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      // Click on each SLA text
-      await user.click(screen.getByText('Premium Support'));
-      await user.click(screen.getByText('Standard Support'));
-      await user.click(screen.getByText('Chat Support'));
+      expect(screen.getByTestId('empty-state-description')).toHaveTextContent('Select SLAs from the list above to configure this plan')
+    })
 
-      expect(mockHandleToggle).toHaveBeenCalledTimes(3);
-      expect(mockHandleToggle).toHaveBeenNthCalledWith(1, 1);
-      expect(mockHandleToggle).toHaveBeenNthCalledWith(2, 2);
-      expect(mockHandleToggle).toHaveBeenNthCalledWith(3, 3);
-    });
-  });
-
-  describe('readonly mode behavior', () => {
-    it('should not show selection indicators in readonly mode', () => {
+    it('should show correct empty state title in read-only mode', () => {
       render(
         <SLAsGrid
-          {...defaultProps}
+          loading={false}
+          displaySlas={[]}
+          selectedSlaIds={[]}
           isReadOnly={true}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
         />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      // Selection indicators should not be visible in readonly mode
-      // This would check for absence of checkbox icons or selection UI
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-      expect(screen.getByText('Standard Support')).toBeInTheDocument();
-      expect(screen.getByText('Chat Support')).toBeInTheDocument();
-    });
+      expect(screen.getByTestId('empty-state-title')).toHaveTextContent('No SLAs included')
+    })
 
-    it('should show different styling in readonly mode', () => {
+    it('should show correct empty state description in read-only mode', () => {
       render(
         <SLAsGrid
-          {...defaultProps}
+          loading={false}
+          displaySlas={[]}
+          selectedSlaIds={[]}
           isReadOnly={true}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
         />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      // SLAs should be displayed but not interactive
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-    });
+      expect(screen.getByTestId('empty-state-description')).toHaveTextContent('This plan does not include any SLAs')
+    })
 
-    it('should maintain selection display in readonly mode', () => {
+    it('should render security icon in read-only empty state', () => {
       render(
         <SLAsGrid
-          {...defaultProps}
+          loading={false}
+          displaySlas={[]}
+          selectedSlaIds={[]}
           isReadOnly={true}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('md-security-icon')).toBeInTheDocument()
+    })
+
+    it('should render plus icon in edit mode empty state', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={[]}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('fa-plus-icon')).toBeInTheDocument()
+    })
+  })
+
+  describe('SLAs Grid Rendering', () => {
+    it('should render grid with SLAs', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('simple-grid')).toBeInTheDocument()
+    })
+
+    it('should render grid with correct columns and gap', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const grid = screen.getByTestId('simple-grid')
+      expect(grid).toHaveAttribute('data-columns', '3')
+      expect(grid).toHaveAttribute('data-gap', '4')
+    })
+
+    it('should render all SLAs', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const slaCards = screen.getAllByTestId('sla-card')
+      expect(slaCards).toHaveLength(3)
+    })
+
+    it('should render SLA names', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Premium Support')).toBeInTheDocument()
+      expect(screen.getByText('Standard Support')).toBeInTheDocument()
+      expect(screen.getByText('Basic Support')).toBeInTheDocument()
+    })
+
+    it('should render SLA support channels', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Channel: Email, Phone, Chat')).toBeInTheDocument()
+      const emailChannels = screen.getAllByText('Channel: Email')
+      expect(emailChannels.length).toBeGreaterThan(0)
+    })
+
+    it('should render SLA response times', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Response: 4h')).toBeInTheDocument()
+      expect(screen.getByText('Response: 24h')).toBeInTheDocument()
+      expect(screen.getByText('Response: 48h')).toBeInTheDocument()
+    })
+
+    it('should render SLA availability schedules', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Schedule: 24/7')).toBeInTheDocument()
+      const businessHoursSchedules = screen.getAllByText('Schedule: Business Hours')
+      expect(businessHoursSchedules.length).toBeGreaterThan(0)
+    })
+
+    it('should render SLA notes when present', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Priority support for critical issues')).toBeInTheDocument()
+      expect(screen.getByText('Community forum access')).toBeInTheDocument()
+    })
+
+    it('should not render notes when empty', () => {
+      const slaWithoutNotes: SupportSLA[] = [{
+        id: 1,
+        name: 'Test SLA',
+        support_channel: 'Email',
+        response_time_hours: 24,
+        availability_schedule: '24/7',
+        notes: '',
+        display_order: 1
+      }]
+
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={slaWithoutNotes}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Test SLA')).toBeInTheDocument()
+      const textElements = screen.getAllByTestId('text')
+      const notesTexts = textElements.filter(el => el.getAttribute('data-fontsize') === 'xs')
+      expect(notesTexts).toHaveLength(0)
+    })
+
+    it('should render single SLA correctly', () => {
+      const singleSla = [mockSlas[0]]
+
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={singleSla}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const slaCards = screen.getAllByTestId('sla-card')
+      expect(slaCards).toHaveLength(1)
+      expect(screen.getByText('Premium Support')).toBeInTheDocument()
+    })
+  })
+
+  describe('SLA Selection', () => {
+    it('should show checkbox icon for unselected SLAs', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const checkboxIcons = screen.getAllByTestId('checkbox-outline-icon')
+      expect(checkboxIcons).toHaveLength(3)
+    })
+
+    it('should show plus icon for selected SLAs', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
           selectedSlaIds={[1, 2]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Selected SLAs should still show as selected visually
-      // but without interactive elements
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-      expect(screen.getByText('Standard Support')).toBeInTheDocument();
-    });
-  });
-
-  describe('visual styling and states', () => {
-    it('should apply correct styling for selected SLAs', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          selectedSlaIds={[1]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Selected SLA cards should have different border/background colors
-      // This would check for specific CSS classes or inline styles
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-    });
-
-    it('should apply hover effects when not readonly', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
           isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
         />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      // SLA cards should have hover effects
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-    });
+      const plusIcons = screen.getAllByTestId('fi-plus-icon')
+      expect(plusIcons).toHaveLength(2)
+    })
 
-    it('should not apply hover effects in readonly mode', () => {
+    it('should show mixed icons for partially selected SLAs', () => {
       render(
         <SLAsGrid
-          {...defaultProps}
-          isReadOnly={true}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // SLA cards should have default cursor in readonly mode
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-    });
-  });
-
-  describe('accessibility', () => {
-    it('should be keyboard navigable when not readonly', async () => {
-      const user = userEvent.setup();
-      const mockHandleToggle = vi.fn();
-
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          isReadOnly={false}
-          handleToggleWithConfirm={mockHandleToggle}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Should be able to tab through SLA cards
-      await user.tab();
-    });
-
-    it('should support keyboard activation when not readonly', async () => {
-      const user = userEvent.setup();
-      const mockHandleToggle = vi.fn();
-
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          isReadOnly={false}
-          handleToggleWithConfirm={mockHandleToggle}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Since the SLAs are clickable boxes, we can test click interaction
-      // which is the primary interaction method for this component
-      const firstSla = screen.getByText('Premium Support').closest('div');
-
-      if (firstSla) {
-        await user.click(firstSla);
-        expect(mockHandleToggle).toHaveBeenCalledWith(1);
-      } else {
-        // If the closest div approach doesn't work, test the text element directly
-        await user.click(screen.getByText('Premium Support'));
-        expect(mockHandleToggle).toHaveBeenCalledWith(1);
-      }
-    });
-
-    it('should have proper ARIA attributes for interactive elements', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          isReadOnly={false}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Interactive SLA cards should have proper ARIA attributes
-      // This would check for role, aria-label, aria-pressed, etc.
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-    });
-
-    it('should not be keyboard navigable in readonly mode', () => {
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          isReadOnly={true}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // SLA cards should not be focusable in readonly mode
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-    });
-  });
-
-  describe('error handling', () => {
-    it('should handle empty SLA objects gracefully', () => {
-      const incompleteSla = {
-        id: 1,
-        name: '',
-        support_channel: '',
-        response_time_hours: 0,
-        availability_schedule: '',
-        notes: '',
-        display_order: 1,
-      } as SupportSLA;
-
-      expect(() => {
-        render(
-          <SLAsGrid
-            {...defaultProps}
-            displaySlas={[incompleteSla]}
-          />,
-          { wrapper: TestWrapper }
-        );
-      }).not.toThrow();
-    });
-
-    it('should handle missing SLA properties gracefully', () => {
-      const incompleteSla = {
-        id: 1
-      } as SupportSLA;
-
-      expect(() => {
-        render(
-          <SLAsGrid
-            {...defaultProps}
-            displaySlas={[incompleteSla]}
-          />,
-          { wrapper: TestWrapper }
-        );
-      }).not.toThrow();
-    });
-
-    it('should handle invalid selectedSlaIds gracefully', () => {
-      expect(() => {
-        render(
-          <SLAsGrid
-            {...defaultProps}
-            selectedSlaIds={[999, -1, 0]}
-          />,
-          { wrapper: TestWrapper }
-        );
-      }).not.toThrow();
-    });
-
-    it('should handle null or undefined handleToggleWithConfirm', () => {
-      expect(() => {
-        render(
-          <SLAsGrid
-            {...defaultProps}
-            handleToggleWithConfirm={undefined as any}
-          />,
-          { wrapper: TestWrapper }
-        );
-      }).not.toThrow();
-    });
-  });
-
-  describe('performance considerations', () => {
-    it('should handle large numbers of SLAs efficiently', () => {
-      const manySlas: SupportSLA[] = Array.from({ length: 100 }, (_, index) => ({
-        id: index + 1,
-        name: `SLA ${index + 1}`,
-        support_channel: 'email',
-        response_time_hours: 24,
-        availability_schedule: '9-5 Mon-Fri',
-        notes: `Notes for SLA ${index + 1}`,
-        display_order: 1,
-      }));
-
-      const start = performance.now();
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={manySlas}
-        />,
-        { wrapper: TestWrapper }
-      );
-      const end = performance.now();
-
-      // Should render reasonably quickly even with many SLAs
-      expect(end - start).toBeLessThan(1000); // Less than 1 second
-    });
-
-    it('should handle frequent selection updates efficiently', () => {
-      const { rerender } = render(
-        <SLAsGrid
-          {...defaultProps}
-          selectedSlaIds={[]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Simulate rapid selection changes
-      const selectionStates = [
-        [1],
-        [1, 2],
-        [1, 2, 3],
-        [2, 3],
-        [3],
-        []
-      ];
-
-      selectionStates.forEach(selection => {
-        expect(() => {
-          rerender(
-            <SLAsGrid
-              {...defaultProps}
-              selectedSlaIds={selection}
-            />
-          );
-        }).not.toThrow();
-      });
-    });
-  });
-
-  describe('component lifecycle', () => {
-    it('should cleanup properly on unmount', () => {
-      const { unmount } = render(
-        <SLAsGrid
-          {...defaultProps}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(() => unmount()).not.toThrow();
-    });
-
-    it('should handle prop changes correctly', () => {
-      const { rerender } = render(
-        <SLAsGrid
-          {...defaultProps}
-          loading={true}
-          selectedSlaIds={[]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByTestId('resource-skeleton')).toBeInTheDocument();
-
-      rerender(
-        <SLAsGrid
-          {...defaultProps}
           loading={false}
-        />
-      );
-
-      expect(screen.queryByTestId('resource-skeleton')).not.toBeInTheDocument();
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-    });
-
-    it('should handle displaySlas updates correctly', () => {
-      const { rerender } = render(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={[mockSlas[0]]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-      expect(screen.queryByText('Standard Support')).not.toBeInTheDocument();
-
-      rerender(
-        <SLAsGrid
-          {...defaultProps}
           displaySlas={mockSlas}
-        />
-      );
+          selectedSlaIds={[1]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
 
-      expect(screen.getByText('Premium Support')).toBeInTheDocument();
-      expect(screen.getByText('Standard Support')).toBeInTheDocument();
-      expect(screen.getByText('Chat Support')).toBeInTheDocument();
-    });
-  });
+      expect(screen.getAllByTestId('fi-plus-icon')).toHaveLength(1)
+      expect(screen.getAllByTestId('checkbox-outline-icon')).toHaveLength(2)
+    })
 
-  describe('edge cases', () => {
-    it('should handle SLAs with very long names and descriptions', () => {
-      const longTextSla: SupportSLA = {
-        id: 1,
-        name: 'This is a very long SLA name that might cause layout issues if not handled properly in the UI components',
-        support_channel: 'email',
-        response_time_hours: 24,
-        availability_schedule: 'This is an extremely long availability schedule description that goes on and on and on and should be handled gracefully by the component without breaking the layout',
-        notes: 'This is an extremely long notes section that goes on and on and should be handled gracefully by the component without breaking the layout or causing visual issues',
-        display_order: 1,
-      };
+    it('should call handleToggleWithConfirm when SLA is clicked', async () => {
+      const user = userEvent.setup()
 
       render(
         <SLAsGrid
-          {...defaultProps}
-          displaySlas={[longTextSla]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByText(longTextSla.name)).toBeInTheDocument();
-      expect(screen.getByText(`Schedule: ${longTextSla.availability_schedule}`)).toBeInTheDocument();
-      expect(screen.getByText(longTextSla.notes!)).toBeInTheDocument();
-    });
-
-    it('should handle SLAs with special characters in names and descriptions', () => {
-      const specialCharSla: SupportSLA = {
-        id: 1,
-        name: 'SLA & Service™ (Premium) - 2024',
-        support_channel: 'phone',
-        response_time_hours: 24,
-        availability_schedule: 'Schedule: @#$%^&*()_+{}|:"<>?[];\\,./`~',
-        notes: 'Special chars: @#$%^&*()_+{}|:"<>?[];\\,./`~',
-        display_order: 1,
-      };
-
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={[specialCharSla]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByText('SLA & Service™ (Premium) - 2024')).toBeInTheDocument();
-      expect(screen.getByText('Special chars: @#$%^&*()_+{}|:"<>?[];\\,./`~')).toBeInTheDocument();
-    });
-
-    it('should handle duplicate SLA IDs gracefully', () => {
-      const duplicateSlas: SupportSLA[] = [
-        {
-          id: 1,
-          name: 'SLA 1',
-          support_channel: 'email',
-          response_time_hours: 24,
-          availability_schedule: '9-5 Mon-Fri',
-          notes: 'First SLA',
-          display_order: 1,
-        },
-        {
-          id: 1,
-          name: 'SLA 1 Duplicate',
-          support_channel: 'phone',
-          response_time_hours: 48,
-          availability_schedule: '24/7',
-          notes: 'Second SLA with same ID',
-          display_order: 1,
-        }
-      ];
-
-      expect(() => {
-        render(
-          <SLAsGrid
-            {...defaultProps}
-            displaySlas={duplicateSlas}
-          />,
-          { wrapper: TestWrapper }
-        );
-      }).not.toThrow();
-    });
-
-    it('should handle SLAs with zero or negative response times', () => {
-      const edgeTimeSlas: SupportSLA[] = [
-        {
-          id: 1,
-          name: 'Zero Response Time',
-          support_channel: 'chat',
-          response_time_hours: 0,
-          availability_schedule: '24/7',
-          notes: 'Instant response',
-          display_order: 1,
-        },
-        {
-          id: 2,
-          name: 'Negative Response Time',
-          support_channel: 'email',
-          response_time_hours: -1,
-          availability_schedule: '9-5 Mon-Fri',
-          notes: 'Invalid response time',
-          display_order: 1,
-        }
-      ];
-
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={edgeTimeSlas}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByText('Response: 0h')).toBeInTheDocument();
-      expect(screen.getByText('Response: -1h')).toBeInTheDocument();
-    });
-
-    it('should handle SLAs with empty strings for optional fields', () => {
-      const emptySla: SupportSLA = {
-        id: 1,
-        name: 'Empty Fields SLA',
-        support_channel: '',
-        response_time_hours: 24,
-        availability_schedule: '',
-        notes: '',
-        display_order: 1,
-      };
-
-      render(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={[emptySla]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByText('Empty Fields SLA')).toBeInTheDocument();
-      expect(screen.getByText('Channel:')).toBeInTheDocument();
-      expect(screen.getByText('Schedule:')).toBeInTheDocument();
-    });
-  });
-
-  describe('icon rendering', () => {
-    it('should show correct empty state icon based on readonly status', () => {
-      // Test readonly mode icon
-      const { rerender } = render(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={[]}
-          selectedSlaIds={[]}
-          isReadOnly={true}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByTestId('slas-empty-state')).toBeInTheDocument();
-      expect(screen.getByTestId('empty-state-icon')).toBeInTheDocument();
-
-      // Test non-readonly mode icon
-      rerender(
-        <SLAsGrid
-          {...defaultProps}
-          displaySlas={[]}
+          loading={false}
+          displaySlas={mockSlas}
           selectedSlaIds={[]}
           isReadOnly={false}
-        />
-      );
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
 
-      expect(screen.getByTestId('slas-empty-state')).toBeInTheDocument();
-      expect(screen.getByTestId('empty-state-icon')).toBeInTheDocument();
-    });
-  });
-});
+      const slaCards = screen.getAllByTestId('sla-card')
+      await user.click(slaCards[0])
+
+      expect(mockHandleToggleWithConfirm).toHaveBeenCalledWith(1)
+    })
+
+    it('should call handleToggleWithConfirm with correct SLA id', async () => {
+      const user = userEvent.setup()
+
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const slaCards = screen.getAllByTestId('sla-card')
+      await user.click(slaCards[0])
+
+      expect(mockHandleToggleWithConfirm).toHaveBeenCalledWith(1)
+      expect(mockHandleToggleWithConfirm).toHaveBeenCalledTimes(1)
+    })
+
+    it('should handle multiple SLA clicks', async () => {
+      const user = userEvent.setup()
+
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const slaCards = screen.getAllByTestId('sla-card')
+      await user.click(slaCards[0])
+      await user.click(slaCards[1])
+      await user.click(slaCards[2])
+
+      expect(mockHandleToggleWithConfirm).toHaveBeenCalledTimes(3)
+    })
+  })
+
+  describe('Read-Only Mode', () => {
+    it('should not show selection icons in read-only mode', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={true}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.queryByTestId('checkbox-outline-icon')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('fi-plus-icon')).not.toBeInTheDocument()
+    })
+
+    it('should set cursor to default in read-only mode', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={true}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const slaCards = screen.getAllByTestId('sla-card')
+      slaCards.forEach(card => {
+        expect(card).toHaveAttribute('data-cursor', 'default')
+      })
+    })
+
+    it('should set cursor to pointer in edit mode', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const slaCards = screen.getAllByTestId('sla-card')
+      slaCards.forEach(card => {
+        expect(card).toHaveAttribute('data-cursor', 'pointer')
+      })
+    })
+
+    it('should not call handler when clicked in read-only mode', async () => {
+      const user = userEvent.setup()
+
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={true}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const slaCards = screen.getAllByTestId('sla-card')
+      await user.click(slaCards[0])
+
+      expect(mockHandleToggleWithConfirm).not.toHaveBeenCalled()
+    })
+
+    it('should render all SLAs in read-only mode', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[1, 2, 3]}
+          isReadOnly={true}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Premium Support')).toBeInTheDocument()
+      expect(screen.getByText('Standard Support')).toBeInTheDocument()
+      expect(screen.getByText('Basic Support')).toBeInTheDocument()
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('should return null when displaySlas is empty array with selected items', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={[]}
+          selectedSlaIds={[1]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.queryByTestId('simple-grid')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('slas-empty-state')).not.toBeInTheDocument()
+    })
+
+    it('should handle SLA with long name', () => {
+      const longNameSla: SupportSLA[] = [{
+        id: 1,
+        name: 'This is a very long SLA name that should be displayed properly without breaking the layout',
+        support_channel: 'Email',
+        response_time_hours: 24,
+        availability_schedule: '24/7',
+        notes: '',
+        display_order: 1
+      }]
+
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={longNameSla}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('This is a very long SLA name that should be displayed properly without breaking the layout')).toBeInTheDocument()
+    })
+
+    it('should handle SLA with long notes', () => {
+      const longNotesSla: SupportSLA[] = [{
+        id: 1,
+        name: 'Premium SLA',
+        support_channel: 'Email',
+        response_time_hours: 4,
+        availability_schedule: '24/7',
+        notes: 'This is a very long note that contains multiple sentences and should be displayed properly within the card layout without causing any overflow or layout issues.',
+        display_order: 1
+      }]
+
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={longNotesSla}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('This is a very long note that contains multiple sentences and should be displayed properly within the card layout without causing any overflow or layout issues.')).toBeInTheDocument()
+    })
+
+    it('should handle rapid clicks on same SLA', async () => {
+      const user = userEvent.setup()
+
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const slaCard = screen.getAllByTestId('sla-card')[0]
+      await user.click(slaCard)
+      await user.click(slaCard)
+      await user.click(slaCard)
+
+      expect(mockHandleToggleWithConfirm).toHaveBeenCalledTimes(3)
+      expect(mockHandleToggleWithConfirm).toHaveBeenCalledWith(1)
+    })
+
+    it('should handle selectedSlaIds with non-existent ids', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[999, 1000]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const checkboxIcons = screen.getAllByTestId('checkbox-outline-icon')
+      expect(checkboxIcons).toHaveLength(3)
+    })
+
+    it('should handle mixed valid and invalid selectedSlaIds', () => {
+      render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[1, 999]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getAllByTestId('fi-plus-icon')).toHaveLength(1)
+      expect(screen.getAllByTestId('checkbox-outline-icon')).toHaveLength(2)
+    })
+  })
+
+  describe('Props Integration', () => {
+    it('should update when loading prop changes', () => {
+      const { rerender } = render(
+        <SLAsGrid
+          loading={true}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('resource-grid-skeleton')).toBeInTheDocument()
+
+      rerender(
+        <Provider>
+          <SLAsGrid
+            loading={false}
+            displaySlas={mockSlas}
+            selectedSlaIds={[]}
+            isReadOnly={false}
+            handleToggleWithConfirm={mockHandleToggleWithConfirm}
+          />
+        </Provider>
+      )
+
+      expect(screen.queryByTestId('resource-grid-skeleton')).not.toBeInTheDocument()
+      expect(screen.getByTestId('simple-grid')).toBeInTheDocument()
+    })
+
+    it('should update when selectedSlaIds prop changes', () => {
+      const { rerender } = render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getAllByTestId('checkbox-outline-icon')).toHaveLength(3)
+
+      rerender(
+        <Provider>
+          <SLAsGrid
+            loading={false}
+            displaySlas={mockSlas}
+            selectedSlaIds={[1, 2]}
+            isReadOnly={false}
+            handleToggleWithConfirm={mockHandleToggleWithConfirm}
+          />
+        </Provider>
+      )
+
+      expect(screen.getAllByTestId('fi-plus-icon')).toHaveLength(2)
+      expect(screen.getAllByTestId('checkbox-outline-icon')).toHaveLength(1)
+    })
+
+    it('should update when isReadOnly prop changes', () => {
+      const { rerender } = render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getAllByTestId('checkbox-outline-icon')).toHaveLength(3)
+
+      rerender(
+        <Provider>
+          <SLAsGrid
+            loading={false}
+            displaySlas={mockSlas}
+            selectedSlaIds={[]}
+            isReadOnly={true}
+            handleToggleWithConfirm={mockHandleToggleWithConfirm}
+          />
+        </Provider>
+      )
+
+      expect(screen.queryByTestId('checkbox-outline-icon')).not.toBeInTheDocument()
+    })
+
+    it('should update when displaySlas prop changes', () => {
+      const { rerender } = render(
+        <SLAsGrid
+          loading={false}
+          displaySlas={mockSlas}
+          selectedSlaIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getAllByTestId('sla-card')).toHaveLength(3)
+
+      const newSlas = [mockSlas[0]]
+      rerender(
+        <Provider>
+          <SLAsGrid
+            loading={false}
+            displaySlas={newSlas}
+            selectedSlaIds={[]}
+            isReadOnly={false}
+            handleToggleWithConfirm={mockHandleToggleWithConfirm}
+          />
+        </Provider>
+      )
+
+      expect(screen.getAllByTestId('sla-card')).toHaveLength(1)
+    })
+  })
+})

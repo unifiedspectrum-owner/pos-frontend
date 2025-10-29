@@ -6,6 +6,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useForm, FormProvider } from 'react-hook-form'
 import { Provider } from '@/components/ui/provider'
+import React from 'react'
 
 /* Plan module imports */
 import PlanBasicDetails from '@plan-management/forms/tabs/basic-details'
@@ -15,7 +16,14 @@ import * as planFormModeContext from '@plan-management/contexts'
 
 /* Mock dependencies */
 vi.mock('@shared/components/form-elements', () => ({
-  TextInputField: ({ label, value, onChange, readOnly, errorMessage, required }: any) => (
+  TextInputField: ({ label, value, onChange, readOnly, errorMessage, required }: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    readOnly?: boolean;
+    errorMessage?: string;
+    required?: boolean
+  }) => (
     <div data-testid={`text-input-${label}`}>
       <label>{label}{required && ' *'}</label>
       <input
@@ -27,7 +35,14 @@ vi.mock('@shared/components/form-elements', () => ({
       {errorMessage && <span data-testid={`error-${label}`}>{errorMessage}</span>}
     </div>
   ),
-  TextAreaField: ({ label, value, onChange, readOnly, errorMessage, required }: any) => (
+  TextAreaField: ({ label, value, onChange, readOnly, errorMessage, required }: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    readOnly?: boolean;
+    errorMessage?: string;
+    required?: boolean
+  }) => (
     <div data-testid={`textarea-${label}`}>
       <label>{label}{required && ' *'}</label>
       <textarea
@@ -39,7 +54,14 @@ vi.mock('@shared/components/form-elements', () => ({
       {errorMessage && <span data-testid={`error-${label}`}>{errorMessage}</span>}
     </div>
   ),
-  SwitchField: ({ label, value, onChange, readOnly, activeText, inactiveText }: any) => (
+  SwitchField: ({ label, value, onChange, readOnly, activeText, inactiveText }: {
+    label: string;
+    value: boolean;
+    onChange: (value: boolean) => void;
+    readOnly?: boolean;
+    activeText?: string;
+    inactiveText?: string
+  }) => (
     <div data-testid={`switch-${label}`}>
       <label>{label}</label>
       <button
@@ -106,23 +128,23 @@ describe('PlanBasicDetails', () => {
     it('should render is_active toggle field', () => {
       render(<TestComponent />, { wrapper: TestWrapper })
 
-      expect(screen.getByTestId('switch-Active')).toBeInTheDocument()
-      expect(screen.getByTestId('switch-button-Active')).toBeInTheDocument()
+      expect(screen.getByTestId('switch-Status')).toBeInTheDocument()
+      expect(screen.getByTestId('switch-button-Status')).toBeInTheDocument()
     })
 
     it('should render is_custom toggle field', () => {
       render(<TestComponent />, { wrapper: TestWrapper })
 
-      expect(screen.getByTestId('switch-Custom Plan')).toBeInTheDocument()
-      expect(screen.getByTestId('switch-button-Custom Plan')).toBeInTheDocument()
+      expect(screen.getByTestId('switch-Plan Type')).toBeInTheDocument()
+      expect(screen.getByTestId('switch-button-Plan Type')).toBeInTheDocument()
     })
 
     it('should render numeric fields', () => {
       render(<TestComponent />, { wrapper: TestWrapper })
 
-      expect(screen.getByTestId('text-input-Included Devices')).toBeInTheDocument()
+      expect(screen.getByTestId('text-input-Included Devices Count')).toBeInTheDocument()
       expect(screen.getByTestId('text-input-Max Users Per Branch')).toBeInTheDocument()
-      expect(screen.getByTestId('text-input-Included Branches')).toBeInTheDocument()
+      expect(screen.getByTestId('text-input-Included Branches Count')).toBeInTheDocument()
     })
   })
 
@@ -144,7 +166,7 @@ describe('PlanBasicDetails', () => {
     it('should enable toggle switches in CREATE mode', () => {
       render(<TestComponent />, { wrapper: TestWrapper })
 
-      const activeSwitch = screen.getByTestId('switch-button-Active')
+      const activeSwitch = screen.getByTestId('switch-button-Status')
       expect(activeSwitch).not.toBeDisabled()
     })
 
@@ -172,7 +194,7 @@ describe('PlanBasicDetails', () => {
       const user = userEvent.setup()
       render(<TestComponent />, { wrapper: TestWrapper })
 
-      const activeSwitch = screen.getByTestId('switch-button-Active')
+      const activeSwitch = screen.getByTestId('switch-button-Status')
       expect(activeSwitch).toHaveTextContent('Active')
 
       await user.click(activeSwitch)
@@ -222,7 +244,7 @@ describe('PlanBasicDetails', () => {
     it('should disable toggle switches in VIEW mode', () => {
       render(<TestComponent />, { wrapper: TestWrapper })
 
-      const activeSwitch = screen.getByTestId('switch-button-Active')
+      const activeSwitch = screen.getByTestId('switch-button-Status')
       expect(activeSwitch).toBeDisabled()
     })
 
@@ -241,8 +263,10 @@ describe('PlanBasicDetails', () => {
           defaultValues: { name: '' }
         })
 
-        /* Manually set error */
-        methods.setError('name', { message: 'Plan name is required' })
+        /* Manually set error using useEffect to avoid infinite re-renders */
+        React.useEffect(() => {
+          methods.setError('name', { message: 'Plan name is required' })
+        }, [methods])
 
         return (
           <FormProvider {...methods}>
@@ -264,7 +288,10 @@ describe('PlanBasicDetails', () => {
           defaultValues: { name: '' }
         })
 
-        methods.setError('name', { message: 'Plan name is required' })
+        /* Manually set error using useEffect to avoid infinite re-renders */
+        React.useEffect(() => {
+          methods.setError('name', { message: 'Plan name is required' })
+        }, [methods])
 
         return (
           <FormProvider {...methods}>
@@ -288,7 +315,7 @@ describe('PlanBasicDetails', () => {
       render(<TestComponent />, { wrapper: TestWrapper })
 
       expect(screen.getByTestId('text-input-Plan Name')).toBeInTheDocument()
-      expect(screen.getByTestId('text-input-Included Devices')).toBeInTheDocument()
+      expect(screen.getByTestId('text-input-Included Devices Count')).toBeInTheDocument()
     })
 
     it('should render textarea for description field', () => {
@@ -300,8 +327,8 @@ describe('PlanBasicDetails', () => {
     it('should render toggle switches for boolean fields', () => {
       render(<TestComponent />, { wrapper: TestWrapper })
 
-      expect(screen.getByTestId('switch-Active')).toBeInTheDocument()
-      expect(screen.getByTestId('switch-Custom Plan')).toBeInTheDocument()
+      expect(screen.getByTestId('switch-Status')).toBeInTheDocument()
+      expect(screen.getByTestId('switch-Plan Type')).toBeInTheDocument()
     })
   })
 
@@ -331,16 +358,16 @@ describe('PlanBasicDetails', () => {
       /* Fill in text fields */
       await user.type(screen.getByTestId('input-Plan Name'), 'Enterprise Plan')
       await user.type(screen.getByTestId('textarea-input-Description'), 'For large organizations')
-      await user.type(screen.getByTestId('input-Included Devices'), '100')
+      await user.type(screen.getByTestId('input-Included Devices Count'), '100')
 
       /* Toggle switches */
-      await user.click(screen.getByTestId('switch-button-Custom Plan'))
+      await user.click(screen.getByTestId('switch-button-Plan Type'))
 
       /* Verify values */
       expect(screen.getByTestId('input-Plan Name')).toHaveValue('Enterprise Plan')
       expect(screen.getByTestId('textarea-input-Description')).toHaveValue('For large organizations')
-      expect(screen.getByTestId('input-Included Devices')).toHaveValue('100')
-      expect(screen.getByTestId('switch-button-Custom Plan')).toHaveTextContent('Yes')
+      expect(screen.getByTestId('input-Included Devices Count')).toHaveValue('100')
+      expect(screen.getByTestId('switch-button-Plan Type')).toHaveTextContent('Custom Plan')
     })
   })
 })

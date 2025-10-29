@@ -22,7 +22,13 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('@shared/components/common', () => ({
-  ErrorMessageContainer: ({ error, title, onRetry, onDismiss, testId }: any) => (
+  ErrorMessageContainer: ({ error, title, onRetry, onDismiss, testId }: {
+    error: string;
+    title?: string;
+    onRetry?: () => void;
+    onDismiss?: () => void;
+    testId?: string;
+  }) => (
     <div data-testid={testId || 'error-container'}>
       {title && <div data-testid="error-title">{title}</div>}
       <div data-testid="error-message">{error}</div>
@@ -47,12 +53,24 @@ vi.mock('@plan-management/forms/tabs', () => ({
 }))
 
 vi.mock('@plan-management/components', () => ({
-  TabNavigation: ({ onNext, onPrevious, onSubmit, onEdit, onBackToList, isFirstTab, isLastTab, isSubmitting, isFormValid, submitButtonText, readOnly }: any) => (
+  TabNavigation: ({ onNext, onPrevious, onSubmit, onEdit, onBackToList, isFirstTab, isLastTab, isSubmitting, isFormValid, submitButtonText, readOnly }: {
+    onNext?: () => void;
+    onPrevious?: () => void;
+    onSubmit?: () => void;
+    onEdit?: () => void;
+    onBackToList: () => void;
+    isFirstTab: boolean;
+    isLastTab: boolean;
+    isSubmitting: boolean;
+    isFormValid: boolean;
+    submitButtonText: string;
+    readOnly: boolean;
+  }) => (
     <div data-testid="tab-navigation">
-      {!isFirstTab && <button onClick={onPrevious} data-testid="nav-previous">Previous</button>}
-      {!isLastTab && <button onClick={onNext} data-testid="nav-next" disabled={!isFormValid}>Next</button>}
-      {isLastTab && !readOnly && <button onClick={onSubmit} data-testid="nav-submit" disabled={isSubmitting || !isFormValid}>{submitButtonText}</button>}
-      {readOnly && <button onClick={onEdit} data-testid="nav-edit">Edit</button>}
+      {!isFirstTab && onPrevious && <button onClick={onPrevious} data-testid="nav-previous">Previous</button>}
+      {!isLastTab && onNext && <button onClick={onNext} data-testid="nav-next" disabled={!isFormValid}>Next</button>}
+      {isLastTab && !readOnly && onSubmit && <button onClick={onSubmit} data-testid="nav-submit" disabled={isSubmitting || !isFormValid}>{submitButtonText}</button>}
+      {readOnly && onEdit && <button onClick={onEdit} data-testid="nav-edit">Edit</button>}
       <button onClick={onBackToList} data-testid="nav-back">Back to List</button>
     </div>
   )
@@ -123,7 +141,7 @@ describe('PlanFormUI', () => {
       refresh: vi.fn(),
       replace: vi.fn(),
       prefetch: vi.fn()
-    } as any)
+    })
 
     vi.spyOn(planFormModeContext, 'usePlanFormMode').mockReturnValue({
       mode: PLAN_FORM_MODES.CREATE,
@@ -638,7 +656,7 @@ describe('PlanFormUI', () => {
 
   describe('Edge Cases', () => {
     it('should handle null active tab gracefully', () => {
-      render(<TestComponent activeTab={null as any} />, { wrapper: TestWrapper })
+      render(<TestComponent activeTab={null} />, { wrapper: TestWrapper })
 
       expect(screen.getByTestId('tab-navigation')).toBeInTheDocument()
     })
@@ -646,7 +664,7 @@ describe('PlanFormUI', () => {
     it('should handle undefined planId in VIEW mode', () => {
       vi.spyOn(planFormModeContext, 'usePlanFormMode').mockReturnValue({
         mode: PLAN_FORM_MODES.VIEW,
-        planId: undefined as any
+        planId: undefined
       })
 
       render(<TestComponent />, { wrapper: TestWrapper })

@@ -1,1195 +1,498 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { useForm } from 'react-hook-form';
-import { Provider } from '@/components/ui/provider';
-import CreateSLAForm from '../create-sla-form';
+/* Comprehensive test suite for CreateSLAForm component */
 
-// Define the form data type for testing
-interface CreateSlaFormData {
-  name: string;
-  support_channel: string;
-  response_time_hours: number;
-  availability_schedule: string;
-  notes?: string;
-  is_active: boolean;
-}
+/* Libraries imports */
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { useForm } from 'react-hook-form'
+import { Provider } from '@/components/ui/provider'
+import React from 'react'
 
-// Mock dependencies
-vi.mock('@plan-management/config', () => ({
-  SLA_CREATE_FORM_CONFIG: [
-    {
-      id: 1,
-      schema_key: 'name',
-      type: 'INPUT',
-      label: 'SLA Name',
-      placeholder: 'Enter SLA name',
-      is_required: true,
-      display_order: 1,
-      grid: { col_span: 1 }
-    },
-    {
-      id: 2,
-      schema_key: 'support_channel',
-      type: 'SELECT',
-      label: 'Support Channel',
-      placeholder: 'Select support channel',
-      is_required: true,
-      display_order: 2,
-      grid: { col_span: 1 },
-      values: [
-        { label: 'Email', value: 'email' },
-        { label: 'Phone', value: 'phone' },
-        { label: 'Chat', value: 'chat' }
-      ]
-    },
-    {
-      id: 3,
-      schema_key: 'response_time_hours',
-      type: 'INPUT',
-      label: 'Response Time (Hours)',
-      placeholder: 'Enter response time in hours',
-      is_required: true,
-      display_order: 3,
-      grid: { col_span: 1 }
-    },
-    {
-      id: 4,
-      schema_key: 'availability_schedule',
-      type: 'TEXTAREA',
-      label: 'Availability Schedule',
-      placeholder: 'Enter availability schedule',
-      is_required: false,
-      display_order: 4,
-      grid: { col_span: 2 }
-    },
-    {
-      id: 5,
-      schema_key: 'notes',
-      type: 'TEXTAREA',
-      label: 'Notes',
-      placeholder: 'Enter additional notes',
-      is_required: false,
-      display_order: 5,
-      grid: { col_span: 2 }
-    },
-    {
-      id: 6,
-      schema_key: 'is_active',
-      type: 'TOGGLE',
-      label: 'Active',
-      is_required: false,
-      display_order: 6,
-      grid: { col_span: 1 },
-      toggle_text: {
-        true: 'Active',
-        false: 'Inactive'
-      }
-    }
-  ]
-}));
+/* Plan module imports */
+import CreateSLAForm from '@plan-management/forms/tabs/components/slas/create-sla-form'
+import { CreateSlaFormData } from '@plan-management/schemas'
 
-vi.mock('@shared/config', () => ({
-  GRAY_COLOR: '#718096'
-}));
-
+/* Mock shared components */
 vi.mock('@shared/components', () => ({
-  TextInputField: ({ label, value, placeholder, onChange, onBlur, name, isInValid, required, errorMessage }: any) => (
-    <div data-testid={`text-input-${name}`}>
-      <label data-testid={`label-${name}`}>
+  TextInputField: ({ label, value, onChange, isInValid, errorMessage, required, placeholder }: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    isInValid?: boolean;
+    errorMessage?: string;
+    required?: boolean;
+    placeholder?: string;
+  }) => (
+    <div data-testid={`text-input-${label}`}>
+      <label>
         {label}
-        {required && <span data-testid={`required-${name}`}>*</span>}
+        {required && ' *'}
       </label>
       <input
-        data-testid={`input-${name}`}
-        value={value || ''}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        onChange={onChange}
-        onBlur={onBlur}
-        name={name}
-        type={name === 'response_time_hours' ? 'number' : 'text'}
+        data-testid={`input-${label}`}
       />
       {isInValid && errorMessage && (
-        <span data-testid={`error-${name}`} role="alert">
-          {errorMessage}
-        </span>
+        <span data-testid={`error-${label}`}>{errorMessage}</span>
       )}
     </div>
   ),
-  TextAreaField: ({ label, value, placeholder, onChange, onBlur, name, isInValid, required, errorMessage }: any) => (
-    <div data-testid={`textarea-${name}`}>
-      <label data-testid={`label-${name}`}>
+  TextAreaField: ({ label, value, onChange, isInValid, errorMessage, required, placeholder }: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    isInValid?: boolean;
+    errorMessage?: string;
+    required?: boolean;
+    placeholder?: string;
+  }) => (
+    <div data-testid={`textarea-${label}`}>
+      <label>
         {label}
-        {required && <span data-testid={`required-${name}`}>*</span>}
+        {required && ' *'}
       </label>
       <textarea
-        data-testid={`textarea-input-${name}`}
-        value={value || ''}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        onChange={onChange}
-        onBlur={onBlur}
-        name={name}
+        data-testid={`textarea-input-${label}`}
       />
       {isInValid && errorMessage && (
-        <span data-testid={`error-${name}`} role="alert">
-          {errorMessage}
-        </span>
+        <span data-testid={`error-${label}`}>{errorMessage}</span>
       )}
     </div>
   ),
-  SelectField: ({ label, value, placeholder, onChange, name, isInValid, required, errorMessage, options }: any) => (
-    <div data-testid={`select-${name}`}>
-      <label data-testid={`label-${name}`}>
-        {label}
-        {required && <span data-testid={`required-${name}`}>*</span>}
-      </label>
-      <select
-        data-testid={`select-input-${name}`}
-        value={value || ''}
-        onChange={onChange}
-        name={name}
-      >
-        <option value="">{placeholder}</option>
-        {options?.map((option: any) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
+  SelectField: ({ label, value, onChange, options }: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    options: Array<{ value: string; label: string }>;
+  }) => (
+    <div data-testid={`select-${label}`}>
+      <label>{label}</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)} data-testid={`select-input-${label}`}>
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
-      {isInValid && errorMessage && (
-        <span data-testid={`error-${name}`} role="alert">
-          {errorMessage}
-        </span>
-      )}
     </div>
   ),
-  SwitchField: ({ label, value, onChange, name, isInValid, required, errorMessage, activeText, inactiveText }: any) => (
-    <div data-testid={`switch-${name}`}>
-      <label data-testid={`label-${name}`}>
-        {label}
-        {required && <span data-testid={`required-${name}`}>*</span>}
-      </label>
-      <div>
-        <input
-          data-testid={`switch-input-${name}`}
-          type="checkbox"
-          checked={value || false}
-          onChange={(e) => onChange(e.target.checked)}
-          name={name}
-        />
-        <span data-testid={`switch-text-${name}`}>
-          {value ? activeText : inactiveText}
-        </span>
-      </div>
-      {isInValid && errorMessage && (
-        <span data-testid={`error-${name}`} role="alert">
-          {errorMessage}
-        </span>
-      )}
+  SwitchField: ({ label, value, onChange }: {
+    label: string;
+    value: boolean;
+    onChange: (value: boolean) => void;
+  }) => (
+    <div data-testid={`switch-${label}`}>
+      <label>{label}</label>
+      <input
+        type="checkbox"
+        checked={value}
+        onChange={(e) => onChange(e.target.checked)}
+        data-testid={`switch-input-${label}`}
+      />
     </div>
   ),
-  PrimaryButton: ({ children, onClick, loading, disabled, leftIcon }: any) => (
-    <button
-      data-testid="primary-button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-busy={loading}
-    >
-      {leftIcon && <span data-testid="button-icon">{leftIcon}</span>}
+  PrimaryButton: ({ children, onClick, loading, disabled, leftIcon }: {
+    children: React.ReactNode;
+    onClick: () => void;
+    loading?: boolean;
+    disabled?: boolean;
+    leftIcon?: React.ComponentType;
+  }) => (
+    <button onClick={onClick} disabled={disabled} data-testid="primary-button" data-loading={loading}>
       {children}
     </button>
   )
-}));
-
-// Test component wrapper that provides form context
-const FormTestWrapper = ({ 
-  children, 
-  defaultValues = {},
-  onSubmit = vi.fn()
-}: { 
-  children: (form: any) => React.ReactNode;
-  defaultValues?: Partial<CreateSlaFormData>;
-  onSubmit?: (data: CreateSlaFormData) => void;
-}) => {
-  const form = useForm<CreateSlaFormData>({
-    defaultValues: {
-      name: '',
-      support_channel: '',
-      response_time_hours: 0,
-      availability_schedule: '',
-      notes: '',
-      is_active: false,
-      ...defaultValues
-    }
-  });
-
-  return (
-    <Provider>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        {children(form)}
-      </form>
-    </Provider>
-  );
-};
+}))
 
 describe('CreateSLAForm', () => {
-  const mockHandleCreateSla = vi.fn();
+  const mockHandleCreateSla = vi.fn()
 
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
+  const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+    <Provider>{children}</Provider>
+  )
 
-  describe('rendering', () => {
+  const TestComponent = ({
+    showCreateSla = true,
+    createSlaSubmitting = false
+  }: {
+    showCreateSla?: boolean;
+    createSlaSubmitting?: boolean
+  } = {}) => {
+    const createSlaForm = useForm<CreateSlaFormData>({
+      defaultValues: {
+        name: '',
+        support_channel: '',
+        response_time_hours: '',
+        availability_schedule: '',
+        notes: ''
+      }
+    })
+
+    return (
+      <CreateSLAForm
+        showCreateSla={showCreateSla}
+        createSlaForm={createSlaForm}
+        createSlaSubmitting={createSlaSubmitting}
+        handleCreateSla={mockHandleCreateSla}
+      />
+    )
+  }
+
+  describe('Component Rendering', () => {
     it('should render form when showCreateSla is true', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      render(<TestComponent showCreateSla={true} />, { wrapper: TestWrapper })
 
-      expect(screen.getByTestId('text-input-name')).toBeInTheDocument();
-      expect(screen.getByTestId('select-support_channel')).toBeInTheDocument();
-      expect(screen.getByTestId('text-input-response_time_hours')).toBeInTheDocument();
-      expect(screen.getByTestId('textarea-availability_schedule')).toBeInTheDocument();
-      expect(screen.getByTestId('textarea-notes')).toBeInTheDocument();
-      expect(screen.getByTestId('switch-is_active')).toBeInTheDocument();
-      expect(screen.getByTestId('primary-button')).toBeInTheDocument();
-    });
+      expect(screen.getByTestId('text-input-SLA Name')).toBeInTheDocument()
+      expect(screen.getByTestId('text-input-Support Channel')).toBeInTheDocument()
+      expect(screen.getByTestId('text-input-Response Time (hours)')).toBeInTheDocument()
+      expect(screen.getByTestId('text-input-Availability Schedule')).toBeInTheDocument()
+      expect(screen.getByTestId('textarea-Notes (Optional)')).toBeInTheDocument()
+      expect(screen.getByTestId('primary-button')).toBeInTheDocument()
+    })
 
     it('should not render form when showCreateSla is false', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={false}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      render(<TestComponent showCreateSla={false} />, { wrapper: TestWrapper })
 
-      expect(screen.queryByTestId('text-input-name')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('select-support_channel')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('primary-button')).not.toBeInTheDocument();
-    });
+      expect(screen.queryByTestId('text-input-SLA Name')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('text-input-Support Channel')).not.toBeInTheDocument()
+    })
 
-    it('should render form fields in correct display order', () => {
-      const { container } = render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+    it('should render all form fields', () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      // Check that all expected fields are rendered
-      expect(screen.getByTestId('text-input-name')).toBeInTheDocument();
-      expect(screen.getByTestId('select-support_channel')).toBeInTheDocument();
-      expect(screen.getByTestId('text-input-response_time_hours')).toBeInTheDocument();
-      expect(screen.getByTestId('textarea-availability_schedule')).toBeInTheDocument();
-      expect(screen.getByTestId('textarea-notes')).toBeInTheDocument();
-      expect(screen.getByTestId('switch-is_active')).toBeInTheDocument();
+      expect(screen.getByTestId('input-SLA Name')).toBeInTheDocument()
+      expect(screen.getByTestId('input-Support Channel')).toBeInTheDocument()
+      expect(screen.getByTestId('input-Response Time (hours)')).toBeInTheDocument()
+      expect(screen.getByTestId('input-Availability Schedule')).toBeInTheDocument()
+      expect(screen.getByTestId('textarea-input-Notes (Optional)')).toBeInTheDocument()
+    })
 
-      // Verify we have the expected number of form fields
-      const inputFields = container.querySelectorAll('input, textarea, select');
-      expect(inputFields.length).toBeGreaterThanOrEqual(6);
-    });
-  });
+    it('should render create button with correct text', () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-  describe('form field rendering', () => {
-    it('should render required fields with required indicators', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      const button = screen.getByTestId('primary-button')
+      expect(button).toHaveTextContent('Create')
+    })
 
-      // Required fields should have required indicators
-      expect(screen.getByTestId('required-name')).toBeInTheDocument();
-      expect(screen.getByTestId('required-support_channel')).toBeInTheDocument();
-      expect(screen.getByTestId('required-response_time_hours')).toBeInTheDocument();
-      
-      // Optional fields should not have required indicators
-      expect(screen.queryByTestId('required-availability_schedule')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('required-notes')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('required-is_active')).not.toBeInTheDocument();
-    });
+    it('should render required indicators for required fields', () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-    it('should render fields with correct labels and placeholders', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      const nameLabel = screen.getByText(/SLA Name/)
+      const channelLabel = screen.getByText(/Support Channel/)
+      const responseLabel = screen.getByText(/Response Time/)
+      const scheduleLabel = screen.getByText(/Availability Schedule/)
 
-      expect(screen.getByTestId('label-name')).toHaveTextContent('SLA Name');
-      expect(screen.getByTestId('input-name')).toHaveAttribute('placeholder', 'Enter SLA name');
-      
-      expect(screen.getByTestId('label-support_channel')).toHaveTextContent('Support Channel');
-      expect(screen.getByTestId('select-input-support_channel')).toBeInTheDocument();
-      
-      expect(screen.getByTestId('label-response_time_hours')).toHaveTextContent('Response Time (Hours)');
-      expect(screen.getByTestId('input-response_time_hours')).toHaveAttribute('placeholder', 'Enter response time in hours');
-      
-      expect(screen.getByTestId('label-availability_schedule')).toHaveTextContent('Availability Schedule');
-      expect(screen.getByTestId('textarea-input-availability_schedule')).toHaveAttribute('placeholder', 'Enter availability schedule');
-      
-      expect(screen.getByTestId('label-notes')).toHaveTextContent('Notes');
-      expect(screen.getByTestId('textarea-input-notes')).toHaveAttribute('placeholder', 'Enter additional notes');
-      
-      expect(screen.getByTestId('label-is_active')).toHaveTextContent('Active');
-    });
+      expect(nameLabel.textContent).toContain('*')
+      expect(channelLabel.textContent).toContain('*')
+      expect(responseLabel.textContent).toContain('*')
+      expect(scheduleLabel.textContent).toContain('*')
+    })
 
-    it('should handle INPUT field type correctly', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+    it('should not render required indicator for optional notes field', () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      const nameInput = screen.getByTestId('input-name');
-      const responseTimeInput = screen.getByTestId('input-response_time_hours');
-      
-      expect(nameInput).toBeInTheDocument();
-      expect(nameInput.tagName).toBe('INPUT');
-      expect(nameInput).toHaveAttribute('type', 'text');
-      
-      expect(responseTimeInput).toBeInTheDocument();
-      expect(responseTimeInput.tagName).toBe('INPUT');
-      expect(responseTimeInput).toHaveAttribute('type', 'number');
-    });
+      const notesLabel = screen.getByText(/Notes \(Optional\)/)
+      expect(notesLabel.textContent).not.toContain('*')
+    })
+  })
 
-    it('should handle TEXTAREA field type correctly', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+  describe('Form Interactions', () => {
+    it('should allow typing in SLA name field', async () => {
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      const availabilityTextarea = screen.getByTestId('textarea-input-availability_schedule');
-      const notesTextarea = screen.getByTestId('textarea-input-notes');
-      
-      expect(availabilityTextarea).toBeInTheDocument();
-      expect(availabilityTextarea.tagName).toBe('TEXTAREA');
-      
-      expect(notesTextarea).toBeInTheDocument();
-      expect(notesTextarea.tagName).toBe('TEXTAREA');
-    });
+      const nameInput = screen.getByTestId('input-SLA Name')
+      await user.type(nameInput, 'Premium Support')
 
-    it('should handle SELECT field type correctly', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      expect(nameInput).toHaveValue('Premium Support')
+    })
 
-      const supportChannelSelect = screen.getByTestId('select-input-support_channel');
-      
-      expect(supportChannelSelect).toBeInTheDocument();
-      expect(supportChannelSelect.tagName).toBe('SELECT');
-      
-      // Check that options are rendered
-      expect(screen.getByText('Email')).toBeInTheDocument();
-      expect(screen.getByText('Phone')).toBeInTheDocument();
-      expect(screen.getByText('Chat')).toBeInTheDocument();
-    });
+    it('should allow typing in support channel field', async () => {
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-    it('should handle TOGGLE field type correctly', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      const channelInput = screen.getByTestId('input-Support Channel')
+      await user.type(channelInput, 'Email, Phone')
 
-      const activeSwitch = screen.getByTestId('switch-input-is_active');
-      const switchText = screen.getByTestId('switch-text-is_active');
-      
-      expect(activeSwitch).toBeInTheDocument();
-      expect(activeSwitch).toHaveAttribute('type', 'checkbox');
-      expect(switchText).toHaveTextContent('Inactive'); // Default state
-    });
-  });
+      expect(channelInput).toHaveValue('Email, Phone')
+    })
 
-  describe('form interactions', () => {
-    it('should handle form input changes', async () => {
-      const user = userEvent.setup();
+    it('should allow typing in response time field', async () => {
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      const responseInput = screen.getByTestId('input-Response Time (hours)')
+      await user.type(responseInput, '24')
 
-      const nameInput = screen.getByTestId('input-name');
-      const supportChannelSelect = screen.getByTestId('select-input-support_channel');
-      const responseTimeInput = screen.getByTestId('input-response_time_hours');
-      const availabilityTextarea = screen.getByTestId('textarea-input-availability_schedule');
-      const notesTextarea = screen.getByTestId('textarea-input-notes');
-      const activeSwitch = screen.getByTestId('switch-input-is_active');
+      expect(responseInput).toHaveValue('24')
+    })
 
-      await user.type(nameInput, 'Premium Support');
-      await user.selectOptions(supportChannelSelect, 'phone');
-      await user.type(responseTimeInput, '24');
-      await user.type(availabilityTextarea, '24/7 Support');
-      await user.type(notesTextarea, 'Premium tier support');
-      await user.click(activeSwitch);
+    it('should allow typing in availability schedule field', async () => {
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      expect(nameInput).toHaveValue('Premium Support');
-      expect(supportChannelSelect).toHaveValue('phone');
-      expect(responseTimeInput).toHaveValue(24);
-      expect(availabilityTextarea).toHaveValue('24/7 Support');
-      expect(notesTextarea).toHaveValue('Premium tier support');
-      expect(activeSwitch).toBeChecked();
-    });
+      const scheduleInput = screen.getByTestId('input-Availability Schedule')
+      await user.type(scheduleInput, '24/7')
 
-    it('should call handleCreateSla when form is submitted', async () => {
-      const user = userEvent.setup();
+      expect(scheduleInput).toHaveValue('24/7')
+    })
 
-      render(
-        <FormTestWrapper onSubmit={mockHandleCreateSla}>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+    it('should allow typing in notes field', async () => {
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      const submitButton = screen.getByTestId('primary-button');
-      await user.click(submitButton);
+      const notesInput = screen.getByTestId('textarea-input-Notes (Optional)')
+      await user.type(notesInput, 'Additional support notes')
 
-      expect(mockHandleCreateSla).toHaveBeenCalled();
-    });
+      expect(notesInput).toHaveValue('Additional support notes')
+    })
 
-    it('should handle switch toggle correctly', async () => {
-      const user = userEvent.setup();
+    it('should handle multiple field changes', async () => {
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      const nameInput = screen.getByTestId('input-SLA Name')
+      const channelInput = screen.getByTestId('input-Support Channel')
+      const responseInput = screen.getByTestId('input-Response Time (hours)')
 
-      const activeSwitch = screen.getByTestId('switch-input-is_active');
-      const switchText = screen.getByTestId('switch-text-is_active');
+      await user.type(nameInput, 'Standard Support')
+      await user.type(channelInput, 'Email')
+      await user.type(responseInput, '48')
 
-      expect(switchText).toHaveTextContent('Inactive');
-      
-      await user.click(activeSwitch);
-      expect(switchText).toHaveTextContent('Active');
-      
-      await user.click(activeSwitch);
-      expect(switchText).toHaveTextContent('Inactive');
-    });
-  });
+      expect(nameInput).toHaveValue('Standard Support')
+      expect(channelInput).toHaveValue('Email')
+      expect(responseInput).toHaveValue('48')
+    })
 
-  describe('loading states', () => {
-    it('should show loading state when createSlaSubmitting is true', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={true}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+    it('should call handleCreateSla when create button is clicked', async () => {
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      const submitButton = screen.getByTestId('primary-button');
-      
-      expect(submitButton).toHaveTextContent('Creating...');
-      expect(submitButton).toBeDisabled();
-      expect(submitButton).toHaveAttribute('aria-busy', 'true');
-    });
+      const button = screen.getByTestId('primary-button')
+      await user.click(button)
 
-    it('should show normal state when createSlaSubmitting is false', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      await waitFor(() => {
+        expect(mockHandleCreateSla).toHaveBeenCalled()
+      })
+    })
+  })
 
-      const submitButton = screen.getByTestId('primary-button');
-      
-      expect(submitButton).toHaveTextContent('Create');
-      expect(submitButton).not.toBeDisabled();
-      expect(submitButton).toHaveAttribute('aria-busy', 'false');
-    });
+  describe('Submitting State', () => {
+    it('should show "Creating..." text when submitting', () => {
+      render(<TestComponent createSlaSubmitting={true} />, { wrapper: TestWrapper })
 
-    it('should disable form during submission', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={true}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      const button = screen.getByTestId('primary-button')
+      expect(button).toHaveTextContent('Creating...')
+    })
 
-      const submitButton = screen.getByTestId('primary-button');
-      expect(submitButton).toBeDisabled();
-    });
+    it('should disable button when submitting', () => {
+      render(<TestComponent createSlaSubmitting={true} />, { wrapper: TestWrapper })
 
-    it('should hide submit button icon when loading', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={true}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      const button = screen.getByTestId('primary-button')
+      expect(button).toBeDisabled()
+    })
 
-      expect(screen.queryByTestId('button-icon')).not.toBeInTheDocument();
-    });
+    it('should show "Create" text when not submitting', () => {
+      render(<TestComponent createSlaSubmitting={false} />, { wrapper: TestWrapper })
 
-    it('should show submit button icon when not loading', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      const button = screen.getByTestId('primary-button')
+      expect(button).toHaveTextContent('Create')
+    })
 
-      expect(screen.getByTestId('button-icon')).toBeInTheDocument();
-    });
-  });
+    it('should enable button when not submitting', () => {
+      render(<TestComponent createSlaSubmitting={false} />, { wrapper: TestWrapper })
 
-  describe('error handling', () => {
-    it('should display error message when createSlaError is provided', () => {
-      const errorMessage = 'Failed to create SLA';
+      const button = screen.getByTestId('primary-button')
+      expect(button).not.toBeDisabled()
+    })
 
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={errorMessage}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+    it('should show loading state in button', () => {
+      render(<TestComponent createSlaSubmitting={true} />, { wrapper: TestWrapper })
 
-      expect(screen.getByText(errorMessage)).toBeInTheDocument();
-    });
+      const button = screen.getByTestId('primary-button')
+      expect(button).toHaveAttribute('data-loading', 'true')
+    })
+  })
 
-    it('should not display error message when createSlaError is null', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+  describe('Form Validation', () => {
+    it('should display validation error for SLA name field', () => {
+      const TestComponentWithError = () => {
+        const createSlaForm = useForm<CreateSlaFormData>({
+          defaultValues: { name: '', support_channel: '', response_time_hours: '', availability_schedule: '', notes: '' }
+        })
 
-      // No error alert should be present
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    });
-
-    it('should handle form validation errors', async () => {
-      const user = userEvent.setup();
-
-      // Create a form wrapper that can simulate validation errors
-      const FormWithErrors = () => {
-        const form = useForm<CreateSlaFormData>({
-          defaultValues: {
-            name: '',
-            support_channel: '',
-            response_time_hours: 0,
-            availability_schedule: '',
-            notes: '',
-            is_active: false
-          },
-          mode: 'onBlur' // Enable validation on blur
-        });
+        React.useEffect(() => {
+          createSlaForm.setError('name', { message: 'SLA name is required' })
+        }, [createSlaForm])
 
         return (
-          <Provider>
-            <form onSubmit={form.handleSubmit(mockHandleCreateSla)}>
-              <CreateSLAForm
-                showCreateSla={true}
-                createSlaForm={form}
-                createSlaSubmitting={false}
-                createSlaError={null}
-                handleCreateSla={mockHandleCreateSla}
-              />
-            </form>
-          </Provider>
-        );
-      };
+          <CreateSLAForm
+            showCreateSla={true}
+            createSlaForm={createSlaForm}
+            createSlaSubmitting={false}
+            handleCreateSla={mockHandleCreateSla}
+          />
+        )
+      }
 
-      render(<FormWithErrors />);
+      render(<TestComponentWithError />, { wrapper: TestWrapper })
 
-      // Trigger validation by focusing and blurring required fields
-      const nameInput = screen.getByTestId('input-name');
-      
-      await user.click(nameInput);
-      await user.tab(); // Move focus away to trigger onBlur validation
+      expect(screen.getByTestId('error-SLA Name')).toHaveTextContent('SLA name is required')
+    })
 
-      // Form should be rendered without errors since validation errors 
-      // would need proper form validation schema setup
-      expect(screen.getByTestId('text-input-name')).toBeInTheDocument();
-      expect(screen.getByTestId('select-support_channel')).toBeInTheDocument();
-    });
-  });
+    it('should display validation error for support channel field', () => {
+      const TestComponentWithError = () => {
+        const createSlaForm = useForm<CreateSlaFormData>({
+          defaultValues: { name: '', support_channel: '', response_time_hours: '', availability_schedule: '', notes: '' }
+        })
 
-  describe('field validation integration', () => {
-    it('should integrate with React Hook Form validation system', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+        React.useEffect(() => {
+          createSlaForm.setError('support_channel', { message: 'Support channel is required' })
+        }, [createSlaForm])
 
-      // Verify that form fields are properly connected to React Hook Form
-      const nameInput = screen.getByTestId('input-name');
-      const supportChannelSelect = screen.getByTestId('select-input-support_channel');
-      const responseTimeInput = screen.getByTestId('input-response_time_hours');
-      const availabilityTextarea = screen.getByTestId('textarea-input-availability_schedule');
-      const notesTextarea = screen.getByTestId('textarea-input-notes');
-      const activeSwitch = screen.getByTestId('switch-input-is_active');
+        return (
+          <CreateSLAForm
+            showCreateSla={true}
+            createSlaForm={createSlaForm}
+            createSlaSubmitting={false}
+            handleCreateSla={mockHandleCreateSla}
+          />
+        )
+      }
 
-      expect(nameInput).toHaveAttribute('name', 'name');
-      expect(supportChannelSelect).toHaveAttribute('name', 'support_channel');
-      expect(responseTimeInput).toHaveAttribute('name', 'response_time_hours');
-      expect(availabilityTextarea).toHaveAttribute('name', 'availability_schedule');
-      expect(notesTextarea).toHaveAttribute('name', 'notes');
-      expect(activeSwitch).toHaveAttribute('name', 'is_active');
-    });
-  });
+      render(<TestComponentWithError />, { wrapper: TestWrapper })
 
-  describe('form configuration handling', () => {
-    it('should handle unknown field types gracefully', () => {
-      // Mock config with unknown field type
-      vi.doMock('@plan-management/config', () => ({
-        SLA_CREATE_FORM_CONFIG: [
-          {
-            id: 1,
-            schema_key: 'unknown',
-            type: 'UNKNOWN_TYPE',
-            label: 'Unknown Field',
-            is_required: false,
-            display_order: 1,
-            grid: { col_span: 1 }
-          }
-        ]
-      }));
+      expect(screen.getByTestId('error-Support Channel')).toHaveTextContent('Support channel is required')
+    })
+  })
 
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+  describe('Field Properties', () => {
+    it('should have correct placeholders', () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-      // Unknown field type should not render anything
-      expect(screen.queryByTestId('text-input-unknown')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('textarea-unknown')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('select-unknown')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('switch-unknown')).not.toBeInTheDocument();
-    });
+      const nameInput = screen.getByTestId('input-SLA Name')
+      const channelInput = screen.getByTestId('input-Support Channel')
+      const responseInput = screen.getByTestId('input-Response Time (hours)')
+      const scheduleInput = screen.getByTestId('input-Availability Schedule')
+      const notesInput = screen.getByTestId('textarea-input-Notes (Optional)')
 
-    it('should sort fields by display_order correctly', () => {
-      // This test verifies that fields are rendered in the correct order
-      // based on the display_order property in the configuration
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      expect(nameInput).toHaveAttribute('placeholder', 'Enter SLA name')
+      expect(channelInput).toHaveAttribute('placeholder', 'e.g., Email, Phone, Chat')
+      expect(responseInput).toHaveAttribute('placeholder', 'e.g., 24')
+      expect(scheduleInput).toHaveAttribute('placeholder', 'e.g., 24/7, Business Hours')
+      expect(notesInput).toHaveAttribute('placeholder', 'Additional notes about this SLA')
+    })
 
-      // Verify fields are in correct DOM order
-      const allInputs = screen.getAllByRole('textbox');
-      const allSelects = screen.getAllByRole('combobox');
-      const allCheckboxes = screen.getAllByRole('checkbox');
-      
-      expect(allInputs.length).toBeGreaterThan(0);
-      expect(allSelects.length).toBeGreaterThan(0);
-      expect(allCheckboxes.length).toBeGreaterThan(0);
-    });
-  });
+    it('should render fields in correct order', () => {
+      render(<TestComponent />, { wrapper: TestWrapper })
 
-  describe('component lifecycle', () => {
-    it('should cleanup properly on unmount', () => {
-      const { unmount } = render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      const nameField = screen.getByTestId('text-input-SLA Name')
+      const channelField = screen.getByTestId('text-input-Support Channel')
+      const responseField = screen.getByTestId('text-input-Response Time (hours)')
+      const scheduleField = screen.getByTestId('text-input-Availability Schedule')
+      const notesField = screen.getByTestId('textarea-Notes (Optional)')
 
-      expect(() => unmount()).not.toThrow();
-    });
+      expect(nameField).toBeInTheDocument()
+      expect(channelField).toBeInTheDocument()
+      expect(responseField).toBeInTheDocument()
+      expect(scheduleField).toBeInTheDocument()
+      expect(notesField).toBeInTheDocument()
+    })
+  })
 
-    it('should handle prop changes correctly', () => {
+  describe('Edge Cases', () => {
+    it('should handle empty form submission', async () => {
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      const button = screen.getByTestId('primary-button')
+      await user.click(button)
+
+      await waitFor(() => {
+        expect(mockHandleCreateSla).toHaveBeenCalled()
+      })
+    })
+
+    it('should handle rapid button clicks', async () => {
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      const button = screen.getByTestId('primary-button')
+      await user.click(button)
+      await user.click(button)
+
+      await waitFor(() => {
+        expect(mockHandleCreateSla).toHaveBeenCalled()
+      })
+    })
+
+    it('should handle very long input values', async () => {
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      const longText = 'A'.repeat(500)
+      const nameInput = screen.getByTestId('input-SLA Name')
+      await user.click(nameInput)
+      await user.paste(longText)
+
+      expect(nameInput).toHaveValue(longText)
+    })
+
+    it('should handle special characters in input fields', async () => {
+      const user = userEvent.setup()
+      render(<TestComponent />, { wrapper: TestWrapper })
+
+      const nameInput = screen.getByTestId('input-SLA Name')
+      await user.type(nameInput, 'Premium & Elite Support (24/7)')
+
+      expect(nameInput).toHaveValue('Premium & Elite Support (24/7)')
+    })
+  })
+
+  describe('Toggle Between States', () => {
+    it('should toggle from hidden to visible', () => {
       const { rerender } = render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={false}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+        <TestComponent showCreateSla={false} />,
+        { wrapper: TestWrapper }
+      )
 
-      expect(screen.queryByTestId('primary-button')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('text-input-SLA Name')).not.toBeInTheDocument()
 
       rerender(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+        <Provider>
+          <TestComponent showCreateSla={true} />
+        </Provider>
+      )
 
-      expect(screen.getByTestId('primary-button')).toBeInTheDocument();
-    });
-  });
+      expect(screen.getByTestId('text-input-SLA Name')).toBeInTheDocument()
+    })
 
-  describe('accessibility', () => {
-    it('should be keyboard navigable', async () => {
-      const user = userEvent.setup();
+    it('should toggle from not submitting to submitting', () => {
+      const { rerender } = render(
+        <TestComponent createSlaSubmitting={false} />,
+        { wrapper: TestWrapper }
+      )
 
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
+      let button = screen.getByTestId('primary-button')
+      expect(button).toHaveTextContent('Create')
+      expect(button).not.toBeDisabled()
 
-      const nameInput = screen.getByTestId('input-name');
-      const supportChannelSelect = screen.getByTestId('select-input-support_channel');
-      const responseTimeInput = screen.getByTestId('input-response_time_hours');
-      const submitButton = screen.getByTestId('primary-button');
+      rerender(
+        <Provider>
+          <TestComponent createSlaSubmitting={true} />
+        </Provider>
+      )
 
-      // Should be able to tab through all form elements
-      await user.tab();
-      expect(nameInput).toHaveFocus();
-
-      await user.tab();
-      expect(supportChannelSelect).toHaveFocus();
-
-      await user.tab();
-      expect(responseTimeInput).toHaveFocus();
-
-      // Continue tabbing to reach submit button
-      await user.tab(); // availability_schedule
-      await user.tab(); // notes
-      await user.tab(); // is_active
-      await user.tab(); // submit button
-      expect(submitButton).toHaveFocus();
-    });
-
-    it('should have proper labels associated with form fields', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
-
-      expect(screen.getByTestId('label-name')).toBeInTheDocument();
-      expect(screen.getByTestId('label-support_channel')).toBeInTheDocument();
-      expect(screen.getByTestId('label-response_time_hours')).toBeInTheDocument();
-      expect(screen.getByTestId('label-availability_schedule')).toBeInTheDocument();
-      expect(screen.getByTestId('label-notes')).toBeInTheDocument();
-      expect(screen.getByTestId('label-is_active')).toBeInTheDocument();
-    });
-
-    it('should have proper structure for error announcements', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
-
-      // Verify that error elements would have proper roles when errors are present
-      // This test verifies the structure is in place for error handling
-      expect(screen.getByTestId('text-input-name')).toBeInTheDocument();
-      expect(screen.getByTestId('select-support_channel')).toBeInTheDocument();
-      expect(screen.getByTestId('text-input-response_time_hours')).toBeInTheDocument();
-      expect(screen.getByTestId('textarea-availability_schedule')).toBeInTheDocument();
-      expect(screen.getByTestId('textarea-notes')).toBeInTheDocument();
-      expect(screen.getByTestId('switch-is_active')).toBeInTheDocument();
-      
-      // The error handling structure is in place through the field components
-      // which would display errors with proper role="alert" when validation fails
-    });
-  });
-
-  describe('edge cases', () => {
-    it('should handle form with default values', () => {
-      const defaultValues = {
-        name: 'Default SLA',
-        support_channel: 'email',
-        response_time_hours: 48,
-        availability_schedule: '9-5 Mon-Fri',
-        notes: 'Default notes',
-        is_active: true
-      };
-
-      render(
-        <FormTestWrapper defaultValues={defaultValues}>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
-
-      expect(screen.getByTestId('input-name')).toHaveValue('Default SLA');
-      expect(screen.getByTestId('select-input-support_channel')).toHaveValue('email');
-      expect(screen.getByTestId('input-response_time_hours')).toHaveValue(48);
-      expect(screen.getByTestId('textarea-input-availability_schedule')).toHaveValue('9-5 Mon-Fri');
-      expect(screen.getByTestId('textarea-input-notes')).toHaveValue('Default notes');
-      expect(screen.getByTestId('switch-input-is_active')).toBeChecked();
-    });
-
-    it('should handle empty placeholder values', () => {
-      // This test verifies that the component handles null/undefined placeholder values
-      // by converting them to empty strings in the component logic
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
-
-      // The component should handle placeholder values gracefully
-      // Even if config has null/undefined placeholders, they should be converted to empty strings
-      const nameInput = screen.getByTestId('input-name');
-      expect(nameInput).toBeInTheDocument();
-      expect(nameInput).toHaveAttribute('placeholder');
-      
-      // Verify that placeholder attribute exists (whether empty or with value)
-      const placeholderValue = nameInput.getAttribute('placeholder');
-      expect(typeof placeholderValue).toBe('string');
-    });
-
-    it('should handle missing grid configuration', () => {
-      vi.doMock('@plan-management/config', () => ({
-        SLA_CREATE_FORM_CONFIG: [
-          {
-            id: 1,
-            schema_key: 'name',
-            type: 'INPUT',
-            label: 'SLA Name',
-            is_required: true,
-            display_order: 1,
-            grid: undefined
-          }
-        ]
-      }));
-
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
-
-      // Should render without throwing even with missing grid config
-      expect(screen.getByTestId('text-input-name')).toBeInTheDocument();
-    });
-
-    it('should handle missing configuration gracefully', () => {
-      vi.doMock('@plan-management/config', () => ({
-        SLA_CREATE_FORM_CONFIG: []
-      }));
-
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
-
-      // Should still render the submit button even with no fields
-      expect(screen.getByTestId('primary-button')).toBeInTheDocument();
-    });
-
-    it('should handle form submission errors gracefully', async () => {
-      const user = userEvent.setup();
-      const mockHandleCreateSlaWithError = vi.fn().mockRejectedValue(new Error('Submission failed'));
-
-      render(
-        <FormTestWrapper onSubmit={mockHandleCreateSlaWithError}>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSlaWithError}
-            />
-          )}
-        </FormTestWrapper>
-      );
-
-      const submitButton = screen.getByTestId('primary-button');
-      
-      // Should not throw when submission fails
-      expect(async () => {
-        await user.click(submitButton);
-      }).not.toThrow();
-    });
-  });
-
-  describe('visual states', () => {
-    it('should apply transition styles correctly', () => {
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={null}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
-
-      // Verify the form container is rendered with proper structure
-      expect(screen.getByTestId('text-input-name')).toBeInTheDocument();
-      expect(screen.getByTestId('primary-button')).toBeInTheDocument();
-    });
-
-    it('should handle error state styling', () => {
-      const errorMessage = 'Failed to create SLA';
-
-      render(
-        <FormTestWrapper>
-          {(form) => (
-            <CreateSLAForm
-              showCreateSla={true}
-              createSlaForm={form}
-              createSlaSubmitting={false}
-              createSlaError={errorMessage}
-              handleCreateSla={mockHandleCreateSla}
-            />
-          )}
-        </FormTestWrapper>
-      );
-
-      // Error message should be displayed
-      expect(screen.getByText(errorMessage)).toBeInTheDocument();
-    });
-  });
-});
+      button = screen.getByTestId('primary-button')
+      expect(button).toHaveTextContent('Creating...')
+      expect(button).toBeDisabled()
+    })
+  })
+})

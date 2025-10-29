@@ -1,719 +1,914 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Provider } from '@/components/ui/provider';
-import FeaturesGrid from '../features-grid';
-import { Feature } from '@plan-management/types';
+/* Comprehensive test suite for FeaturesGrid component */
 
-// Mock dependencies
-vi.mock('@shared/config', () => ({
-  PRIMARY_COLOR: '#3182CE',
-  GRAY_COLOR: '#718096',
-  DARK_COLOR: '#2D3748',
-  WHITE_COLOR: '#FFFFFF'
-}));
+/* Libraries imports */
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { Provider } from '@/components/ui/provider'
+import React from 'react'
 
+/* Plan module imports */
+import FeaturesGrid from '@plan-management/forms/tabs/components/features/features-grid'
+import { Feature } from '@plan-management/types'
+
+/* Mock ResourceGridSkeleton component */
 vi.mock('@plan-management/components', () => ({
-  ResourceSkeleton: ({ count, columns, variant, minHeight }: any) => (
-    <div data-testid="resource-skeleton">
-      <div data-testid="skeleton-count">{count}</div>
-      <div data-testid="skeleton-columns">{columns}</div>
-      <div data-testid="skeleton-variant">{variant}</div>
-      <div data-testid="skeleton-min-height">{minHeight}</div>
+  ResourceGridSkeleton: ({ count, columns, variant, minHeight }: {
+    count: number;
+    columns: number;
+    variant: string;
+    minHeight: string;
+  }) => (
+    <div data-testid="resource-grid-skeleton" data-count={count} data-columns={columns} data-variant={variant} data-minheight={minHeight}>
+      Loading skeleton...
     </div>
   )
-}));
+}))
 
+/* Mock EmptyStateContainer component */
 vi.mock('@shared/components', () => ({
-  EmptyStateContainer: ({ icon, title, description, testId }: any) => (
+  EmptyStateContainer: ({ icon, title, description, testId }: {
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+    testId: string;
+  }) => (
     <div data-testid={testId}>
       <div data-testid="empty-state-icon">{icon}</div>
       <div data-testid="empty-state-title">{title}</div>
       <div data-testid="empty-state-description">{description}</div>
     </div>
   )
-}));
+}))
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <Provider>{children}</Provider>
-);
+/* Mock Chakra UI components */
+vi.mock('@chakra-ui/react', async () => {
+  const actual = await vi.importActual('@chakra-ui/react')
+  return {
+    ...actual as Record<string, unknown>,
+    SimpleGrid: ({ children, columns, gap }: { children: React.ReactNode; columns: number; gap: number }) => (
+      <div data-testid="simple-grid" data-columns={columns} data-gap={gap}>{children}</div>
+    ),
+    GridItem: ({ children, h }: { children: React.ReactNode; h: string }) => (
+      <div data-testid="grid-item" data-h={h}>{children}</div>
+    ),
+    Box: ({ children, onClick, cursor, borderColor, bg, p, borderWidth, w, ...props }: {
+      children: React.ReactNode;
+      onClick?: () => void;
+      cursor?: string;
+      borderColor?: string;
+      bg?: string;
+      p?: number;
+      borderWidth?: number;
+      borderRadius?: string;
+      transition?: string;
+      position?: string;
+      h?: string;
+      minH?: string;
+      display?: string;
+      flexDirection?: string;
+      shadow?: string;
+      w?: string;
+      _hover?: Record<string, unknown>;
+    }) => {
+      /* Distinguish between feature card (has onClick, cursor, p=4, borderWidth) and icon container (has w="20px") */
+      const isFeatureCard = p === 4 && borderWidth === 1
+      const testId = isFeatureCard ? 'feature-card' : 'box'
+
+      return (
+        <div data-testid={testId} onClick={onClick} data-cursor={cursor || undefined} data-bordercolor={borderColor} data-bg={bg} {...props}>
+          {children}
+        </div>
+      )
+    },
+    Flex: ({ children, justifyContent, align, flexDir, gap, flex, minH, flexShrink, ml }: {
+      children: React.ReactNode;
+      justifyContent?: string;
+      align?: string;
+      flexDir?: string;
+      gap?: number;
+      flex?: number;
+      minH?: number;
+      flexShrink?: number;
+      ml?: number;
+    }) => (
+      <div data-testid="flex" data-justifycontent={justifyContent} data-align={align} data-flexdir={flexDir} data-gap={gap} data-flex={flex} data-minh={minH} data-flexshrink={flexShrink} data-ml={ml}>
+        {children}
+      </div>
+    ),
+    Text: ({ children, fontSize, fontWeight, color, lineHeight }: {
+      children: React.ReactNode;
+      fontSize?: string;
+      fontWeight?: string;
+      color?: string;
+      lineHeight?: string;
+    }) => (
+      <span data-testid="text" data-fontsize={fontSize} data-fontweight={fontWeight} data-color={color} data-lineheight={lineHeight}>
+        {children}
+      </span>
+    )
+  }
+})
+
+/* Mock react-icons */
+vi.mock('react-icons/md', () => ({
+  MdStars: ({ size, color }: { size: number; color: string }) => (
+    <div data-testid="md-stars-icon" data-size={size} data-color={color}>Stars Icon</div>
+  ),
+  MdOutlineCheckBoxOutlineBlank: () => (
+    <div data-testid="checkbox-outline-icon">Checkbox Icon</div>
+  )
+}))
+
+vi.mock('react-icons/fi', () => ({
+  FiPlus: () => (
+    <div data-testid="plus-icon">Plus Icon</div>
+  )
+}))
 
 describe('FeaturesGrid', () => {
+  const mockHandleToggleWithConfirm = vi.fn()
+
   const mockFeatures: Feature[] = [
     {
       id: 1,
-      name: 'Advanced Analytics',
-      description: 'Get detailed insights and analytics for your business',
+      name: 'Advanced Reporting',
+      description: 'Detailed analytics and custom reports',
       display_order: 1
     },
     {
       id: 2,
-      name: 'API Access',
-      description: 'Full API access to integrate with your systems',
+      name: 'Multi-User Access',
+      description: 'Support for multiple user accounts',
       display_order: 2
     },
     {
       id: 3,
-      name: 'Priority Support',
-      description: '24/7 priority customer support',
+      name: 'API Integration',
+      description: 'RESTful API for third-party integrations',
       display_order: 3
     }
-  ];
-
-  const defaultProps = {
-    loading: false,
-    displayResources: mockFeatures,
-    selectedFeatureIds: [],
-    isReadOnly: false,
-    handleToggleWithConfirm: vi.fn()
-  };
+  ]
 
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
+  const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+    <Provider>{children}</Provider>
+  )
 
-  describe('loading states', () => {
-    it('should display loading skeleton when loading is true', () => {
+  describe('Loading State', () => {
+    it('should render skeleton when loading is true', () => {
       render(
         <FeaturesGrid
-          {...defaultProps}
           loading={true}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByTestId('resource-skeleton')).toBeInTheDocument();
-      expect(screen.getByTestId('skeleton-count')).toHaveTextContent('6');
-      expect(screen.getByTestId('skeleton-columns')).toHaveTextContent('3');
-      expect(screen.getByTestId('skeleton-variant')).toHaveTextContent('simple');
-      expect(screen.getByTestId('skeleton-min-height')).toHaveTextContent('100px');
-    });
-
-    it('should not display features grid when loading is true', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          loading={true}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.queryByText('Advanced Analytics')).not.toBeInTheDocument();
-      expect(screen.queryByText('API Access')).not.toBeInTheDocument();
-      expect(screen.queryByText('Priority Support')).not.toBeInTheDocument();
-    });
-
-    it('should display features grid when loading is false', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          loading={false}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.queryByTestId('resource-skeleton')).not.toBeInTheDocument();
-      expect(screen.getByText('Advanced Analytics')).toBeInTheDocument();
-      expect(screen.getByText('API Access')).toBeInTheDocument();
-      expect(screen.getByText('Priority Support')).toBeInTheDocument();
-    });
-  });
-
-  describe('empty states', () => {
-    it('should show empty state when no features available and isReadOnly is true', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
           displayResources={[]}
-          isReadOnly={true}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByTestId('features-empty-state')).toBeInTheDocument();
-      expect(screen.getByTestId('empty-state-title')).toHaveTextContent('No features included');
-      expect(screen.getByTestId('empty-state-description')).toHaveTextContent('This plan does not include any features');
-    });
-
-    it('should not show empty state when no features available and isReadOnly is false', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          displayResources={[]}
-          isReadOnly={false}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.queryByTestId('features-empty-state')).not.toBeInTheDocument();
-    });
-
-    it('should render features grid when displayResources has items', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          displayResources={mockFeatures}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.queryByTestId('features-empty-state')).not.toBeInTheDocument();
-      expect(screen.getByText('Advanced Analytics')).toBeInTheDocument();
-    });
-  });
-
-  describe('features rendering', () => {
-    it('should render all features with correct names and descriptions', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          displayResources={mockFeatures}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByText('Advanced Analytics')).toBeInTheDocument();
-      expect(screen.getByText('Get detailed insights and analytics for your business')).toBeInTheDocument();
-      
-      expect(screen.getByText('API Access')).toBeInTheDocument();
-      expect(screen.getByText('Full API access to integrate with your systems')).toBeInTheDocument();
-      
-      expect(screen.getByText('Priority Support')).toBeInTheDocument();
-      expect(screen.getByText('24/7 priority customer support')).toBeInTheDocument();
-    });
-
-    it('should render features in a 3-column grid', () => {
-      const { container } = render(
-        <FeaturesGrid
-          {...defaultProps}
-          displayResources={mockFeatures}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Check that the grid structure is rendered by looking for the grid container
-      const gridContainer = container.querySelector('[class*="css-"]'); // Chakra UI generates CSS classes
-      expect(gridContainer).toBeInTheDocument();
-      
-      // Verify that all features are rendered as individual items
-      expect(screen.getByText('Advanced Analytics')).toBeInTheDocument();
-      expect(screen.getByText('API Access')).toBeInTheDocument();
-      expect(screen.getByText('Priority Support')).toBeInTheDocument();
-    });
-
-    it('should render correct number of feature cards', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          displayResources={mockFeatures}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      const featureCards = screen.getAllByText(/Advanced Analytics|API Access|Priority Support/);
-      expect(featureCards).toHaveLength(3);
-    });
-  });
-
-  describe('feature selection states', () => {
-    it('should show unselected state for features not in selectedFeatureIds', () => {
-      const { container } = render(
-        <FeaturesGrid
-          {...defaultProps}
           selectedFeatureIds={[]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // All features should show unselected state (checkbox outline icons)
-      // Since we can't easily test React Icons, we verify by checking that
-      // the features are rendered and clickable (indicating unselected interactive state)
-      expect(screen.getByText('Advanced Analytics')).toBeInTheDocument();
-      expect(screen.getByText('API Access')).toBeInTheDocument();
-      expect(screen.getByText('Priority Support')).toBeInTheDocument();
-      
-      // Verify features are in unselected state by checking for lack of selected styling
-      const featureCards = container.querySelectorAll('[class*="css-"]');
-      expect(featureCards.length).toBeGreaterThan(0);
-    });
-
-    it('should show selected state for features in selectedFeatureIds', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          selectedFeatureIds={[1, 3]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Selected features should have different styling/icons
-      // This would need to check for specific styling or icons used for selected state
-    });
-
-    it('should handle mixed selection states correctly', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          selectedFeatureIds={[2]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Only feature with id 2 (API Access) should be selected
-      // Other features should be unselected
-    });
-  });
-
-  describe('interaction handling', () => {
-    it('should call handleToggleWithConfirm when feature card is clicked and not readonly', async () => {
-      const user = userEvent.setup();
-      const mockHandleToggle = vi.fn();
-
-      render(
-        <FeaturesGrid
-          {...defaultProps}
           isReadOnly={false}
-          handleToggleWithConfirm={mockHandleToggle}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
         />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      // Click on the feature text which should be within the clickable area
-      await user.click(screen.getByText('Advanced Analytics'));
-      expect(mockHandleToggle).toHaveBeenCalledWith(1);
-    });
+      expect(screen.getByTestId('resource-grid-skeleton')).toBeInTheDocument()
+      expect(screen.getByText('Loading skeleton...')).toBeInTheDocument()
+    })
 
-    it('should not call handleToggleWithConfirm when feature card is clicked in readonly mode', async () => {
-      const user = userEvent.setup();
-      const mockHandleToggle = vi.fn();
-
+    it('should render skeleton with correct props', () => {
       render(
         <FeaturesGrid
-          {...defaultProps}
-          isReadOnly={true}
-          handleToggleWithConfirm={mockHandleToggle}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Click on the feature text - in readonly mode this should not trigger the handler
-      await user.click(screen.getByText('Advanced Analytics'));
-      expect(mockHandleToggle).not.toHaveBeenCalled();
-    });
-
-    it('should handle multiple feature clicks correctly', async () => {
-      const user = userEvent.setup();
-      const mockHandleToggle = vi.fn();
-
-      render(
-        <FeaturesGrid
-          {...defaultProps}
+          loading={true}
+          displayResources={[]}
+          selectedFeatureIds={[]}
           isReadOnly={false}
-          handleToggleWithConfirm={mockHandleToggle}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
         />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      // Click on each feature text
-      await user.click(screen.getByText('Advanced Analytics'));
-      await user.click(screen.getByText('API Access'));
-      await user.click(screen.getByText('Priority Support'));
+      const skeleton = screen.getByTestId('resource-grid-skeleton')
+      expect(skeleton).toHaveAttribute('data-count', '6')
+      expect(skeleton).toHaveAttribute('data-columns', '3')
+      expect(skeleton).toHaveAttribute('data-variant', 'simple')
+      expect(skeleton).toHaveAttribute('data-minheight', '100px')
+    })
 
-      expect(mockHandleToggle).toHaveBeenCalledTimes(3);
-      expect(mockHandleToggle).toHaveBeenNthCalledWith(1, 1);
-      expect(mockHandleToggle).toHaveBeenNthCalledWith(2, 2);
-      expect(mockHandleToggle).toHaveBeenNthCalledWith(3, 3);
-    });
-  });
-
-  describe('readonly mode behavior', () => {
-    it('should not show selection indicators in readonly mode', () => {
+    it('should not render features when loading', () => {
       render(
         <FeaturesGrid
-          {...defaultProps}
-          isReadOnly={true}
+          loading={true}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
         />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      // Selection indicators should not be visible in readonly mode
-      // This would check for absence of checkbox icons or selection UI
-    });
+      expect(screen.queryByTestId('simple-grid')).not.toBeInTheDocument()
+    })
+  })
 
-    it('should show different styling in readonly mode', () => {
+  describe('Empty State', () => {
+    it('should render empty state in read-only mode when no features', () => {
       render(
         <FeaturesGrid
-          {...defaultProps}
-          isReadOnly={true} />,
-        { wrapper: TestWrapper }
-      );
-    });
-
-    it('should maintain selection display in readonly mode', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
+          loading={false}
+          displayResources={[]}
+          selectedFeatureIds={[]}
           isReadOnly={true}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('features-empty-state')).toBeInTheDocument()
+      expect(screen.getByTestId('empty-state-title')).toHaveTextContent('No features included')
+      expect(screen.getByTestId('empty-state-description')).toHaveTextContent('This plan does not include any features')
+    })
+
+    it('should render stars icon in empty state', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={[]}
+          selectedFeatureIds={[]}
+          isReadOnly={true}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('md-stars-icon')).toBeInTheDocument()
+    })
+
+    it('should not render empty state in edit mode when no features', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={[]}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.queryByTestId('features-empty-state')).not.toBeInTheDocument()
+    })
+
+    it('should return null in edit mode when no features', () => {
+      const { container } = render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={[]}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      /* Component returns null, so no grid or empty state should be rendered */
+      expect(screen.queryByTestId('simple-grid')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('features-empty-state')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Features Grid Rendering', () => {
+    it('should render grid with features', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByTestId('simple-grid')).toBeInTheDocument()
+    })
+
+    it('should render grid with correct columns and gap', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const grid = screen.getByTestId('simple-grid')
+      expect(grid).toHaveAttribute('data-columns', '3')
+      expect(grid).toHaveAttribute('data-gap', '4')
+    })
+
+    it('should render all features', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const featureCards = screen.getAllByTestId('feature-card')
+      expect(featureCards).toHaveLength(3)
+    })
+
+    it('should render feature names', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Advanced Reporting')).toBeInTheDocument()
+      expect(screen.getByText('Multi-User Access')).toBeInTheDocument()
+      expect(screen.getByText('API Integration')).toBeInTheDocument()
+    })
+
+    it('should render feature descriptions', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Detailed analytics and custom reports')).toBeInTheDocument()
+      expect(screen.getByText('Support for multiple user accounts')).toBeInTheDocument()
+      expect(screen.getByText('RESTful API for third-party integrations')).toBeInTheDocument()
+    })
+
+    it('should render single feature correctly', () => {
+      const singleFeature = [mockFeatures[0]]
+
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={singleFeature}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const featureCards = screen.getAllByTestId('feature-card')
+      expect(featureCards).toHaveLength(1)
+      expect(screen.getByText('Advanced Reporting')).toBeInTheDocument()
+    })
+  })
+
+  describe('Feature Selection', () => {
+    it('should show checkbox icon for unselected features', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const checkboxIcons = screen.getAllByTestId('checkbox-outline-icon')
+      expect(checkboxIcons).toHaveLength(3)
+    })
+
+    it('should show plus icon for selected features', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
           selectedFeatureIds={[1, 2]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Selected features should still show as selected visually
-      // but without interactive elements
-    });
-  });
-
-  describe('visual styling and states', () => {
-    it('should apply correct styling for selected features', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          selectedFeatureIds={[1]} />,
-        { wrapper: TestWrapper }
-      );
-
-      // Selected feature cards should have different border/background colors
-      // This would check for specific CSS classes or inline styles
-    });
-
-    it('should apply hover effects when not readonly', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          isReadOnly={false} />,
-        { wrapper: TestWrapper }
-      );
-    });
-
-    it('should not apply hover effects in readonly mode', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          isReadOnly={true} />,
-        { wrapper: TestWrapper }
-      );
-
-      // Feature cards should have default cursor in readonly mode
-    });
-  });
-
-  describe('accessibility', () => {
-    it('should be keyboard navigable when not readonly', async () => {
-      const user = userEvent.setup();
-      const mockHandleToggle = vi.fn();
-
-      render(
-        <FeaturesGrid
-          {...defaultProps}
           isReadOnly={false}
-          handleToggleWithConfirm={mockHandleToggle}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
         />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      // Should be able to tab through feature cards
-      await user.tab();
-      
-    });
+      const plusIcons = screen.getAllByTestId('plus-icon')
+      expect(plusIcons).toHaveLength(2)
+    })
 
-    it('should support keyboard activation when not readonly', async () => {
-      const user = userEvent.setup();
-      const mockHandleToggle = vi.fn();
-
+    it('should show mixed icons for partially selected features', () => {
       render(
         <FeaturesGrid
-          {...defaultProps}
-          isReadOnly={false}
-          handleToggleWithConfirm={mockHandleToggle}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Since the features are clickable boxes, we can test click interaction
-      // which is the primary interaction method for this component
-      const firstFeature = screen.getByText('Advanced Analytics').closest('div');
-
-      if (firstFeature) {
-        await user.click(firstFeature);
-        expect(mockHandleToggle).toHaveBeenCalledWith(1);
-      } else {
-        // If the closest div approach doesn't work, test the text element directly
-        await user.click(screen.getByText('Advanced Analytics'));
-        expect(mockHandleToggle).toHaveBeenCalledWith(1);
-      }
-    });
-
-    it('should have proper ARIA attributes for interactive elements', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          isReadOnly={false}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Interactive feature cards should have proper ARIA attributes
-      // This would check for role, aria-label, aria-pressed, etc.
-    });
-
-    it('should not be keyboard navigable in readonly mode', () => {
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          isReadOnly={true}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Feature cards should not be focusable in readonly mode
-    });
-  });
-
-  describe('error handling', () => {
-    it('should handle empty feature objects gracefully', () => {
-      const incompleteFeature = {
-        id: 1,
-        name: '',
-        description: ''
-      } as Feature;
-
-      expect(() => {
-        render(
-          <FeaturesGrid
-            {...defaultProps}
-            displayResources={[incompleteFeature]}
-          />,
-          { wrapper: TestWrapper }
-        );
-      }).not.toThrow();
-    });
-
-    it('should handle missing feature properties gracefully', () => {
-      const incompleteFeature = {
-        id: 1
-      } as Feature;
-
-      expect(() => {
-        render(
-          <FeaturesGrid
-            {...defaultProps}
-            displayResources={[incompleteFeature]}
-          />,
-          { wrapper: TestWrapper }
-        );
-      }).not.toThrow();
-    });
-
-    it('should handle invalid selectedFeatureIds gracefully', () => {
-      expect(() => {
-        render(
-          <FeaturesGrid
-            {...defaultProps}
-            selectedFeatureIds={[999, -1, 0]}
-          />,
-          { wrapper: TestWrapper }
-        );
-      }).not.toThrow();
-    });
-
-    it('should handle null or undefined handleToggleWithConfirm', () => {
-      expect(() => {
-        render(
-          <FeaturesGrid
-            {...defaultProps}
-            handleToggleWithConfirm={undefined as any}
-          />,
-          { wrapper: TestWrapper }
-        );
-      }).not.toThrow();
-    });
-  });
-
-  describe('performance considerations', () => {
-    it('should handle large numbers of features efficiently', () => {
-      const manyFeatures: Feature[] = Array.from({ length: 100 }, (_, index) => ({
-        id: index + 1,
-        name: `Feature ${index + 1}`,
-        description: `Description for feature ${index + 1}`,
-        display_order: 4
-      }));
-
-      const start = performance.now();
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          displayResources={manyFeatures}
-        />,
-        { wrapper: TestWrapper }
-      );
-      const end = performance.now();
-
-      // Should render reasonably quickly even with many features
-      expect(end - start).toBeLessThan(1000); // Less than 1 second
-    });
-
-    it('should handle frequent selection updates efficiently', () => {
-      const { rerender } = render(
-        <FeaturesGrid
-          {...defaultProps}
-          selectedFeatureIds={[]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      // Simulate rapid selection changes
-      const selectionStates = [
-        [1],
-        [1, 2],
-        [1, 2, 3],
-        [2, 3],
-        [3],
-        []
-      ];
-
-      selectionStates.forEach(selection => {
-        expect(() => {
-          rerender(
-            <FeaturesGrid
-              {...defaultProps}
-              selectedFeatureIds={selection}
-            />
-          );
-        }).not.toThrow();
-      });
-    });
-  });
-
-  describe('component lifecycle', () => {
-    it('should cleanup properly on unmount', () => {
-      const { unmount } = render(
-        <FeaturesGrid
-          {...defaultProps}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(() => unmount()).not.toThrow();
-    });
-
-    it('should handle prop changes correctly', () => {
-      const { rerender } = render(
-        <FeaturesGrid
-          {...defaultProps}
-          loading={true}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByTestId('resource-skeleton')).toBeInTheDocument();
-
-      rerender(
-        <FeaturesGrid
-          {...defaultProps}
           loading={false}
-        />
-      );
+          displayResources={mockFeatures}
+          selectedFeatureIds={[1]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
 
-      expect(screen.queryByTestId('resource-skeleton')).not.toBeInTheDocument();
-      expect(screen.getByText('Advanced Analytics')).toBeInTheDocument();
-    });
+      expect(screen.getAllByTestId('plus-icon')).toHaveLength(1)
+      expect(screen.getAllByTestId('checkbox-outline-icon')).toHaveLength(2)
+    })
 
-    it('should handle displayResources updates correctly', () => {
+    it('should call handleToggleWithConfirm when feature is clicked', async () => {
+      const user = userEvent.setup()
+
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const featureCards = screen.getAllByTestId('feature-card')
+      await user.click(featureCards[0])
+
+      expect(mockHandleToggleWithConfirm).toHaveBeenCalledWith(1)
+    })
+
+    it('should call handleToggleWithConfirm with correct feature id', async () => {
+      const user = userEvent.setup()
+
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const featureCards = screen.getAllByTestId('feature-card')
+      await user.click(featureCards[0])
+
+      expect(mockHandleToggleWithConfirm).toHaveBeenCalledWith(1)
+      expect(mockHandleToggleWithConfirm).toHaveBeenCalledTimes(1)
+    })
+
+    it('should handle multiple feature clicks', async () => {
+      const user = userEvent.setup()
+
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const featureCards = screen.getAllByTestId('feature-card')
+      await user.click(featureCards[0])
+      await user.click(featureCards[1])
+      await user.click(featureCards[2])
+
+      expect(mockHandleToggleWithConfirm).toHaveBeenCalledTimes(3)
+    })
+  })
+
+  describe('Read-Only Mode', () => {
+    it('should not show selection icons in read-only mode', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={true}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.queryByTestId('checkbox-outline-icon')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('plus-icon')).not.toBeInTheDocument()
+    })
+
+    it('should set cursor to default in read-only mode', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={true}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const featureCards = screen.getAllByTestId('feature-card')
+      featureCards.forEach(card => {
+        expect(card).toHaveAttribute('data-cursor', 'default')
+      })
+    })
+
+    it('should set cursor to pointer in edit mode', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const featureCards = screen.getAllByTestId('feature-card')
+      featureCards.forEach(card => {
+        expect(card).toHaveAttribute('data-cursor', 'pointer')
+      })
+    })
+
+    it('should not call handler when clicked in read-only mode', async () => {
+      const user = userEvent.setup()
+
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={true}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const featureCards = screen.getAllByTestId('feature-card')
+      await user.click(featureCards[0])
+
+      expect(mockHandleToggleWithConfirm).not.toHaveBeenCalled()
+    })
+
+    it('should render all features in read-only mode', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[1, 2, 3]}
+          isReadOnly={true}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Advanced Reporting')).toBeInTheDocument()
+      expect(screen.getByText('Multi-User Access')).toBeInTheDocument()
+      expect(screen.getByText('API Integration')).toBeInTheDocument()
+    })
+  })
+
+  describe('Visual States', () => {
+    it('should apply selected border color to selected features', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[1]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const featureCards = screen.getAllByTestId('feature-card')
+      expect(featureCards[0]).toHaveAttribute('data-bordercolor')
+    })
+
+    it('should apply different background for selected features', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[1]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const featureCards = screen.getAllByTestId('feature-card')
+      expect(featureCards[0]).toHaveAttribute('data-bg')
+    })
+
+    it('should render grid items with full height', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const gridItems = screen.getAllByTestId('grid-item')
+      gridItems.forEach(item => {
+        expect(item).toHaveAttribute('data-h', 'full')
+      })
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('should handle empty selectedFeatureIds array', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const checkboxIcons = screen.getAllByTestId('checkbox-outline-icon')
+      expect(checkboxIcons).toHaveLength(3)
+    })
+
+    it('should handle all features selected', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[1, 2, 3]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const plusIcons = screen.getAllByTestId('plus-icon')
+      expect(plusIcons).toHaveLength(3)
+      expect(screen.queryByTestId('checkbox-outline-icon')).not.toBeInTheDocument()
+    })
+
+    it('should handle feature with long name', () => {
+      const longNameFeature: Feature[] = [{
+        id: 1,
+        name: 'This is a very long feature name that should be displayed properly without breaking the layout',
+        description: 'Short description',
+        display_order: 1
+      }]
+
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={longNameFeature}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('This is a very long feature name that should be displayed properly without breaking the layout')).toBeInTheDocument()
+    })
+
+    it('should handle feature with long description', () => {
+      const longDescFeature: Feature[] = [{
+        id: 1,
+        name: 'Feature',
+        description: 'This is a very long description that contains multiple sentences and should be displayed properly within the card layout without causing any overflow or layout issues.',
+        display_order: 1
+      }]
+
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={longDescFeature}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('This is a very long description that contains multiple sentences and should be displayed properly within the card layout without causing any overflow or layout issues.')).toBeInTheDocument()
+    })
+
+    it('should handle rapid clicks on same feature', async () => {
+      const user = userEvent.setup()
+
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const featureCard = screen.getAllByTestId('feature-card')[0]
+      await user.click(featureCard)
+      await user.click(featureCard)
+      await user.click(featureCard)
+
+      expect(mockHandleToggleWithConfirm).toHaveBeenCalledTimes(3)
+      expect(mockHandleToggleWithConfirm).toHaveBeenCalledWith(1)
+    })
+
+    it('should handle feature with empty description', () => {
+      const emptyDescFeature: Feature[] = [{
+        id: 1,
+        name: 'Feature Name',
+        description: '',
+        display_order: 1
+      }]
+
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={emptyDescFeature}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getByText('Feature Name')).toBeInTheDocument()
+    })
+
+    it('should handle selectedFeatureIds with non-existent ids', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[999, 1000]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      const checkboxIcons = screen.getAllByTestId('checkbox-outline-icon')
+      expect(checkboxIcons).toHaveLength(3)
+    })
+
+    it('should handle mixed valid and invalid selectedFeatureIds', () => {
+      render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[1, 999]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getAllByTestId('plus-icon')).toHaveLength(1)
+      expect(screen.getAllByTestId('checkbox-outline-icon')).toHaveLength(2)
+    })
+  })
+
+  describe('Props Integration', () => {
+    it('should update when loading prop changes', () => {
       const { rerender } = render(
         <FeaturesGrid
-          {...defaultProps}
-          displayResources={[mockFeatures[0]]}
+          loading={true}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
         />,
         { wrapper: TestWrapper }
-      );
+      )
 
-      expect(screen.getByText('Advanced Analytics')).toBeInTheDocument();
-      expect(screen.queryByText('API Access')).not.toBeInTheDocument();
+      expect(screen.getByTestId('resource-grid-skeleton')).toBeInTheDocument()
 
       rerender(
-        <FeaturesGrid
-          {...defaultProps}
-          displayResources={mockFeatures}
-        />
-      );
-
-      expect(screen.getByText('Advanced Analytics')).toBeInTheDocument();
-      expect(screen.getByText('API Access')).toBeInTheDocument();
-      expect(screen.getByText('Priority Support')).toBeInTheDocument();
-    });
-  });
-
-  describe('edge cases', () => {
-    it('should handle features with very long names and descriptions', () => {
-      const longTextFeature: Feature = {
-        id: 1,
-        name: 'This is a very long feature name that might cause layout issues if not handled properly in the UI components',
-        description: 'This is an extremely long description that goes on and on and on and should be handled gracefully by the component without breaking the layout or causing visual issues that would impact the user experience negatively',
-        display_order:1
-      };
-
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          displayResources={[longTextFeature]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByText(longTextFeature.name)).toBeInTheDocument();
-      expect(screen.getByText(longTextFeature.description)).toBeInTheDocument();
-    });
-
-    it('should handle features with special characters in names and descriptions', () => {
-      const specialCharFeature: Feature = {
-        id: 1,
-        name: 'Feature & Service™ (Premium) - 2024',
-        description: 'Special chars: @#$%^&*()_+{}|:"<>?[];\\,./`~',
-        display_order: 1,
-      };
-
-      render(
-        <FeaturesGrid
-          {...defaultProps}
-          displayResources={[specialCharFeature]}
-        />,
-        { wrapper: TestWrapper }
-      );
-
-      expect(screen.getByText('Feature & Service™ (Premium) - 2024')).toBeInTheDocument();
-      expect(screen.getByText('Special chars: @#$%^&*()_+{}|:"<>?[];\\,./`~')).toBeInTheDocument();
-    });
-
-    it('should handle duplicate feature IDs gracefully', () => {
-      const duplicateFeatures: Feature[] = [
-        {
-          id: 1,
-          name: 'Feature 1',
-          description: 'First feature',
-          display_order: 1,
-        },
-        {
-          id: 1,
-          name: 'Feature 1 Duplicate',
-          description: 'Second feature with same ID',
-          display_order: 1,
-        }
-      ];
-
-      expect(() => {
-        render(
+        <Provider>
           <FeaturesGrid
-            {...defaultProps}
-            displayResources={duplicateFeatures}
-          />,
-          { wrapper: TestWrapper }
-        );
-      }).not.toThrow();
-    });
-  });
-});
+            loading={false}
+            displayResources={mockFeatures}
+            selectedFeatureIds={[]}
+            isReadOnly={false}
+            handleToggleWithConfirm={mockHandleToggleWithConfirm}
+          />
+        </Provider>
+      )
+
+      expect(screen.queryByTestId('resource-grid-skeleton')).not.toBeInTheDocument()
+      expect(screen.getByTestId('simple-grid')).toBeInTheDocument()
+    })
+
+    it('should update when selectedFeatureIds prop changes', () => {
+      const { rerender } = render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getAllByTestId('checkbox-outline-icon')).toHaveLength(3)
+
+      rerender(
+        <Provider>
+          <FeaturesGrid
+            loading={false}
+            displayResources={mockFeatures}
+            selectedFeatureIds={[1, 2]}
+            isReadOnly={false}
+            handleToggleWithConfirm={mockHandleToggleWithConfirm}
+          />
+        </Provider>
+      )
+
+      expect(screen.getAllByTestId('plus-icon')).toHaveLength(2)
+      expect(screen.getAllByTestId('checkbox-outline-icon')).toHaveLength(1)
+    })
+
+    it('should update when isReadOnly prop changes', () => {
+      const { rerender } = render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getAllByTestId('checkbox-outline-icon')).toHaveLength(3)
+
+      rerender(
+        <Provider>
+          <FeaturesGrid
+            loading={false}
+            displayResources={mockFeatures}
+            selectedFeatureIds={[]}
+            isReadOnly={true}
+            handleToggleWithConfirm={mockHandleToggleWithConfirm}
+          />
+        </Provider>
+      )
+
+      expect(screen.queryByTestId('checkbox-outline-icon')).not.toBeInTheDocument()
+    })
+
+    it('should update when displayResources prop changes', () => {
+      const { rerender } = render(
+        <FeaturesGrid
+          loading={false}
+          displayResources={mockFeatures}
+          selectedFeatureIds={[]}
+          isReadOnly={false}
+          handleToggleWithConfirm={mockHandleToggleWithConfirm}
+        />,
+        { wrapper: TestWrapper }
+      )
+
+      expect(screen.getAllByTestId('feature-card')).toHaveLength(3)
+
+      const newFeatures = [mockFeatures[0]]
+      rerender(
+        <Provider>
+          <FeaturesGrid
+            loading={false}
+            displayResources={newFeatures}
+            selectedFeatureIds={[]}
+            isReadOnly={false}
+            handleToggleWithConfirm={mockHandleToggleWithConfirm}
+          />
+        </Provider>
+      )
+
+      expect(screen.getAllByTestId('feature-card')).toHaveLength(1)
+    })
+  })
+})

@@ -48,7 +48,15 @@ vi.mock('@plan-management/components', () => ({
 vi.mock('@plan-management/forms/form-ui', () => {
   const React = require('react')
   return {
-    default: ({ activeTab, showSavedIndicator, isSubmitting, onSubmit, onTabChange, onNextTab, onPreviousTab }: any) =>
+    default: ({ activeTab, showSavedIndicator, isSubmitting, onSubmit, onTabChange, onNextTab, onPreviousTab }: {
+      activeTab: string;
+      showSavedIndicator: boolean;
+      isSubmitting: boolean;
+      onSubmit: (data: Record<string, unknown>) => void;
+      onTabChange: (tab: string) => void;
+      onNextTab: () => void;
+      onPreviousTab: () => void;
+    }) =>
       React.createElement('div', { 'data-testid': 'plan-form-ui' },
         React.createElement('div', { 'data-testid': 'active-tab' }, activeTab),
         React.createElement('div', { 'data-testid': 'saved-indicator' }, showSavedIndicator ? 'Saved' : 'Not Saved'),
@@ -165,7 +173,7 @@ describe('PlanFormContainer', () => {
     vi.spyOn(storageUtils, 'saveFormDataToStorage').mockReturnValue(true)
     vi.spyOn(storageUtils, 'loadDataFromStorage').mockImplementation(() => {})
     vi.spyOn(storageUtils, 'clearStorageData').mockImplementation(() => {})
-    vi.spyOn(formUtils, 'formatApiDataToFormData').mockImplementation((data) => data as any)
+    vi.spyOn(formUtils, 'formatApiDataToFormData').mockImplementation((data) => data as unknown as CreatePlanFormData)
 
     mockGetValues.mockReturnValue({
       name: '',
@@ -203,9 +211,9 @@ describe('PlanFormContainer', () => {
     })
 
     /* Override form methods with mocks */
-    methods.setValue = mockSetValue as any
-    methods.reset = mockReset as any
-    methods.getValues = mockGetValues as any
+    methods.setValue = mockSetValue
+    methods.reset = mockReset
+    methods.getValues = mockGetValues
 
     return (
       <FormProvider {...methods}>
